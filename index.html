@@ -34,9 +34,7 @@
 
         .main-content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); }
         .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.4s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .view-section.active { display: block; }
 
         .section-card { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; position: relative; }
         
@@ -58,7 +56,6 @@
 
         #containerTasksDinamicas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed var(--border); }
 
-        .chart-container { height: 250px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { text-align: left; padding: 12px; color: var(--text-dim); font-size: 0.7rem; border-bottom: 1px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
@@ -107,7 +104,7 @@
 
         <div class="section-card">
             <h2 style="margin-bottom: 20px;">Volume por Analista</h2>
-            <div class="chart-container"><canvas id="meuGraficoBarras"></canvas></div>
+            <div style="height: 250px;"><canvas id="meuGraficoBarras"></canvas></div>
         </div>
 
         <div id="cardRegistro" class="section-card">
@@ -123,16 +120,22 @@
                 </div>
                 <div id="divQtdTask" style="visibility: hidden;">
                     <label style="font-size:0.7rem; font-weight:700">QTD TASKS</label>
-                    <input type="number" id="taskQtd" min="1" placeholder="Ex: 2" oninput="gerarCamposTask()">
+                    <input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()">
                 </div>
                 <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" onchange="escutarBanco()"></div>
             </div>
 
             <div id="containerTasksDinamicas" style="display: none;"></div>
 
-            <div style="margin-top:10px">
-                <label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO / LINK (Opcional)</label>
-                <input type="text" id="serv" placeholder="Link da RITM ou detalhamento">
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-top:10px">
+                <div>
+                    <label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA</label>
+                    <input type="text" id="descResumida" placeholder="O que foi feito?">
+                </div>
+                <div>
+                    <label style="font-size:0.7rem; font-weight:700">LINK DA RITM (Opcional)</label>
+                    <input type="text" id="linkRitm" placeholder="http://...">
+                </div>
             </div>
             <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">REGISTRAR NO BANCO</button>
         </div>
@@ -145,7 +148,16 @@
                 </select>
             </div>
             <table style="min-width: 100%;">
-                <thead><tr><th>RITM</th><th>TASK(S)</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>RITM</th>
+                        <th>TASK(S)</th>
+                        <th>ANALISTA</th>
+                        <th>DESCRIÇÃO</th>
+                        <th>LINK</th>
+                        <th style="text-align:right">AÇÃO</th>
+                    </tr>
+                </thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
@@ -195,12 +207,9 @@
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('displayUser').innerText = logado.nome;
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
-            
-            // PERSISTÊNCIA DO TURNO ABERTO
             if(localStorage.getItem('turnoAberto_' + logado.nome) === 'true') {
                 document.getElementById('cardRegistro').classList.add('unlocked');
             }
-
             carregarFiltroAnalistas();
             escutarBanco();
         }
@@ -223,15 +232,8 @@
         });
     }
 
-    function logout() { 
-        localStorage.removeItem('usuarioLogado'); 
-        location.reload(); 
-    }
-
-    function iniciarTurno() { 
-        document.getElementById('cardRegistro').classList.add('unlocked');
-        localStorage.setItem('turnoAberto_' + logado.nome, 'true');
-    }
+    function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
+    function iniciarTurno() { document.getElementById('cardRegistro').classList.add('unlocked'); localStorage.setItem('turnoAberto_' + logado.nome, 'true'); }
 
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -248,17 +250,8 @@
 
     function toggleTaskInput() {
         const temTask = document.getElementById('temTask').value;
-        const divQtd = document.getElementById('divQtdTask');
-        const container = document.getElementById('containerTasksDinamicas');
-        if(temTask === 'sim') {
-            divQtd.style.visibility = 'visible';
-            container.style.display = 'grid';
-        } else {
-            divQtd.style.visibility = 'hidden';
-            container.style.display = 'none';
-            container.innerHTML = "";
-            document.getElementById('taskQtd').value = "";
-        }
+        document.getElementById('divQtdTask').style.visibility = (temTask === 'sim') ? 'visible' : 'hidden';
+        document.getElementById('containerTasksDinamicas').style.display = (temTask === 'sim') ? 'grid' : 'none';
     }
 
     function gerarCamposTask() {
@@ -267,85 +260,64 @@
         container.innerHTML = "";
         if(qtd > 0) {
             for(let i = 1; i <= qtd; i++) {
-                container.innerHTML += `<div>
-                    <label style="font-size:0.6rem; color:var(--primary)">TASK ${i}</label>
-                    <input type="text" class="input-task-dinamica" placeholder="TASK00${i}">
-                </div>`;
+                container.innerHTML += `<div><label style="font-size:0.6rem">TASK ${i}</label><input type="text" class="input-task-dinamica" placeholder="TASK..."></div>`;
             }
         }
     }
 
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
-        const s = document.getElementById('serv').value || "Sem link/descrição"; // Deixando opcional
-        const d = document.getElementById('data').value;
+        const d = document.getElementById('descResumida').value;
+        const l = document.getElementById('linkRitm').value || "---";
+        const dt = document.getElementById('data').value;
         const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
         
-        let tasksColetadas = [];
+        let tasks = [];
         document.querySelectorAll('.input-task-dinamica').forEach(input => {
-            if(input.value) tasksColetadas.push(input.value.toUpperCase().trim());
+            if(input.value) tasks.push(input.value.toUpperCase().trim());
         });
 
-        if(!r) return alert("O número da RITM é obrigatório!"); // Apenas RITM obrigatória agora
+        if(!r || !d) return alert("RITM e Descrição são obrigatórios!");
 
         database.ref('chamados').push({ 
-            ritm: r, 
-            taskQtd: qtdT,
-            tasks: tasksColetadas.length > 0 ? tasksColetadas.join(", ") : "Não possui",
-            servico: s, 
-            data: d, 
-            analista: logado.nome 
+            ritm: r, desc: d, link: l, data: dt, analista: logado.nome, taskQtd: qtdT, tasks: tasks.join(", ") || "Não possui"
         }).then(() => {
-            // Limpa apenas após o sucesso
-            document.getElementById('ritm').value = ""; 
-            document.getElementById('taskQtd').value = ""; 
-            document.getElementById('serv').value = "";
-            document.getElementById('temTask').value = "nao"; 
-            toggleTaskInput();
+            document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = "";
+            document.getElementById('taskQtd').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput();
         });
     }
 
     function escutarBanco() {
         database.ref('chamados').on('value', snap => {
             const tbody = document.getElementById('corpoTabela');
-            const dataFiltro = document.getElementById('data').value;
-            const analistaFiltro = document.getElementById('filtroAnalista').value;
+            const dataF = document.getElementById('data').value;
+            const analistaF = document.getElementById('filtroAnalista').value;
             tbody.innerHTML = "";
-            let contagem = {};
-            let totalRitms = 0;
-            let totalTasks = 0;
+            let cont = {}; let tR = 0; let tT = 0;
 
             snap.forEach(item => {
-                const key = item.key; // ID do Firebase
-                const c = item.val();
-                if(c.data === dataFiltro) {
-                    totalRitms++;
-                    totalTasks += (parseInt(c.taskQtd) || 0);
-                    contagem[c.analista] = (contagem[c.analista] || 0) + 1;
-                    if(analistaFiltro === "TODOS" || c.analista === analistaFiltro) {
+                const c = item.val(); const key = item.key;
+                if(c.data === dataF) {
+                    tR++; tT += (parseInt(c.taskQtd) || 0);
+                    cont[c.analista] = (cont[c.analista] || 0) + 1;
+                    if(analistaF === "TODOS" || c.analista === analistaF) {
                         tbody.innerHTML = `<tr>
-                            <td><b>${c.ritm}</b></td>
-                            <td>${c.tasks || '---'}</td>
-                            <td>${c.analista}</td>
-                            <td>${c.servico}</td>
-                            <td style="text-align:right">
-                                <button onclick="excluirChamado('${key}')" style="background:none; color:var(--danger); cursor:pointer">🗑</button>
-                            </td>
+                            <td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td>
+                            <td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td>
+                            <td style="text-align:right"><button onclick="deletarRegistro('${key}')" style="background:none; color:#ef4444; font-size:1.2rem; cursor:pointer">🗑</button></td>
                         </tr>` + tbody.innerHTML;
                     }
                 }
             });
-            document.getElementById('kpiRitms').innerText = totalRitms;
-            document.getElementById('kpiTasks').innerText = totalTasks;
-            atualizarGrafico(contagem);
+            document.getElementById('kpiRitms').innerText = tR;
+            document.getElementById('kpiTasks').innerText = tT;
+            atualizarGrafico(cont);
         });
     }
 
-    function excluirChamado(id) {
-        if(confirm("Deseja realmente apagar este registro?")) {
-            database.ref('chamados/' + id).remove()
-                .then(() => { console.log("Excluído com sucesso"); })
-                .catch((error) => { alert("Erro ao excluir: " + error.message); });
+    function deletarRegistro(id) {
+        if(confirm("Deseja apagar este registro?")) {
+            database.ref('chamados/' + id).remove();
         }
     }
 
