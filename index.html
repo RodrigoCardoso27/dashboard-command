@@ -3,98 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YDUQS | OPS Command Center</title>
-    
+    <title>YDUQS | COMMAND CENTER</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-
     <style>
-        :root {
-            --bg-body: #0f172a; --bg-card: #1e293b; --primary: #6366f1;
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
-            --text-main: #f8fafc; --text-dim: #94a3b8; --border: rgba(255, 255, 255, 0.1);
-        }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg-body); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
-        #telaLogin { position: fixed; inset: 0; background: radial-gradient(circle at top right, #1e1b4b, #0f172a); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: var(--bg-card); padding: 48px; border-radius: 32px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        .sidebar { width: 260px; background: #020617; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px; position: fixed; height: 100vh; }
-        .logo-area { font-weight: 800; font-size: 1.2rem; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
-        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); }
-        .section-card { background: var(--bg-card); border-radius: 24px; border: 1px solid var(--border); padding: 32px; margin-bottom: 32px; position: relative; }
-        #overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); z-index: 10; border-radius: 24px; backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; font-weight: 700; }
-        .unlocked #overlay { display: none; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        input, select { width: 100%; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; height: 48px; padding: 0 16px; color: white; box-sizing: border-box; }
-        button { height: 48px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 16px; color: var(--text-dim); font-size: 0.75rem; border-bottom: 1px solid var(--border); }
-        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-        .status-badge { padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; }
-        .resolvido { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        body { background: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 40px; border-radius: 20px; border: 1px solid #334155; width: 300px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #4f46e5; }
     </style>
 </head>
 <body>
-
-<div id="telaLogin">
-    <div class="login-card">
-        <div class="logo-area" style="justify-content: center;">⚡ COMMAND CENTER</div>
-        <p style="color: var(--text-dim); margin-bottom: 30px;">Identifique-se para acessar</p>
-        <input type="text" id="loginUser" placeholder="Usuário">
-        <input type="password" id="loginPass" placeholder="Senha" style="margin-top:15px">
-        <button class="btn-primary" style="margin-top: 25px;" onclick="autenticar()">CONECTAR</button>
+    <div class="card">
+        <h2 style="margin-top:0">⚡ LOGIN OPS</h2>
+        <input type="text" id="user" placeholder="USUÁRIO">
+        <input type="password" id="pass" placeholder="SENHA">
+        <button id="btn" onclick="entrar()">CONECTAR</button>
+        <p id="msg" style="font-size: 12px; color: #94a3b8; margin-top: 15px;">Aguardando conexão...</p>
     </div>
-</div>
-
-<div class="sidebar">
-    <div class="logo-area">💎 YDUQS OPS</div>
-    <div style="color:var(--text-dim); font-weight:600; margin-bottom:20px">📊 Dashboard</div>
-    <div id="navAdmin" style="display:none; color:var(--warning); font-weight:600; cursor:pointer" onclick="toggleAdmin()">🛠 Painel Admin</div>
-    <div style="margin-top:auto; border-top:1px solid var(--border); padding-top:20px">
-        <div id="userName" style="font-weight:600">Conectando...</div>
-        <div style="color:var(--danger); font-size:0.8rem; cursor:pointer; margin-top:5px" onclick="location.reload()">Sair</div>
-    </div>
-</div>
-
-<div class="main-content">
-    <div id="painelAdmin" class="section-card" style="display:none; border: 2px solid var(--primary);">
-        <h3 style="margin-top:0">Gestão de Equipe</h3>
-        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
-            <input type="text" id="newUserName" placeholder="Nome">
-            <input type="text" id="newUserPass" placeholder="Senha">
-            <button class="btn-success" onclick="cadastrarAnalista()">CRIAR ACESSO</button>
-        </div>
-    </div>
-
-    <div style="display:flex; gap:15px; margin-bottom:30px">
-        <button id="btnIniciar" class="btn-primary" style="width:200px" onclick="iniciarTurno()">INICIAR TURNO</button>
-        <button id="btnFinalizar" class="btn-danger" style="width:200px; display:none" onclick="finalizarTurno()">ENCERRAR DIA</button>
-    </div>
-
-    <div class="section-card" id="mainCard">
-        <div id="overlay">ACESSO BLOQUEADO</div>
-        <div class="grid">
-            <div><label>Data</label><input type="date" id="data" onchange="escutar()"></div>
-            <div><label>RITM</label><input type="text" id="ritm"></div>
-            <div style="grid-column:span 2"><label>Serviço</label><input type="text" id="desc"></div>
-            <div style="grid-column:span 2"><button class="btn-success" onclick="salvar()">SALVAR NA NUVEM</button></div>
-        </div>
-    </div>
-
-    <div class="section-card" style="padding:0">
-        <table id="tabela">
-            <thead><tr><th>RITM</th><th>Analista</th><th>Serviço</th><th style="text-align:right">Ação</th></tr></thead>
-            <tbody id="corpoTabela"></tbody>
-        </table>
-    </div>
-</div>
 
 <script>
-    // CHAVES DO RODRIGO - REVISADAS
     const firebaseConfig = {
         apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
         authDomain: "dashboard-command-1ef72.firebaseapp.com",
@@ -105,73 +34,47 @@
         appId: "1:38631596446:web:f9470a5b648173e168b68f"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    let usuarioLogado = null;
-    document.getElementById('data').valueAsDate = new Date();
+    // Inicializa com tratamento de erro
+    try {
+        firebase.initializeApp(firebaseConfig);
+        document.getElementById('msg').innerText = "Sistema Online ✅";
+    } catch (e) {
+        document.getElementById('msg').innerText = "Erro ao carregar banco ❌";
+    }
 
-    function autenticar() {
-        const user = document.getElementById('loginUser').value.toUpperCase().trim();
-        const pass = document.getElementById('loginPass').value;
-        if(!user || !pass) return alert("Preencha Usuário e Senha");
+    function entrar() {
+        const u = document.getElementById('user').value.toUpperCase().trim();
+        const p = document.getElementById('pass').value;
+        const btn = document.getElementById('btn');
+        
+        if(!u || !p) return alert("Preencha os campos!");
+        
+        btn.innerText = "VERIFICANDO...";
+        btn.disabled = true;
 
-        database.ref('usuarios/' + user).once('value', snap => {
+        firebase.database().ref('usuarios/' + u).once('value').then(snap => {
             const d = snap.val();
-            if(!d && user === "ADMIN") {
-                if(confirm("Deseja criar esta SENHA MESTRE para o ADMIN?")) {
-                    database.ref('usuarios/ADMIN').set({ senha: pass, role: 'admin' }).then(() => location.reload());
+            if(!d && u === "ADMIN") {
+                if(confirm("Criar senha MASTER para ADMIN?")) {
+                    firebase.database().ref('usuarios/ADMIN').set({senha: p, role: 'admin'}).then(() => {
+                        alert("Senha Master Criada! Entre novamente.");
+                        location.reload();
+                    });
                 }
-            } else if(d && d.senha === pass) {
-                usuarioLogado = { nome: user, role: d.role || 'analista' };
-                document.getElementById('telaLogin').style.display = 'none';
-                document.getElementById('userName').innerText = user;
-                if(usuarioLogado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
-                escutar();
-            } else alert("Acesso Inválido!");
-        }).catch(err => alert("Erro de Conexão. Verifique o Modo de Teste no Firebase."));
-    }
-
-    function iniciarTurno() {
-        document.getElementById('mainCard').classList.add('unlocked');
-        document.getElementById('btnIniciar').style.display = 'none';
-        document.getElementById('btnFinalizar').style.display = 'block';
-    }
-
-    function finalizarTurno() {
-        if(confirm("Encerrar dia?")) location.reload();
-    }
-
-    function salvar() {
-        const ritm = document.getElementById('ritm').value.toUpperCase().trim();
-        if(!ritm) return alert("RITM vazia!");
-        database.ref('chamados').push({
-            ritm, analista: usuarioLogado.nome,
-            servico: document.getElementById('desc').value,
-            data: document.getElementById('data').value
+            } else if(d && d.senha === p) {
+                alert("ACESSO AUTORIZADO! Redirecionando...");
+                // Aqui depois colocamos o resto do dashboard, vamos focar em logar primeiro!
+            } else {
+                alert("Usuário ou Senha incorretos!");
+                btn.innerText = "CONECTAR";
+                btn.disabled = false;
+            }
+        }).catch(err => {
+            console.error(err);
+            alert("Erro crítico: Verifique se o Realtime Database está ATIVADO em modo de teste.");
+            btn.innerText = "CONECTAR";
+            btn.disabled = false;
         });
-        document.getElementById('ritm').value = "";
-    }
-
-    function escutar() {
-        database.ref('chamados').on('value', snap => {
-            const corpo = document.getElementById('corpoTabela');
-            const dataRef = document.getElementById('data').value;
-            corpo.innerHTML = "";
-            snap.forEach(item => {
-                const c = item.val();
-                if(c.data === dataRef) {
-                    corpo.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.analista}</td><td>${c.servico}</td><td style="text-align:right"><button onclick="excluir('${item.key}')" style="background:none;color:red;width:auto;display:inline">🗑️</button></td></tr>` + corpo.innerHTML;
-                }
-            });
-        });
-    }
-
-    function excluir(key) { if(confirm("Apagar?")) database.ref('chamados/' + key).remove(); }
-    function toggleAdmin() { const p = document.getElementById('painelAdmin'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
-    function cadastrarAnalista() {
-        const u = document.getElementById('newUserName').value.toUpperCase().trim();
-        const p = document.getElementById('newUserPass').value;
-        if(u && p) { database.ref('usuarios/' + u).set({ senha: p, role: 'analista' }); alert("Criado!"); }
     }
 </script>
 </body>
