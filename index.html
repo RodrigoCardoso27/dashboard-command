@@ -38,16 +38,20 @@
 
         .section-card { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; position: relative; }
         
+        /* Modal de Report */
+        #modalReport { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--bg-surface); padding: 30px; border-radius: 24px; width: 400px; border: 1px solid var(--border); }
+
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .kpi-box { background: var(--glass); padding: 20px; border-radius: 20px; border: 1px solid var(--border); text-align: center; }
         .kpi-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
         .kpi-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
 
-        #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 10; border-radius: 24px; backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 10; border-radius: 24px; backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; }
         .unlocked #overlay { display: none; }
 
         .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
-        input, select { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; height: 45px; padding: 0 15px; color: white; transition: 0.3s; }
+        input, select, textarea { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; color: white; transition: 0.3s; font-family: inherit; }
         
         button { height: 45px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
@@ -60,11 +64,21 @@
         th { text-align: left; padding: 12px; color: var(--text-dim); font-size: 0.7rem; border-bottom: 1px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         
-        .btn-delete { background: none !important; color: #ef4444 !important; font-size: 1.2rem; cursor: pointer !important; padding: 5px; border-radius: 5px; transition: 0.2s; }
-        .btn-delete:hover { background: rgba(239, 68, 68, 0.1) !important; }
+        .btn-delete { background: none !important; color: #ef4444 !important; font-size: 1.2rem; cursor: pointer !important; }
     </style>
 </head>
 <body>
+
+<div id="modalReport">
+    <div class="modal-content">
+        <h3 style="margin-bottom: 15px;">Reportar Erro ou Melhoria</h3>
+        <textarea id="msgReport" rows="5" placeholder="Descreva aqui o erro ou sua sugestão de melhoria..."></textarea>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn-danger" style="flex: 1;" onclick="fecharModalReport()">Cancelar</button>
+            <button class="btn-success" style="flex: 1;" onclick="enviarReport()">Enviar Relato</button>
+        </div>
+    </div>
+</div>
 
 <div id="telaLogin">
     <div class="login-card">
@@ -86,6 +100,7 @@
         </div>
     </div>
     <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border);">
+        <button class="btn-primary" style="height: 35px; margin-bottom: 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" onclick="abrirModalReport()">📣 Reportar Erro</button>
         <div id="displayUser" style="font-weight: 800; color: white;">Analista</div>
         <button class="btn-danger" style="height: 35px; width: 100%; margin-top: 10px;" onclick="logout()">Sair</button>
     </div>
@@ -111,7 +126,9 @@
         </div>
 
         <div id="cardRegistro" class="section-card">
-            <div id="overlay"><button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
+            <div id="overlay">
+                <button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button>
+            </div>
             <div class="form-grid">
                 <div><label style="font-size:0.7rem; font-weight:700">RITM</label><input type="text" id="ritm" placeholder="RITM000"></div>
                 <div>
@@ -127,20 +144,13 @@
                 </div>
                 <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" onchange="escutarBanco()"></div>
             </div>
-
             <div id="containerTasksDinamicas" style="display: none;"></div>
-
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-top:10px">
-                <div>
-                    <label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA</label>
-                    <input type="text" id="descResumida" placeholder="O que foi feito?">
-                </div>
-                <div>
-                    <label style="font-size:0.7rem; font-weight:700">LINK DA RITM (Opcional)</label>
-                    <input type="text" id="linkRitm" placeholder="http://...">
-                </div>
+                <div><label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA</label><input type="text" id="descResumida" placeholder="O que foi feito?"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">LINK DA RITM (Opcional)</label><input type="text" id="linkRitm" placeholder="http://..."></div>
             </div>
             <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">REGISTRAR NO BANCO</button>
+            <button class="btn-danger" style="margin-top: 10px; width: 100%; height: 35px; background: transparent; border: 1px solid #ef4444;" onclick="finalizarTurno()">Encerrar meu turno de hoje</button>
         </div>
 
         <div class="section-card">
@@ -151,16 +161,7 @@
                 </select>
             </div>
             <table style="min-width: 100%;">
-                <thead>
-                    <tr>
-                        <th>RITM</th>
-                        <th>TASK(S)</th>
-                        <th>ANALISTA</th>
-                        <th>DESCRIÇÃO</th>
-                        <th>LINK</th>
-                        <th style="text-align:right">AÇÃO</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>RITM</th><th>TASK(S)</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
@@ -181,6 +182,14 @@
                     <tbody id="listaUsuarios"></tbody>
                 </table>
             </div>
+        </div>
+
+        <div class="section-card" style="border-color: #818cf8;">
+            <h2 style="color: #818cf8; margin-bottom: 20px;">Relatos de Erros / Sugestões</h2>
+            <table style="min-width: 100%;">
+                <thead><tr><th>Data</th><th>Analista</th><th>Relato</th><th style="text-align:right">Ação</th></tr></thead>
+                <tbody id="listaReports"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -210,13 +219,64 @@
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('displayUser').innerText = logado.nome;
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
-            if(localStorage.getItem('turnoAberto_' + logado.nome) === 'true') {
-                document.getElementById('cardRegistro').classList.add('unlocked');
-            }
+            verificarStatusTurno();
             carregarFiltroAnalistas();
             escutarBanco();
         }
     };
+
+    // FUNÇÕES DE REPORT
+    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
+    function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
+    
+    function enviarReport() {
+        const msg = document.getElementById('msgReport').value;
+        if(!msg) return alert("Por favor, escreva o relato.");
+        const dataH = new Date().toLocaleString();
+        database.ref('reports').push({ analista: logado.nome, mensagem: msg, data: dataH }).then(() => {
+            alert("Relato enviado ao Administrador!");
+            fecharModalReport();
+        });
+    }
+
+    function listarReports() {
+        database.ref('reports').on('value', snap => {
+            const tbody = document.getElementById('listaReports');
+            tbody.innerHTML = "";
+            snap.forEach(item => {
+                const r = item.val();
+                tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.mensagem}</td>
+                <td style="text-align:right"><button onclick="deletarReport('${item.key}')" style="background:none; color:var(--danger)">Arquivar</button></td></tr>`;
+            });
+        });
+    }
+    function deletarReport(id) { if(confirm("Deseja arquivar este relato?")) database.ref('reports').child(id).remove(); }
+
+    function verificarStatusTurno() {
+        const hoje = new Date().toISOString().split('T')[0];
+        database.ref('statusTurno/' + logado.nome).once('value', snap => {
+            const status = snap.val();
+            if(status && status.aberto === true) {
+                if(status.data === hoje) document.getElementById('cardRegistro').classList.add('unlocked');
+                else finalizarTurno();
+            }
+        });
+    }
+
+    function iniciarTurno() {
+        const hoje = new Date().toISOString().split('T')[0];
+        database.ref('statusTurno/' + logado.nome).set({ aberto: true, data: hoje }).then(() => {
+            document.getElementById('cardRegistro').classList.add('unlocked');
+        });
+    }
+
+    function finalizarTurno() {
+        if(confirm("Deseja encerrar seu turno?")) {
+            database.ref('statusTurno/' + logado.nome).set({ aberto: false, data: '' }).then(() => {
+                document.getElementById('cardRegistro').classList.remove('unlocked');
+            });
+        }
+    }
 
     function autenticar() {
         const u = document.getElementById('lUser').value.toUpperCase().trim();
@@ -226,17 +286,12 @@
             if(user && user.senha === p) {
                 logado = { nome: u, role: user.role };
                 localStorage.setItem('usuarioLogado', JSON.stringify(logado));
-                document.getElementById('telaLogin').style.display = 'none';
-                document.getElementById('displayUser').innerText = u;
-                if(user.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
-                carregarFiltroAnalistas();
-                escutarBanco();
+                location.reload();
             } else { document.getElementById('errorMsg').style.display = 'block'; }
         });
     }
 
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
-    function iniciarTurno() { document.getElementById('cardRegistro').classList.add('unlocked'); localStorage.setItem('turnoAberto_' + logado.nome, 'true'); }
 
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -248,6 +303,7 @@
             document.getElementById('viewAdmin').classList.add('active');
             document.getElementById('btnAdmin').classList.add('active');
             listarUsuarios();
+            listarReports();
         }
     }
 
@@ -274,17 +330,10 @@
         const l = document.getElementById('linkRitm').value || "---";
         const dt = document.getElementById('data').value;
         const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
-        
         let tasks = [];
-        document.querySelectorAll('.input-task-dinamica').forEach(input => {
-            if(input.value) tasks.push(input.value.toUpperCase().trim());
-        });
-
-        if(!r || !d) return alert("RITM e Descrição são obrigatórios!");
-
-        database.ref('chamados').push({ 
-            ritm: r, desc: d, link: l, data: dt, analista: logado.nome, taskQtd: qtdT, tasks: tasks.join(", ") || "Não possui"
-        }).then(() => {
+        document.querySelectorAll('.input-task-dinamica').forEach(input => { if(input.value) tasks.push(input.value.toUpperCase().trim()); });
+        if(!r || !d) return alert("RITM e Descrição obrigatórios!");
+        database.ref('chamados').push({ ritm: r, desc: d, link: l, data: dt, analista: logado.nome, taskQtd: qtdT, tasks: tasks.join(", ") || "Não possui" }).then(() => {
             document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = "";
             document.getElementById('taskQtd').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput();
         });
@@ -297,21 +346,15 @@
             const analistaF = document.getElementById('filtroAnalista').value;
             tbody.innerHTML = "";
             let cont = {}; let tR = 0; let tT = 0;
-
             snap.forEach(item => {
                 const c = item.val(); const key = item.key;
                 if(c.data === dataF) {
                     tR++; tT += (parseInt(c.taskQtd) || 0);
                     cont[c.analista] = (cont[c.analista] || 0) + 1;
                     if(analistaF === "TODOS" || c.analista === analistaF) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td>
-                            <td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td>
-                            <td style="text-align:right">
-                                <button onclick="removerRegistro('${key}')" class="btn-delete">🗑</button>
-                            </td>`;
-                        tbody.prepend(tr);
+                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td>
+                        <td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td>
+                        <td style="text-align:right"><button onclick="removerRegistro('${key}')" class="btn-delete">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -321,29 +364,19 @@
         });
     }
 
-    // FUNÇÃO DE EXCLUSÃO CORRIGIDA
-    function removerRegistro(idFirebase) {
-        if(confirm("Deseja apagar este registro permanentemente?")) {
-            database.ref('chamados').child(idFirebase).remove()
-            .then(() => {
-                console.log("Removido com sucesso!");
-            })
-            .catch((error) => {
-                alert("Erro ao remover: " + error.message);
-            });
-        }
-    }
+    function removerRegistro(id) { if(confirm("Deseja apagar permanentemente?")) database.ref('chamados').child(id).remove(); }
 
     function atualizarGrafico(dados) {
         const ctx = document.getElementById('meuGraficoBarras').getContext('2d');
         if(chartInstance) chartInstance.destroy();
+        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
         chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: Object.keys(dados),
-                datasets: [{ label: 'Chamados', data: Object.values(dados), backgroundColor: '#6366f1', borderRadius: 8 }]
+                datasets: [{ label: 'Chamados', data: Object.values(dados), backgroundColor: Object.keys(dados).map((_, i) => colors[i % colors.length]), borderRadius: 8 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
         });
     }
 
