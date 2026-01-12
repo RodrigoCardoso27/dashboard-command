@@ -95,14 +95,13 @@
         </div>
     </div>
     <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border);">
-        <button class="btn-primary" style="height: 35px; margin-bottom: 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" onclick="abrirModalReport()">📣 Reportar Bug/Erro</button>
+        <button class="btn-primary" style="height: 35px; margin-bottom: 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" onclick="abrirModalReport()">📣 Reportar Erro</button>
         <div id="displayUser" style="font-weight: 800; color: white;">Analista</div>
         <button class="btn-danger" style="height: 35px; width: 100%; margin-top: 10px;" onclick="logout()">Sair</button>
     </div>
 </div>
 
 <div class="main-content">
-    
     <div id="viewDash" class="view-section active">
         <div class="kpi-grid">
             <div class="kpi-box">
@@ -114,12 +113,10 @@
                 <div class="kpi-value" id="kpiTasks" style="color: var(--success);">0</div>
             </div>
         </div>
-
         <div class="section-card">
             <h2 style="margin-bottom: 20px;">Volume por Analista</h2>
             <div style="height: 250px;"><canvas id="meuGraficoBarras"></canvas></div>
         </div>
-
         <div id="cardRegistro" class="section-card">
             <div id="overlay"><button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
             <div class="form-grid">
@@ -136,7 +133,6 @@
             <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">REGISTRAR NO BANCO</button>
             <button class="btn-danger" style="margin-top: 10px; width: 100%; height: 35px; background: transparent; border: 1px solid #ef4444;" onclick="finalizarTurno()">Encerrar meu turno de hoje</button>
         </div>
-
         <div class="section-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3>Registros Ativos</h3>
@@ -222,12 +218,11 @@
             const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
             snap.forEach(item => {
                 const r = item.val();
-                tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.mensagem}</td><td style="text-align:right"><button onclick="deletarReport('${item.key}')" style="background:none; color:var(--danger)">Arquivar</button></td></tr>`;
+                tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.mensagem}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${item.key}').remove()" style="background:none; color:var(--danger); cursor:pointer;">Arquivar</button></td></tr>`;
             });
         });
     }
-    function deletarReport(id) { if(confirm("Arquivar?")) database.ref('reports').child(id).remove(); }
-
+    
     function verificarStatusTurno() {
         const hoje = new Date().toISOString().split('T')[0];
         database.ref('statusTurno/' + logado.nome).once('value', snap => {
@@ -244,7 +239,7 @@
     }
     function finalizarTurno() {
         if(confirm("Encerrar turno?")) {
-            database.ref('statusTurno/' + logado.nome).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
+            database.ref('statusTurno/' + (logado ? logado.nome : '')).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
         }
     }
 
@@ -265,8 +260,15 @@
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); document.getElementById('btnDash').classList.add('active'); }
-        else { document.getElementById('viewAdmin').classList.add('active'); document.getElementById('btnAdmin').classList.add('active'); listarUsuarios(); listarReports(); }
+        if(view === 'dash') { 
+            document.getElementById('viewDash').classList.add('active'); 
+            document.getElementById('btnDash').classList.add('active'); 
+        } else { 
+            document.getElementById('viewAdmin').classList.add('active'); 
+            document.getElementById('btnAdmin').classList.add('active'); 
+            listarUsuarios(); 
+            listarReports(); 
+        }
     }
 
     function toggleTaskInput() {
@@ -304,7 +306,7 @@
                 if(c.data === dataF) {
                     tR++; tT += (parseInt(c.taskQtd) || 0); cont[c.analista] = (cont[c.analista] || 0) + 1;
                     if(analistaF === "TODOS" || c.analista === analistaF) {
-                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${key}').remove()" style="background:none; color:var(--danger); font-size:1.2rem">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${key}').remove()" style="background:none; color:var(--danger); font-size:1.2rem; cursor:pointer;">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -330,7 +332,7 @@
             const lista = document.getElementById('listaUsuarios'); lista.innerHTML = "";
             snap.forEach(u => {
                 const val = u.val();
-                lista.innerHTML += `<tr><td>${val.nomeCompleto || '---'}</td><td><b>${u.key}</b></td><td>••••••</td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none">Remover</button></td></tr>`;
+                lista.innerHTML += `<tr><td>${val.nomeCompleto || '---'}</td><td><b>${u.key}</b></td><td>••••••</td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none; cursor:pointer;">Remover</button></td></tr>`;
             });
         });
     }
@@ -341,12 +343,17 @@
         const p = document.getElementById('nPass').value;
         if(nc && u && p) {
             database.ref('usuarios/' + u).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => {
-                alert("Cadastrado!"); document.getElementById('nCompleto').value = ""; document.getElementById('nUser').value = ""; document.getElementById('nPass').value = "";
-            });
-        } else alert("Preencha tudo!");
+                alert("Cadastrado com sucesso!");
+                document.getElementById('nCompleto').value = "";
+                document.getElementById('nUser').value = "";
+                document.getElementById('nPass').value = "";
+            }).catch(e => alert("Erro: " + e.message));
+        } else alert("Preencha todos os campos corretamente.");
     }
+    
     function exportarExcel() {
-        const table = document.querySelector("table"); const wb = XLSX.utils.table_to_book(table);
+        const table = document.querySelector("#viewDash table"); 
+        const wb = XLSX.utils.table_to_book(table);
         XLSX.writeFile(wb, `Relatorio_OPS_${document.getElementById('data').value}.xlsx`);
     }
 </script>
