@@ -12,121 +12,48 @@
 
     <style>
         :root {
-            --bg-deep: #020617;
-            --bg-surface: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.7);
-            --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.3);
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --border: rgba(255, 255, 255, 0.08);
+            --bg-deep: #020617; --bg-surface: #0f172a; --bg-card: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1; --primary-glow: rgba(99, 102, 241, 0.3);
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --text-main: #f8fafc; --text-dim: #94a3b8; --border: rgba(255, 255, 255, 0.08);
             --glass: rgba(255, 255, 255, 0.03);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-deep); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
 
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg-deep); 
-            color: var(--text-main); 
-            display: flex; 
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        #telaLogin { position: fixed; inset: 0; background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--bg-card); padding: 50px; border-radius: 32px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
 
-        /* TELA DE LOGIN ESTILO GLASS */
-        #telaLogin { 
-            position: fixed; inset: 0; 
-            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
-            z-index: 9999; display: flex; align-items: center; justify-content: center; 
-        }
-        .login-card { 
-            background: var(--bg-card); padding: 50px; border-radius: 32px; 
-            width: 100%; max-width: 400px; text-align: center; 
-            border: 1px solid var(--border); backdrop-filter: blur(20px);
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
-        }
-
-        /* SIDEBAR MODERNA */
-        .sidebar { 
-            width: 280px; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px);
-            border-right: 1px solid var(--border); display: flex; flex-direction: column; 
-            padding: 32px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100;
-        }
-        .logo-area { 
-            font-weight: 800; font-size: 1.4rem; letter-spacing: -1px;
-            background: linear-gradient(to right, #818cf8, #6366f1);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 48px; display: flex; align-items: center; gap: 12px;
-        }
+        .sidebar { width: 280px; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 32px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; }
+        .logo-area { font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; background: linear-gradient(to right, #818cf8, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 48px; display: flex; align-items: center; gap: 12px; }
 
         .nav-group { margin-bottom: 30px; }
         .nav-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 12px; font-weight: 700; }
-        
-        .nav-item { 
-            padding: 14px 18px; border-radius: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 0.95rem;
-            margin-bottom: 8px; color: var(--text-dim); border: 1px solid transparent;
-        }
-        .nav-item:hover { background: var(--glass); color: white; border-color: var(--border); transform: translateX(5px); }
+        .nav-item { padding: 14px 18px; border-radius: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: var(--text-dim); border: 1px solid transparent; }
+        .nav-item:hover { background: var(--glass); color: white; transform: translateX(5px); }
         .nav-admin { color: var(--warning) !important; display: none; }
 
-        /* MAIN CONTENT */
         .main-content { margin-left: 280px; padding: 48px; width: calc(100% - 280px); background: #020617; }
+        .section-card { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); padding: 32px; margin-bottom: 30px; position: relative; }
 
-        .section-header { margin-bottom: 32px; }
-        .section-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
-        .section-header p { color: var(--text-dim); margin-top: 4px; }
-
-        .section-card { 
-            background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); 
-            padding: 32px; margin-bottom: 30px; position: relative; transition: 0.3s;
-        }
-        .section-card:hover { border-color: rgba(99, 102, 241, 0.4); }
-
-        #overlay { 
-            position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); 
-            z-index: 10; border-radius: 24px; backdrop-filter: blur(8px); 
-            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem;
-        }
+        #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); z-index: 10; border-radius: 24px; backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-weight: 700; }
         .unlocked #overlay { display: none; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        
-        label { font-size: 0.85rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 8px; }
-
-        input { 
-            width: 100%; background: #020617; border: 1px solid var(--border); 
-            border-radius: 12px; height: 50px; padding: 0 16px; color: white; transition: 0.3s;
-            font-family: inherit; font-size: 0.95rem;
-        }
+        input { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 12px; height: 50px; padding: 0 16px; color: white; transition: 0.3s; font-size: 0.95rem; }
         input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
 
-        button { 
-            height: 50px; border-radius: 12px; font-weight: 700; cursor: pointer; 
-            transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px;
-            font-size: 0.95rem; border: none;
-        }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 15px -3px var(--primary-glow); }
-        .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .btn-danger:hover { background: var(--danger); color: white; }
+        button { height: 50px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-success { background: var(--success); color: white; width: 100%; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); width: 100%; }
 
-        /* TABELA PREMIUM */
         .table-container { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 20px; color: var(--text-dim); background: rgba(255,255,255,0.02); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 20px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: rgba(255,255,255,0.01); }
-
+        th { text-align: left; padding: 20px; color: var(--text-dim); background: rgba(255,255,255,0.02); font-size: 0.75rem; text-transform: uppercase; }
+        td { padding: 20px; border-bottom: 1px solid var(--border); }
         .badge-ritm { background: var(--glass); padding: 6px 12px; border-radius: 8px; font-weight: 700; color: var(--primary); border: 1px solid var(--border); }
-
         .user-footer { margin-top: auto; background: var(--glass); padding: 20px; border-radius: 20px; border: 1px solid var(--border); }
     </style>
 </head>
@@ -137,79 +64,60 @@
         <div class="logo-area" style="justify-content: center;">🌐 COMMAND</div>
         <input type="text" id="lUser" placeholder="Usuário">
         <input type="password" id="lPass" placeholder="Senha" style="margin-top: 15px;">
-        <button class="btn-primary" style="margin-top: 24px; width: 100%;" onclick="autenticar()">Acessar Sistema</button>
+        <button class="btn-primary" style="margin-top: 24px;" onclick="autenticar()">Acessar Sistema</button>
+        <p id="errorMsg" style="color: var(--danger); font-size: 0.8rem; margin-top: 15px; display: none;">Usuário ou senha incorretos!</p>
     </div>
 </div>
 
 <div class="sidebar">
     <div class="logo-area">🌐 COMMAND</div>
-    
     <div class="nav-group">
         <div class="nav-label">Menu Principal</div>
-        <div class="nav-item" onclick="location.reload()">🏠 Dashboard</div>
+        <div class="nav-item" onclick="irHome()">🏠 Dashboard</div>
         <div class="nav-item" onclick="exportarExcel()" style="color: var(--success)">📥 Exportar Excel</div>
     </div>
-
     <div id="navAdmin" class="nav-group nav-admin">
         <div class="nav-label">Administração</div>
         <div class="nav-item" onclick="toggleAdmin()">🛠 Gestão de Equipe</div>
     </div>
-
     <div class="user-footer">
         <div id="displayUser" style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Analista</div>
-        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px;">Sessão Ativa</div>
-        <button class="btn-danger" style="height: 35px; font-size: 0.8rem; width: 100%;" onclick="location.reload()">Sair</button>
+        <button class="btn-danger" style="height: 35px; font-size: 0.8rem; margin-top: 10px;" onclick="location.reload()">Sair</button>
     </div>
 </div>
 
 <div class="main-content">
-    <div class="section-header">
+    <div class="section-header" style="margin-bottom: 30px;">
         <h1>Command Center</h1>
-        <p>Gestão e Monitoramento de RITMs em tempo real</p>
+        <p>Painel Operacional em tempo real</p>
     </div>
 
     <div id="painelAdmin" class="section-card" style="display: none; border: 1px solid var(--warning);">
-        <h3 style="margin-bottom: 20px; color: var(--warning);">Cadastrar Novo Analista</h3>
+        <h3 style="margin-bottom: 20px; color: var(--warning);">Cadastrar Analista</h3>
         <div class="grid">
-            <input type="text" id="nUser" placeholder="Nome de Usuário">
-            <input type="text" id="nPass" placeholder="Senha Provisória">
+            <input type="text" id="nUser" placeholder="Usuário">
+            <input type="text" id="nPass" placeholder="Senha">
         </div>
-        <button class="btn-success" style="margin-top: 20px;" onclick="cadastrarAnalista()">Confirmar Cadastro</button>
+        <button class="btn-success" style="margin-top: 20px;" onclick="cadastrarAnalista()">Confirmar</button>
     </div>
 
     <div style="margin-bottom: 32px;">
-        <button id="btnIniciar" class="btn-primary" style="padding: 0 40px;" onclick="iniciarTurno()">⚡ Iniciar Meu Turno</button>
+        <button id="btnIniciar" class="btn-primary" style="width: 250px;" onclick="iniciarTurno()">⚡ Iniciar Turno</button>
     </div>
 
     <div class="section-card" id="cardRegistro">
-        <div id="overlay">CLIQUE EM INICIAR TURNO PARA LIBERAR</div>
+        <div id="overlay">ACESSO RESTRITO</div>
         <div class="grid">
-            <div>
-                <label>RITM / CHAMADO</label>
-                <input type="text" id="ritm" placeholder="Digite a RITM">
-            </div>
-            <div>
-                <label>DATA DO REGISTRO</label>
-                <input type="date" id="data">
-            </div>
-            <div style="grid-column: span 2;">
-                <label>DESCRIÇÃO DO SERVIÇO</label>
-                <input type="text" id="serv" placeholder="O que está sendo realizado?">
-            </div>
+            <div><label>RITM</label><input type="text" id="ritm"></div>
+            <div><label>DATA</label><input type="date" id="data"></div>
+            <div style="grid-column: span 2;"><label>SERVIÇO</label><input type="text" id="serv"></div>
         </div>
-        <button class="btn-success" style="margin-top: 24px; width: 100%;" onclick="salvar()">Gravar Registro na Nuvem</button>
+        <button class="btn-success" style="margin-top: 24px;" onclick="salvar()">Gravar Registro</button>
     </div>
 
     <div class="table-container">
         <table>
-            <thead>
-                <tr>
-                    <th>RITM</th>
-                    <th>ANALISTA</th>
-                    <th>SERVIÇO REALIZADO</th>
-                    <th style="text-align: right;">AÇÕES</th>
-                </tr>
-            </thead>
+            <thead><tr><th>RITM</th><th>ANALISTA</th><th>SERVIÇO</th><th style="text-align: right;">AÇÃO</th></tr></thead>
             <tbody id="corpoTabela"></tbody>
         </table>
     </div>
@@ -235,12 +143,15 @@
     function autenticar() {
         const u = document.getElementById('lUser').value.toUpperCase().trim();
         const p = document.getElementById('lPass').value;
-        if(!u || !p) return alert("Preencha os dados de acesso!");
+        const err = document.getElementById('errorMsg');
+        err.style.display = 'none';
+
+        if(!u || !p) return alert("Preencha os campos!");
 
         database.ref('usuarios/' + u).once('value', snap => {
             const user = snap.val();
             if(!user && u === "ADMIN") {
-                if(confirm("Configurar senha mestre para ADMIN?")) {
+                if(confirm("Criar Admin?")) {
                     database.ref('usuarios/ADMIN').set({ senha: p, role: 'admin' }).then(() => location.reload());
                 }
             } else if(user && user.senha === p) {
@@ -249,8 +160,16 @@
                 document.getElementById('displayUser').innerText = u;
                 if(user.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
                 escutarBanco();
-            } else { alert("Acesso Inválido!"); }
+            } else {
+                err.style.display = 'block'; // Mostra mensagem de erro
+            }
         });
+    }
+
+    // CORREÇÃO: Função Dashboard não desloga mais
+    function irHome() {
+        document.getElementById('painelAdmin').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function iniciarTurno() {
@@ -287,7 +206,7 @@
                         <td style="font-weight:600">${c.analista}</td>
                         <td style="color:var(--text-dim)">${c.servico}</td>
                         <td style="text-align: right;">
-                            <button onclick="excluir('${item.key}')" style="background:none; color:var(--danger); width:auto; display:inline; font-size:1.2rem">🗑</button>
+                            <button onclick="excluir('${item.key}')" style="background:none; color:var(--danger); width:auto; display:inline;">🗑</button>
                         </td>`;
                     tbody.prepend(tr);
                 }
@@ -295,14 +214,14 @@
         });
     }
 
-    function excluir(id) { if(confirm("Excluir este registro?")) database.ref('chamados/'+id).remove(); }
+    function excluir(id) { if(confirm("Excluir?")) database.ref('chamados/'+id).remove(); }
 
     function cadastrarAnalista() {
         const n = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
         if(n && p) {
             database.ref('usuarios/'+n).set({ senha: p, role: 'analista' });
-            alert("Analista cadastrado!");
+            alert("Cadastrado!");
             document.getElementById('nUser').value = ""; document.getElementById('nPass').value = "";
         }
     }
