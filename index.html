@@ -23,19 +23,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-deep); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
 
-        /* Login */
         #telaLogin { position: fixed; inset: 0; background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { background: var(--bg-card); padding: 50px; border-radius: 32px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); backdrop-filter: blur(20px); }
 
-        /* Sidebar */
         .sidebar { width: 280px; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 32px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; }
         .logo-area { font-weight: 800; font-size: 1.4rem; background: linear-gradient(to right, #818cf8, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 40px; }
 
-        /* Nav */
         .nav-item { padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 5px; font-weight: 600; color: var(--text-dim); display: flex; align-items: center; gap: 10px; }
         .nav-item:hover, .nav-item.active { background: var(--glass); color: white; }
 
-        /* Layout */
         .main-content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); }
         .view-section { display: none; }
         .view-section.active { display: block; animation: fadeIn 0.4s ease; }
@@ -47,13 +43,16 @@
         #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 10; border-radius: 24px; backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .unlocked #overlay { display: none; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
-        input, select { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; height: 45px; padding: 0 15px; color: white; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
+        input, select { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; height: 45px; padding: 0 15px; color: white; transition: 0.3s; }
         
         button { height: 45px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
         .btn-success { background: var(--success); color: white; width: 100%; }
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        /* Container Dinâmico das Tasks */
+        #containerTasksDinamicas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed var(--border); }
 
         .chart-container { height: 250px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -99,13 +98,26 @@
         <div id="cardRegistro" class="section-card">
             <div id="overlay"><button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
             <div class="form-grid">
-                <div><label style="font-size:0.7rem; font-weight:700">RITM</label><input type="text" id="ritm"></div>
-                <div><label style="font-size:0.7rem; font-weight:700">TASK</label><input type="text" id="task"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">RITM</label><input type="text" id="ritm" placeholder="RITM000"></div>
+                <div>
+                    <label style="font-size:0.7rem; font-weight:700">TEM TASK?</label>
+                    <select id="temTask" onchange="toggleTaskInput()">
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                    </select>
+                </div>
+                <div id="divQtdTask" style="visibility: hidden;">
+                    <label style="font-size:0.7rem; font-weight:700">QTD TASKS</label>
+                    <input type="number" id="taskQtd" min="1" placeholder="Ex: 2" oninput="gerarCamposTask()">
+                </div>
                 <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" onchange="escutarBanco()"></div>
             </div>
+
+            <div id="containerTasksDinamicas" style="display: none;"></div>
+
             <div style="margin-top:10px">
                 <label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO / LINK</label>
-                <input type="text" id="serv">
+                <input type="text" id="serv" placeholder="Link da RITM ou detalhamento">
             </div>
             <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">REGISTRAR NO BANCO</button>
         </div>
@@ -118,7 +130,7 @@
                 </select>
             </div>
             <table style="min-width: 100%;">
-                <thead><tr><th>RITM</th><th>TASK</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
+                <thead><tr><th>RITM</th><th>TASK(S)</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
@@ -128,7 +140,7 @@
         <div class="section-card">
             <h2 style="color: var(--warning); margin-bottom: 20px;">Gestão de Equipe</h2>
             <div class="form-grid">
-                <input type="text" id="nUser" placeholder="Login do Analista">
+                <input type="text" id="nUser" placeholder="Login">
                 <input type="text" id="nPass" placeholder="Senha">
                 <button class="btn-success" onclick="cadastrarAnalista()">CADASTRAR</button>
             </div>
@@ -141,7 +153,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <script>
@@ -178,11 +189,9 @@
         });
     }
 
-    // FUNÇÃO QUE RESOLVE O BUG DE TELAS JUNTAS
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        
         if(view === 'dash') {
             document.getElementById('viewDash').classList.add('active');
             document.getElementById('btnDash').classList.add('active');
@@ -193,6 +202,69 @@
         }
     }
 
+    function toggleTaskInput() {
+        const temTask = document.getElementById('temTask').value;
+        const divQtd = document.getElementById('divQtdTask');
+        const container = document.getElementById('containerTasksDinamicas');
+        
+        if(temTask === 'sim') {
+            divQtd.style.visibility = 'visible';
+            container.style.display = 'grid';
+        } else {
+            divQtd.style.visibility = 'hidden';
+            container.style.display = 'none';
+            container.innerHTML = "";
+            document.getElementById('taskQtd').value = "";
+        }
+    }
+
+    // NOVA FUNÇÃO: GERA AS CAIXAS DE ACORDO COM A QTD
+    function gerarCamposTask() {
+        const qtd = parseInt(document.getElementById('taskQtd').value);
+        const container = document.getElementById('containerTasksDinamicas');
+        container.innerHTML = "";
+        
+        if(qtd > 0) {
+            for(let i = 1; i <= qtd; i++) {
+                container.innerHTML += `<div>
+                    <label style="font-size:0.6rem; color:var(--primary)">TASK ${i}</label>
+                    <input type="text" class="input-task-dinamica" placeholder="TASK00${i}">
+                </div>`;
+            }
+        }
+    }
+
+    function salvar() {
+        const r = document.getElementById('ritm').value.toUpperCase().trim();
+        const s = document.getElementById('serv').value;
+        const d = document.getElementById('data').value;
+        
+        // Pega os valores de todas as caixas de task geradas
+        let tasksColetadas = [];
+        document.querySelectorAll('.input-task-dinamica').forEach(input => {
+            if(input.value) tasksColetadas.push(input.value.toUpperCase().trim());
+        });
+
+        if(!r || !s) return alert("RITM e Descrição obrigatórios!");
+        
+        database.ref('chamados').push({ 
+            ritm: r, 
+            temTask: document.getElementById('temTask').value,
+            tasks: tasksColetadas.length > 0 ? tasksColetadas.join(", ") : "Não possui",
+            servico: s, 
+            data: d, 
+            analista: logado.nome 
+        });
+        
+        // Limpar tudo
+        document.getElementById('ritm').value = ""; 
+        document.getElementById('taskQtd').value = ""; 
+        document.getElementById('serv').value = "";
+        document.getElementById('temTask').value = "nao";
+        toggleTaskInput();
+    }
+
+    // O RESTANTE DO SCRIPT CONTINUA IGUAL (ESCUTARBANCO, GRAFICO, ETC)
     function carregarFiltroAnalistas() {
         database.ref('usuarios').on('value', snap => {
             const select = document.getElementById('filtroAnalista');
@@ -225,8 +297,13 @@
                 if(c.data === dataFiltro) {
                     contagem[c.analista] = (contagem[c.analista] || 0) + 1;
                     if(analistaFiltro === "TODOS" || c.analista === analistaFiltro) {
-                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.task}</td><td>${c.analista}</td><td>${c.servico}</td>
-                        <td style="text-align:right"><button onclick="excluir('${item.key}')" style="background:none; color:var(--danger)">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr>
+                            <td><b>${c.ritm}</b></td>
+                            <td style="color:var(--text-dim)">${c.tasks || '---'}</td>
+                            <td>${c.analista}</td>
+                            <td>${c.servico}</td>
+                            <td style="text-align:right"><button onclick="excluir('${item.key}')" style="background:none; color:var(--danger)">🗑</button></td>
+                        </tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -247,25 +324,14 @@
         });
     }
 
-    function salvar() {
-        const r = document.getElementById('ritm').value.toUpperCase().trim();
-        const t = document.getElementById('task').value.toUpperCase().trim() || "---";
-        const s = document.getElementById('serv').value;
-        const d = document.getElementById('data').value;
-        if(!r || !s) return alert("RITM e Descrição obrigatórios!");
-        database.ref('chamados').push({ ritm: r, task: t, servico: s, data: d, analista: logado.nome });
-        document.getElementById('ritm').value = ""; document.getElementById('task').value = ""; document.getElementById('serv').value = "";
-    }
-
+    function removerUser(id) { if(confirm("Remover acesso?")) database.ref('usuarios/'+id).remove(); }
+    function excluir(id) { if(confirm("Apagar registro?")) database.ref('chamados/'+id).remove(); }
+    function iniciarTurno() { document.getElementById('cardRegistro').classList.add('unlocked'); }
     function cadastrarAnalista() {
         const n = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
         if(n && p) database.ref('usuarios/'+n).set({ senha: p, role: 'analista' });
     }
-
-    function removerUser(id) { if(confirm("Remover acesso?")) database.ref('usuarios/'+id).remove(); }
-    function excluir(id) { if(confirm("Apagar registro?")) database.ref('chamados/'+id).remove(); }
-    function iniciarTurno() { document.getElementById('cardRegistro').classList.add('unlocked'); }
     function exportarExcel() {
         const table = document.querySelector("table");
         const wb = XLSX.utils.table_to_book(table);
