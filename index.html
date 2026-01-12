@@ -188,6 +188,10 @@
     let logado = null;
     let chartInstance = null;
 
+    // FUNÇÕES AUXILIARES PARA TRATAR O PONTO NO FIREBASE
+    function encodeKey(str) { return str.replace(/\./g, ','); }
+    function decodeKey(str) { return str.replace(/,/g, '.'); }
+
     document.getElementById('data').valueAsDate = new Date();
 
     window.onload = function() {
@@ -225,7 +229,8 @@
     
     function verificarStatusTurno() {
         const hoje = new Date().toISOString().split('T')[0];
-        database.ref('statusTurno/' + logado.nome).once('value', snap => {
+        const userKey = encodeKey(logado.nome);
+        database.ref('statusTurno/' + userKey).once('value', snap => {
             const status = snap.val();
             if(status && status.aberto === true) {
                 if(status.data === hoje) document.getElementById('cardRegistro').classList.add('unlocked');
@@ -235,21 +240,25 @@
     }
     function iniciarTurno() {
         const hoje = new Date().toISOString().split('T')[0];
-        database.ref('statusTurno/' + logado.nome).set({ aberto: true, data: hoje }).then(() => document.getElementById('cardRegistro').classList.add('unlocked'));
+        const userKey = encodeKey(logado.nome);
+        database.ref('statusTurno/' + userKey).set({ aberto: true, data: hoje }).then(() => document.getElementById('cardRegistro').classList.add('unlocked'));
     }
     function finalizarTurno() {
         if(confirm("Encerrar turno?")) {
-            database.ref('statusTurno/' + (logado ? logado.nome : '')).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
+            const userKey = encodeKey(logado ? logado.nome : '');
+            database.ref('statusTurno/' + userKey).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
         }
     }
 
     function autenticar() {
-        const u = document.getElementById('lUser').value.toUpperCase().trim();
+        const uRaw = document.getElementById('lUser').value.toUpperCase().trim();
         const p = document.getElementById('lPass').value;
-        database.ref('usuarios/' + u).once('value', snap => {
+        const uEncoded = encodeKey(uRaw);
+        
+        database.ref('usuarios/' + uEncoded).once('value', snap => {
             const user = snap.val();
             if(user && user.senha === p) {
-                logado = { nome: u, role: user.role };
+                logado = { nome: uRaw, role: user.role };
                 localStorage.setItem('usuarioLogado', JSON.stringify(logado));
                 location.reload();
             } else { document.getElementById('errorMsg').style.display = 'block'; }
@@ -260,15 +269,8 @@
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        if(view === 'dash') { 
-            document.getElementById('viewDash').classList.add('active'); 
-            document.getElementById('btnDash').classList.add('active'); 
-        } else { 
-            document.getElementById('viewAdmin').classList.add('active'); 
-            document.getElementById('btnAdmin').classList.add('active'); 
-            listarUsuarios(); 
-            listarReports(); 
-        }
+        if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); document.getElementById('btnDash').classList.add('active'); }
+        else { document.getElementById('viewAdmin').classList.add('active'); document.getElementById('btnAdmin').classList.add('active'); listarUsuarios(); listarReports(); }
     }
 
     function toggleTaskInput() {
@@ -323,7 +325,10 @@
     function carregarFiltroAnalistas() {
         database.ref('usuarios').on('value', snap => {
             const select = document.getElementById('filtroAnalista'); select.innerHTML = '<option value="TODOS">TODOS OS ANALISTAS</option>';
-            snap.forEach(u => { select.innerHTML += `<option value="${u.key}">${u.key}</option>`; });
+            snap.forEach(u => { 
+                const loginDecoded = decodeKey(u.key);
+                select.innerHTML += `<option value="${loginDecoded}">${loginDecoded}</option>`; 
+            });
         });
     }
 
@@ -332,23 +337,26 @@
             const lista = document.getElementById('listaUsuarios'); lista.innerHTML = "";
             snap.forEach(u => {
                 const val = u.val();
-                lista.innerHTML += `<tr><td>${val.nomeCompleto || '---'}</td><td><b>${u.key}</b></td><td>••••••</td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none; cursor:pointer;">Remover</button></td></tr>`;
+                const loginDecoded = decodeKey(u.key);
+                lista.innerHTML += `<tr><td>${val.nomeCompleto || '---'}</td><td><b>${loginDecoded}</b></td><td>••••••</td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none; cursor:pointer;">Remover</button></td></tr>`;
             });
         });
     }
 
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value.trim();
-        const u = document.getElementById('nUser').value.toUpperCase().trim();
+        const uRaw = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
-        if(nc && u && p) {
-            database.ref('usuarios/' + u).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => {
+        const uEncoded = encodeKey(uRaw);
+
+        if(nc && uRaw && p) {
+            database.ref('usuarios/' + uEncoded).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => {
                 alert("Cadastrado com sucesso!");
                 document.getElementById('nCompleto').value = "";
                 document.getElementById('nUser').value = "";
                 document.getElementById('nPass').value = "";
             }).catch(e => alert("Erro: " + e.message));
-        } else alert("Preencha todos os campos corretamente.");
+        } else alert("Preencha todos os campos!");
     }
     
     function exportarExcel() {
