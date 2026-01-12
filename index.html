@@ -3,25 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YDUQS | COMMAND CENTER</title>
+    <title>YDUQS | OPS Command Center</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: #1e293b; padding: 40px; border-radius: 20px; border: 1px solid #334155; width: 300px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #4f46e5; }
+        :root { --bg-body: #0f172a; --bg-card: #1e293b; --primary: #6366f1; --success: #10b981; --danger: #ef4444; --text-main: #f8fafc; --text-dim: #94a3b8; --border: rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg-body); color: var(--text-main); display: flex; min-height: 100vh; }
+        #telaLogin { position: fixed; inset: 0; background: radial-gradient(circle at top right, #1e1b4b, #0f172a); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--bg-card); padding: 40px; border-radius: 24px; width: 320px; text-align: center; border: 1px solid var(--border); }
+        .sidebar { width: 240px; background: #020617; border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; position: fixed; height: 100vh; }
+        .main-content { margin-left: 240px; padding: 40px; width: 100%; }
+        .section-card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; position: relative; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input, select { width: 100%; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; height: 40px; padding: 0 12px; color: white; margin-bottom: 10px; box-sizing: border-box; }
+        button { height: 40px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; width: 100%; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; padding: 12px; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        #overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 10; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .unlocked #overlay { display: none; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2 style="margin-top:0">⚡ LOGIN OPS</h2>
-        <input type="text" id="user" placeholder="USUÁRIO">
-        <input type="password" id="pass" placeholder="SENHA">
-        <button id="btn" onclick="entrar()">CONECTAR</button>
-        <p id="msg" style="font-size: 12px; color: #94a3b8; margin-top: 15px;">Aguardando conexão...</p>
+
+<div id="telaLogin">
+    <div class="login-card">
+        <h3>⚡ OPS LOGIN</h3>
+        <input type="text" id="lUser" placeholder="Usuário">
+        <input type="password" id="lPass" placeholder="Senha">
+        <button class="btn-primary" onclick="autenticar()">CONECTAR</button>
     </div>
+</div>
+
+<div class="sidebar">
+    <h2 style="color:var(--primary)">YDUQS</h2>
+    <p id="userName" style="font-weight:bold; margin-top:0">Analista</p>
+    <hr style="width:100%; border:0; border-top:1px solid var(--border)">
+    <div id="navAdmin" style="display:none; color:orange; cursor:pointer; font-weight:bold" onclick="tAdmin()">🛠 PAINEL ADMIN</div>
+    <button class="btn-danger" style="margin-top:auto" onclick="location.reload()">Sair</button>
+</div>
+
+<div class="main-content">
+    <div id="painelAdmin" class="section-card" style="display:none; border-color: orange;">
+        <h4>Gestão de Usuários</h4>
+        <div class="grid">
+            <input type="text" id="nUser" placeholder="Novo Usuário">
+            <input type="text" id="nPass" placeholder="Senha">
+        </div>
+        <button class="btn-success" onclick="cadastrar()">CADASTRAR ANALISTA</button>
+    </div>
+
+    <div style="margin-bottom:20px">
+        <button id="btnStart" class="btn-primary" style="width:200px" onclick="start()">INICIAR TURNO</button>
+    </div>
+
+    <div id="cardRegistro" class="section-card">
+        <div id="overlay">CLIQUE EM INICIAR TURNO</div>
+        <div class="grid">
+            <div><label>RITM</label><input type="text" id="ritm"></div>
+            <div><label>Data</label><input type="date" id="data"></div>
+            <div style="grid-column: span 2"><label>Serviço</label><input type="text" id="serv"></div>
+        </div>
+        <button class="btn-success" onclick="salvar()">SALVAR NO BANCO NUVEM</button>
+    </div>
+
+    <div class="section-card">
+        <table>
+            <thead><tr><th>RITM</th><th>Analista</th><th>Serviço</th><th>Ação</th></tr></thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
+</div>
 
 <script>
     const firebaseConfig = {
@@ -33,48 +89,56 @@
         messagingSenderId: "38631596446",
         appId: "1:38631596446:web:f9470a5b648173e168b68f"
     };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let userAtivo = null;
+    document.getElementById('data').valueAsDate = new Date();
 
-    // Inicializa com tratamento de erro
-    try {
-        firebase.initializeApp(firebaseConfig);
-        document.getElementById('msg').innerText = "Sistema Online ✅";
-    } catch (e) {
-        document.getElementById('msg').innerText = "Erro ao carregar banco ❌";
+    function autenticar() {
+        const u = document.getElementById('lUser').value.toUpperCase().trim();
+        const p = document.getElementById('lPass').value;
+        db.ref('usuarios/' + u).once('value', snap => {
+            const d = snap.val();
+            if(d && d.senha === p) {
+                userAtivo = { nome: u, role: d.role };
+                document.getElementById('telaLogin').style.display = 'none';
+                document.getElementById('userName').innerText = "Olá, " + u;
+                if(d.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
+                escutar();
+            } else { alert("Acesso negado!"); }
+        });
     }
 
-    function entrar() {
-        const u = document.getElementById('user').value.toUpperCase().trim();
-        const p = document.getElementById('pass').value;
-        const btn = document.getElementById('btn');
-        
-        if(!u || !p) return alert("Preencha os campos!");
-        
-        btn.innerText = "VERIFICANDO...";
-        btn.disabled = true;
+    function start() { document.getElementById('cardRegistro').classList.add('unlocked'); document.getElementById('btnStart').style.display='none'; }
+    function tAdmin() { const p = document.getElementById('painelAdmin'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
 
-        firebase.database().ref('usuarios/' + u).once('value').then(snap => {
-            const d = snap.val();
-            if(!d && u === "ADMIN") {
-                if(confirm("Criar senha MASTER para ADMIN?")) {
-                    firebase.database().ref('usuarios/ADMIN').set({senha: p, role: 'admin'}).then(() => {
-                        alert("Senha Master Criada! Entre novamente.");
-                        location.reload();
-                    });
-                }
-            } else if(d && d.senha === p) {
-                alert("ACESSO AUTORIZADO! Redirecionando...");
-                // Aqui depois colocamos o resto do dashboard, vamos focar em logar primeiro!
-            } else {
-                alert("Usuário ou Senha incorretos!");
-                btn.innerText = "CONECTAR";
-                btn.disabled = false;
-            }
-        }).catch(err => {
-            console.error(err);
-            alert("Erro crítico: Verifique se o Realtime Database está ATIVADO em modo de teste.");
-            btn.innerText = "CONECTAR";
-            btn.disabled = false;
+    function salvar() {
+        const r = document.getElementById('ritm').value.toUpperCase();
+        if(!r) return alert("RITM obrigatória");
+        db.ref('chamados').push({
+            ritm: r, servico: document.getElementById('serv').value,
+            data: document.getElementById('data').value, analista: userAtivo.nome
         });
+        document.getElementById('ritm').value = ""; document.getElementById('serv').value = "";
+    }
+
+    function escutar() {
+        db.ref('chamados').on('value', snap => {
+            const list = document.getElementById('lista'); list.innerHTML = "";
+            snap.forEach(item => {
+                const c = item.val();
+                if(c.data === document.getElementById('data').value) {
+                    list.innerHTML = `<tr><td>${c.ritm}</td><td>${c.analista}</td><td>${c.servico}</td><td><button onclick="apagar('${item.key}')" style="background:none;color:red;width:auto">🗑</button></td></tr>` + list.innerHTML;
+                }
+            });
+        });
+    }
+
+    function apagar(k) { if(confirm("Apagar registro?")) db.ref('chamados/'+k).remove(); }
+    function cadastrar() {
+        const u = document.getElementById('nUser').value.toUpperCase().trim();
+        const p = document.getElementById('nPass').value;
+        if(u && p) { db.ref('usuarios/'+u).set({senha:p, role:'analista'}); alert("Analista cadastrado!"); }
     }
 </script>
 </body>
