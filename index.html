@@ -40,7 +40,6 @@
 
         .section-card { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; position: relative; }
         
-        /* Contador Style */
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .kpi-box { background: var(--glass); padding: 20px; border-radius: 20px; border: 1px solid var(--border); text-align: center; }
         .kpi-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
@@ -132,7 +131,7 @@
             <div id="containerTasksDinamicas" style="display: none;"></div>
 
             <div style="margin-top:10px">
-                <label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO / LINK</label>
+                <label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO / LINK (Opcional)</label>
                 <input type="text" id="serv" placeholder="Link da RITM ou detalhamento">
             </div>
             <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">REGISTRAR NO BANCO</button>
@@ -196,6 +195,12 @@
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('displayUser').innerText = logado.nome;
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
+            
+            // PERSISTÊNCIA DO TURNO ABERTO
+            if(localStorage.getItem('turnoAberto_' + logado.nome) === 'true') {
+                document.getElementById('cardRegistro').classList.add('unlocked');
+            }
+
             carregarFiltroAnalistas();
             escutarBanco();
         }
@@ -218,7 +223,15 @@
         });
     }
 
-    function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
+    function logout() { 
+        localStorage.removeItem('usuarioLogado'); 
+        location.reload(); 
+    }
+
+    function iniciarTurno() { 
+        document.getElementById('cardRegistro').classList.add('unlocked');
+        localStorage.setItem('turnoAberto_' + logado.nome, 'true');
+    }
 
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -264,22 +277,32 @@
 
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
-        const s = document.getElementById('serv').value;
+        const s = document.getElementById('serv').value || "Sem link/descrição"; // Deixando opcional
         const d = document.getElementById('data').value;
         const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
+        
         let tasksColetadas = [];
         document.querySelectorAll('.input-task-dinamica').forEach(input => {
             if(input.value) tasksColetadas.push(input.value.toUpperCase().trim());
         });
-        if(!r || !s) return alert("RITM e Descrição obrigatórios!");
+
+        if(!r) return alert("O número da RITM é obrigatório!"); // Apenas RITM obrigatória agora
+
         database.ref('chamados').push({ 
             ritm: r, 
             taskQtd: qtdT,
             tasks: tasksColetadas.length > 0 ? tasksColetadas.join(", ") : "Não possui",
-            servico: s, data: d, analista: logado.nome 
+            servico: s, 
+            data: d, 
+            analista: logado.nome 
+        }).then(() => {
+            // Limpa apenas após o sucesso
+            document.getElementById('ritm').value = ""; 
+            document.getElementById('taskQtd').value = ""; 
+            document.getElementById('serv').value = "";
+            document.getElementById('temTask').value = "nao"; 
+            toggleTaskInput();
         });
-        document.getElementById('ritm').value = ""; document.getElementById('taskQtd').value = ""; document.getElementById('serv').value = "";
-        document.getElementById('temTask').value = "nao"; toggleTaskInput();
     }
 
     function escutarBanco() {
@@ -293,14 +316,22 @@
             let totalTasks = 0;
 
             snap.forEach(item => {
+                const key = item.key; // ID do Firebase
                 const c = item.val();
                 if(c.data === dataFiltro) {
                     totalRitms++;
                     totalTasks += (parseInt(c.taskQtd) || 0);
                     contagem[c.analista] = (contagem[c.analista] || 0) + 1;
                     if(analistaFiltro === "TODOS" || c.analista === analistaFiltro) {
-                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.tasks || '---'}</td><td>${c.analista}</td><td>${c.servico}</td>
-                        <td style="text-align:right"><button onclick="excluir('${item.key}')" style="background:none; color:var(--danger)">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr>
+                            <td><b>${c.ritm}</b></td>
+                            <td>${c.tasks || '---'}</td>
+                            <td>${c.analista}</td>
+                            <td>${c.servico}</td>
+                            <td style="text-align:right">
+                                <button onclick="excluirChamado('${key}')" style="background:none; color:var(--danger); cursor:pointer">🗑</button>
+                            </td>
+                        </tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -308,6 +339,14 @@
             document.getElementById('kpiTasks').innerText = totalTasks;
             atualizarGrafico(contagem);
         });
+    }
+
+    function excluirChamado(id) {
+        if(confirm("Deseja realmente apagar este registro?")) {
+            database.ref('chamados/' + id).remove()
+                .then(() => { console.log("Excluído com sucesso"); })
+                .catch((error) => { alert("Erro ao excluir: " + error.message); });
+        }
     }
 
     function atualizarGrafico(dados) {
@@ -323,7 +362,6 @@
         });
     }
 
-    // Outras funções de controle permanecem iguais...
     function carregarFiltroAnalistas() {
         database.ref('usuarios').on('value', snap => {
             const select = document.getElementById('filtroAnalista');
@@ -338,14 +376,12 @@
             lista.innerHTML = "";
             snap.forEach(u => {
                 lista.innerHTML += `<tr><td><b>${u.key}</b></td><td>${u.val().role}</td>
-                <td style="text-align:right">${u.key !== 'ADMIN' ? `<button onclick="removerUser('${u.key}')" style="color:var(--danger); background:none">Excluir</button>` : ''}</td></tr>`;
+                <td style="text-align:right">${u.key !== 'ADMIN' ? `<button onclick="removerUser('${u.key}')" style="color:var(--danger); background:none; cursor:pointer">Excluir</button>` : ''}</td></tr>`;
             });
         });
     }
 
     function removerUser(id) { if(confirm("Remover acesso?")) database.ref('usuarios/'+id).remove(); }
-    function excluir(id) { if(confirm("Apagar registro?")) database.ref('chamados/'+id).remove(); }
-    function iniciarTurno() { document.getElementById('cardRegistro').classList.add('unlocked'); }
     function cadastrarAnalista() {
         const n = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
