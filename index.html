@@ -38,7 +38,6 @@
 
         .section-card { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; position: relative; }
         
-        /* Modal de Report */
         #modalReport { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: var(--bg-surface); padding: 30px; border-radius: 24px; width: 400px; border: 1px solid var(--border); }
 
@@ -58,13 +57,9 @@
         .btn-success { background: var(--success); color: white; width: 100%; }
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
 
-        #containerTasksDinamicas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed var(--border); }
-
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { text-align: left; padding: 12px; color: var(--text-dim); font-size: 0.7rem; border-bottom: 1px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        
-        .btn-delete { background: none !important; color: #ef4444 !important; font-size: 1.2rem; cursor: pointer !important; }
     </style>
 </head>
 <body>
@@ -100,7 +95,7 @@
         </div>
     </div>
     <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border);">
-        <button class="btn-primary" style="height: 35px; margin-bottom: 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" onclick="abrirModalReport()">📣 Reportar Erro</button>
+        <button class="btn-primary" style="height: 35px; margin-bottom: 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" onclick="abrirModalReport()">📣 Reportar Bug/Erro</button>
         <div id="displayUser" style="font-weight: 800; color: white;">Analista</div>
         <button class="btn-danger" style="height: 35px; width: 100%; margin-top: 10px;" onclick="logout()">Sair</button>
     </div>
@@ -126,25 +121,14 @@
         </div>
 
         <div id="cardRegistro" class="section-card">
-            <div id="overlay">
-                <button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button>
-            </div>
+            <div id="overlay"><button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
             <div class="form-grid">
                 <div><label style="font-size:0.7rem; font-weight:700">RITM</label><input type="text" id="ritm" placeholder="RITM000"></div>
-                <div>
-                    <label style="font-size:0.7rem; font-weight:700">TEM TASK?</label>
-                    <select id="temTask" onchange="toggleTaskInput()">
-                        <option value="nao">Não</option>
-                        <option value="sim">Sim</option>
-                    </select>
-                </div>
-                <div id="divQtdTask" style="visibility: hidden;">
-                    <label style="font-size:0.7rem; font-weight:700">QTD TASKS</label>
-                    <input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()">
-                </div>
+                <div><label style="font-size:0.7rem; font-weight:700">TEM TASK?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+                <div id="divQtdTask" style="visibility: hidden;"><label style="font-size:0.7rem; font-weight:700">QTD TASKS</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
                 <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" onchange="escutarBanco()"></div>
             </div>
-            <div id="containerTasksDinamicas" style="display: none;"></div>
+            <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed var(--border);"></div>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-top:10px">
                 <div><label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA</label><input type="text" id="descResumida" placeholder="O que foi feito?"></div>
                 <div><label style="font-size:0.7rem; font-weight:700">LINK DA RITM (Opcional)</label><input type="text" id="linkRitm" placeholder="http://..."></div>
@@ -156,9 +140,7 @@
         <div class="section-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3>Registros Ativos</h3>
-                <select id="filtroAnalista" onchange="escutarBanco()" style="width: 200px;">
-                    <option value="TODOS">TODOS OS ANALISTAS</option>
-                </select>
+                <select id="filtroAnalista" onchange="escutarBanco()" style="width: 200px;"><option value="TODOS">TODOS OS ANALISTAS</option></select>
             </div>
             <table style="min-width: 100%;">
                 <thead><tr><th>RITM</th><th>TASK(S)</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
@@ -170,20 +152,20 @@
     <div id="viewAdmin" class="view-section">
         <div class="section-card">
             <h2 style="color: var(--warning); margin-bottom: 20px;">Gestão de Equipe</h2>
-            <div class="form-grid">
-                <input type="text" id="nUser" placeholder="Login">
-                <input type="text" id="nPass" placeholder="Senha">
-                <button class="btn-success" onclick="cadastrarAnalista()">CADASTRAR</button>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                <div><label style="font-size:0.6rem">NOME COMPLETO</label><input type="text" id="nCompleto" placeholder="Ex: Rodrigo Silva"></div>
+                <div><label style="font-size:0.6rem">LOGIN (USUÁRIO)</label><input type="text" id="nUser" placeholder="Ex: RODRIGO.SILVA"></div>
+                <div><label style="font-size:0.6rem">SENHA</label><input type="password" id="nPass" placeholder="Senha123"></div>
+                <div style="display:flex; align-items:flex-end;"><button class="btn-success" style="width:100%" onclick="cadastrarAnalista()">CADASTRAR</button></div>
             </div>
             <div style="margin-top: 30px;">
                 <h4>Analistas Cadastrados</h4>
                 <table style="min-width: 100%;">
-                    <thead><tr><th>Usuário</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
+                    <thead><tr><th>Nome Completo</th><th>Login</th><th>Senha</th><th style="text-align:right">Ação</th></tr></thead>
                     <tbody id="listaUsuarios"></tbody>
                 </table>
             </div>
         </div>
-
         <div class="section-card" style="border-color: #818cf8;">
             <h2 style="color: #818cf8; margin-bottom: 20px;">Relatos de Erros / Sugestões</h2>
             <table style="min-width: 100%;">
@@ -225,32 +207,26 @@
         }
     };
 
-    // FUNÇÕES DE REPORT
     function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
     function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
-    
     function enviarReport() {
         const msg = document.getElementById('msgReport').value;
-        if(!msg) return alert("Por favor, escreva o relato.");
-        const dataH = new Date().toLocaleString();
-        database.ref('reports').push({ analista: logado.nome, mensagem: msg, data: dataH }).then(() => {
-            alert("Relato enviado ao Administrador!");
-            fecharModalReport();
+        if(!msg) return alert("Escreva algo.");
+        database.ref('reports').push({ analista: logado.nome, mensagem: msg, data: new Date().toLocaleString() }).then(() => {
+            alert("Enviado!"); fecharModalReport();
         });
     }
 
     function listarReports() {
         database.ref('reports').on('value', snap => {
-            const tbody = document.getElementById('listaReports');
-            tbody.innerHTML = "";
+            const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
             snap.forEach(item => {
                 const r = item.val();
-                tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.mensagem}</td>
-                <td style="text-align:right"><button onclick="deletarReport('${item.key}')" style="background:none; color:var(--danger)">Arquivar</button></td></tr>`;
+                tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.mensagem}</td><td style="text-align:right"><button onclick="deletarReport('${item.key}')" style="background:none; color:var(--danger)">Arquivar</button></td></tr>`;
             });
         });
     }
-    function deletarReport(id) { if(confirm("Deseja arquivar este relato?")) database.ref('reports').child(id).remove(); }
+    function deletarReport(id) { if(confirm("Arquivar?")) database.ref('reports').child(id).remove(); }
 
     function verificarStatusTurno() {
         const hoje = new Date().toISOString().split('T')[0];
@@ -262,19 +238,13 @@
             }
         });
     }
-
     function iniciarTurno() {
         const hoje = new Date().toISOString().split('T')[0];
-        database.ref('statusTurno/' + logado.nome).set({ aberto: true, data: hoje }).then(() => {
-            document.getElementById('cardRegistro').classList.add('unlocked');
-        });
+        database.ref('statusTurno/' + logado.nome).set({ aberto: true, data: hoje }).then(() => document.getElementById('cardRegistro').classList.add('unlocked'));
     }
-
     function finalizarTurno() {
-        if(confirm("Deseja encerrar seu turno?")) {
-            database.ref('statusTurno/' + logado.nome).set({ aberto: false, data: '' }).then(() => {
-                document.getElementById('cardRegistro').classList.remove('unlocked');
-            });
+        if(confirm("Encerrar turno?")) {
+            database.ref('statusTurno/' + logado.nome).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
         }
     }
 
@@ -292,19 +262,11 @@
     }
 
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
-
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        if(view === 'dash') {
-            document.getElementById('viewDash').classList.add('active');
-            document.getElementById('btnDash').classList.add('active');
-        } else {
-            document.getElementById('viewAdmin').classList.add('active');
-            document.getElementById('btnAdmin').classList.add('active');
-            listarUsuarios();
-            listarReports();
-        }
+        if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); document.getElementById('btnDash').classList.add('active'); }
+        else { document.getElementById('viewAdmin').classList.add('active'); document.getElementById('btnAdmin').classList.add('active'); listarUsuarios(); listarReports(); }
     }
 
     function toggleTaskInput() {
@@ -312,16 +274,10 @@
         document.getElementById('divQtdTask').style.visibility = (temTask === 'sim') ? 'visible' : 'hidden';
         document.getElementById('containerTasksDinamicas').style.display = (temTask === 'sim') ? 'grid' : 'none';
     }
-
     function gerarCamposTask() {
         const qtd = parseInt(document.getElementById('taskQtd').value);
-        const container = document.getElementById('containerTasksDinamicas');
-        container.innerHTML = "";
-        if(qtd > 0) {
-            for(let i = 1; i <= qtd; i++) {
-                container.innerHTML += `<div><label style="font-size:0.6rem">TASK ${i}</label><input type="text" class="input-task-dinamica" placeholder="TASK..."></div>`;
-            }
-        }
+        const container = document.getElementById('containerTasksDinamicas'); container.innerHTML = "";
+        if(qtd > 0) { for(let i = 1; i <= qtd; i++) { container.innerHTML += `<div><label style="font-size:0.6rem">TASK ${i}</label><input type="text" class="input-task-dinamica" placeholder="TASK..."></div>`; } }
     }
 
     function salvar() {
@@ -330,9 +286,8 @@
         const l = document.getElementById('linkRitm').value || "---";
         const dt = document.getElementById('data').value;
         const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
-        let tasks = [];
-        document.querySelectorAll('.input-task-dinamica').forEach(input => { if(input.value) tasks.push(input.value.toUpperCase().trim()); });
-        if(!r || !d) return alert("RITM e Descrição obrigatórios!");
+        let tasks = []; document.querySelectorAll('.input-task-dinamica').forEach(input => { if(input.value) tasks.push(input.value.toUpperCase().trim()); });
+        if(!r || !d) return alert("Obrigatório!");
         database.ref('chamados').push({ ritm: r, desc: d, link: l, data: dt, analista: logado.nome, taskQtd: qtdT, tasks: tasks.join(", ") || "Não possui" }).then(() => {
             document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = "";
             document.getElementById('taskQtd').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput();
@@ -341,73 +296,57 @@
 
     function escutarBanco() {
         database.ref('chamados').on('value', snap => {
-            const tbody = document.getElementById('corpoTabela');
-            const dataF = document.getElementById('data').value;
-            const analistaF = document.getElementById('filtroAnalista').value;
-            tbody.innerHTML = "";
+            const tbody = document.getElementById('corpoTabela'); const dataF = document.getElementById('data').value;
+            const analistaF = document.getElementById('filtroAnalista').value; tbody.innerHTML = "";
             let cont = {}; let tR = 0; let tT = 0;
             snap.forEach(item => {
                 const c = item.val(); const key = item.key;
                 if(c.data === dataF) {
-                    tR++; tT += (parseInt(c.taskQtd) || 0);
-                    cont[c.analista] = (cont[c.analista] || 0) + 1;
+                    tR++; tT += (parseInt(c.taskQtd) || 0); cont[c.analista] = (cont[c.analista] || 0) + 1;
                     if(analistaF === "TODOS" || c.analista === analistaF) {
-                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td>
-                        <td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td>
-                        <td style="text-align:right"><button onclick="removerRegistro('${key}')" class="btn-delete">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${key}').remove()" style="background:none; color:var(--danger); font-size:1.2rem">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
-            document.getElementById('kpiRitms').innerText = tR;
-            document.getElementById('kpiTasks').innerText = tT;
-            atualizarGrafico(cont);
+            document.getElementById('kpiRitms').innerText = tR; document.getElementById('kpiTasks').innerText = tT; atualizarGrafico(cont);
         });
     }
 
-    function removerRegistro(id) { if(confirm("Deseja apagar permanentemente?")) database.ref('chamados').child(id).remove(); }
-
     function atualizarGrafico(dados) {
-        const ctx = document.getElementById('meuGraficoBarras').getContext('2d');
-        if(chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('meuGraficoBarras').getContext('2d'); if(chartInstance) chartInstance.destroy();
         const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(dados),
-                datasets: [{ label: 'Chamados', data: Object.values(dados), backgroundColor: Object.keys(dados).map((_, i) => colors[i % colors.length]), borderRadius: 8 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
-        });
+        chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dados), datasets: [{ label: 'Chamados', data: Object.values(dados), backgroundColor: Object.keys(dados).map((_, i) => colors[i % colors.length]), borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
     }
 
     function carregarFiltroAnalistas() {
         database.ref('usuarios').on('value', snap => {
-            const select = document.getElementById('filtroAnalista');
-            select.innerHTML = '<option value="TODOS">TODOS OS ANALISTAS</option>';
+            const select = document.getElementById('filtroAnalista'); select.innerHTML = '<option value="TODOS">TODOS OS ANALISTAS</option>';
             snap.forEach(u => { select.innerHTML += `<option value="${u.key}">${u.key}</option>`; });
         });
     }
 
     function listarUsuarios() {
         database.ref('usuarios').on('value', snap => {
-            const lista = document.getElementById('listaUsuarios');
-            lista.innerHTML = "";
+            const lista = document.getElementById('listaUsuarios'); lista.innerHTML = "";
             snap.forEach(u => {
-                lista.innerHTML += `<tr><td><b>${u.key}</b></td><td>${u.val().role}</td>
-                <td style="text-align:right">${u.key !== 'ADMIN' ? `<button onclick="removerUser('${u.key}')" style="color:var(--danger); background:none; cursor:pointer">Excluir</button>` : ''}</td></tr>`;
+                const val = u.val();
+                lista.innerHTML += `<tr><td>${val.nomeCompleto || '---'}</td><td><b>${u.key}</b></td><td>••••••</td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none">Remover</button></td></tr>`;
             });
         });
     }
 
-    function removerUser(id) { if(confirm("Remover acesso?")) database.ref('usuarios/'+id).remove(); }
     function cadastrarAnalista() {
-        const n = document.getElementById('nUser').value.toUpperCase().trim();
+        const nc = document.getElementById('nCompleto').value.trim();
+        const u = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
-        if(n && p) database.ref('usuarios/'+n).set({ senha: p, role: 'analista' });
+        if(nc && u && p) {
+            database.ref('usuarios/' + u).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => {
+                alert("Cadastrado!"); document.getElementById('nCompleto').value = ""; document.getElementById('nUser').value = ""; document.getElementById('nPass').value = "";
+            });
+        } else alert("Preencha tudo!");
     }
     function exportarExcel() {
-        const table = document.querySelector("table");
-        const wb = XLSX.utils.table_to_book(table);
+        const table = document.querySelector("table"); const wb = XLSX.utils.table_to_book(table);
         XLSX.writeFile(wb, `Relatorio_OPS_${document.getElementById('data').value}.xlsx`);
     }
 </script>
