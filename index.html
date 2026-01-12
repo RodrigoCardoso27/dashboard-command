@@ -3,78 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YDUQS | OPS Command Center</title>
+    <title>COMMAND CENTER | OPS Premium</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        :root { --bg-body: #0f172a; --bg-card: #1e293b; --primary: #6366f1; --success: #10b981; --danger: #ef4444; --text-main: #f8fafc; --text-dim: #94a3b8; --border: rgba(255, 255, 255, 0.1); }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg-body); color: var(--text-main); display: flex; min-height: 100vh; }
-        #telaLogin { position: fixed; inset: 0; background: radial-gradient(circle at top right, #1e1b4b, #0f172a); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: var(--bg-card); padding: 40px; border-radius: 24px; width: 320px; text-align: center; border: 1px solid var(--border); }
-        .sidebar { width: 240px; background: #020617; border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; position: fixed; height: 100vh; }
-        .main-content { margin-left: 240px; padding: 40px; width: 100%; }
-        .section-card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; position: relative; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        input, select { width: 100%; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; height: 40px; padding: 0 12px; color: white; margin-bottom: 10px; box-sizing: border-box; }
-        button { height: 40px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; width: 100%; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; padding: 12px; color: var(--text-dim); border-bottom: 1px solid var(--border); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
-        #overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 10; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        :root {
+            --bg-deep: #020617;
+            --bg-surface: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-deep); 
+            color: var(--text-main); 
+            display: flex; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* TELA DE LOGIN ESTILO GLASS */
+        #telaLogin { 
+            position: fixed; inset: 0; 
+            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+            z-index: 9999; display: flex; align-items: center; justify-content: center; 
+        }
+        .login-card { 
+            background: var(--bg-card); padding: 50px; border-radius: 32px; 
+            width: 100%; max-width: 400px; text-align: center; 
+            border: 1px solid var(--border); backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+        }
+
+        /* SIDEBAR MODERNA */
+        .sidebar { 
+            width: 280px; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px);
+            border-right: 1px solid var(--border); display: flex; flex-direction: column; 
+            padding: 32px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100;
+        }
+        .logo-area { 
+            font-weight: 800; font-size: 1.4rem; letter-spacing: -1px;
+            background: linear-gradient(to right, #818cf8, #6366f1);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 48px; display: flex; align-items: center; gap: 12px;
+        }
+
+        .nav-group { margin-bottom: 30px; }
+        .nav-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 12px; font-weight: 700; }
+        
+        .nav-item { 
+            padding: 14px 18px; border-radius: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 0.95rem;
+            margin-bottom: 8px; color: var(--text-dim); border: 1px solid transparent;
+        }
+        .nav-item:hover { background: var(--glass); color: white; border-color: var(--border); transform: translateX(5px); }
+        .nav-admin { color: var(--warning) !important; display: none; }
+
+        /* MAIN CONTENT */
+        .main-content { margin-left: 280px; padding: 48px; width: calc(100% - 280px); background: #020617; }
+
+        .section-header { margin-bottom: 32px; }
+        .section-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+        .section-header p { color: var(--text-dim); margin-top: 4px; }
+
+        .section-card { 
+            background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); 
+            padding: 32px; margin-bottom: 30px; position: relative; transition: 0.3s;
+        }
+        .section-card:hover { border-color: rgba(99, 102, 241, 0.4); }
+
+        #overlay { 
+            position: absolute; inset: 0; background: rgba(2, 6, 23, 0.8); 
+            z-index: 10; border-radius: 24px; backdrop-filter: blur(8px); 
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem;
+        }
         .unlocked #overlay { display: none; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        
+        label { font-size: 0.85rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 8px; }
+
+        input { 
+            width: 100%; background: #020617; border: 1px solid var(--border); 
+            border-radius: 12px; height: 50px; padding: 0 16px; color: white; transition: 0.3s;
+            font-family: inherit; font-size: 0.95rem;
+        }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+
+        button { 
+            height: 50px; border-radius: 12px; font-weight: 700; cursor: pointer; 
+            transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-size: 0.95rem; border: none;
+        }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 15px -3px var(--primary-glow); }
+        .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        /* TABELA PREMIUM */
+        .table-container { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 20px; color: var(--text-dim); background: rgba(255,255,255,0.02); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 20px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.01); }
+
+        .badge-ritm { background: var(--glass); padding: 6px 12px; border-radius: 8px; font-weight: 700; color: var(--primary); border: 1px solid var(--border); }
+
+        .user-footer { margin-top: auto; background: var(--glass); padding: 20px; border-radius: 20px; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
 <div id="telaLogin">
     <div class="login-card">
-        <h3>⚡ OPS LOGIN</h3>
+        <div class="logo-area" style="justify-content: center;">🌐 COMMAND</div>
         <input type="text" id="lUser" placeholder="Usuário">
-        <input type="password" id="lPass" placeholder="Senha">
-        <button class="btn-primary" onclick="autenticar()">CONECTAR</button>
+        <input type="password" id="lPass" placeholder="Senha" style="margin-top: 15px;">
+        <button class="btn-primary" style="margin-top: 24px; width: 100%;" onclick="autenticar()">Acessar Sistema</button>
     </div>
 </div>
 
 <div class="sidebar">
-    <h2 style="color:var(--primary)">YDUQS</h2>
-    <p id="userName" style="font-weight:bold; margin-top:0">Analista</p>
-    <hr style="width:100%; border:0; border-top:1px solid var(--border)">
-    <div id="navAdmin" style="display:none; color:orange; cursor:pointer; font-weight:bold" onclick="tAdmin()">🛠 PAINEL ADMIN</div>
-    <button class="btn-danger" style="margin-top:auto" onclick="location.reload()">Sair</button>
+    <div class="logo-area">🌐 COMMAND</div>
+    
+    <div class="nav-group">
+        <div class="nav-label">Menu Principal</div>
+        <div class="nav-item" onclick="location.reload()">🏠 Dashboard</div>
+        <div class="nav-item" onclick="exportarExcel()" style="color: var(--success)">📥 Exportar Excel</div>
+    </div>
+
+    <div id="navAdmin" class="nav-group nav-admin">
+        <div class="nav-label">Administração</div>
+        <div class="nav-item" onclick="toggleAdmin()">🛠 Gestão de Equipe</div>
+    </div>
+
+    <div class="user-footer">
+        <div id="displayUser" style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">Analista</div>
+        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px;">Sessão Ativa</div>
+        <button class="btn-danger" style="height: 35px; font-size: 0.8rem; width: 100%;" onclick="location.reload()">Sair</button>
+    </div>
 </div>
 
 <div class="main-content">
-    <div id="painelAdmin" class="section-card" style="display:none; border-color: orange;">
-        <h4>Gestão de Usuários</h4>
+    <div class="section-header">
+        <h1>Command Center</h1>
+        <p>Gestão e Monitoramento de RITMs em tempo real</p>
+    </div>
+
+    <div id="painelAdmin" class="section-card" style="display: none; border: 1px solid var(--warning);">
+        <h3 style="margin-bottom: 20px; color: var(--warning);">Cadastrar Novo Analista</h3>
         <div class="grid">
-            <input type="text" id="nUser" placeholder="Novo Usuário">
-            <input type="text" id="nPass" placeholder="Senha">
+            <input type="text" id="nUser" placeholder="Nome de Usuário">
+            <input type="text" id="nPass" placeholder="Senha Provisória">
         </div>
-        <button class="btn-success" onclick="cadastrar()">CADASTRAR ANALISTA</button>
+        <button class="btn-success" style="margin-top: 20px;" onclick="cadastrarAnalista()">Confirmar Cadastro</button>
     </div>
 
-    <div style="margin-bottom:20px">
-        <button id="btnStart" class="btn-primary" style="width:200px" onclick="start()">INICIAR TURNO</button>
+    <div style="margin-bottom: 32px;">
+        <button id="btnIniciar" class="btn-primary" style="padding: 0 40px;" onclick="iniciarTurno()">⚡ Iniciar Meu Turno</button>
     </div>
 
-    <div id="cardRegistro" class="section-card">
-        <div id="overlay">CLIQUE EM INICIAR TURNO</div>
+    <div class="section-card" id="cardRegistro">
+        <div id="overlay">CLIQUE EM INICIAR TURNO PARA LIBERAR</div>
         <div class="grid">
-            <div><label>RITM</label><input type="text" id="ritm"></div>
-            <div><label>Data</label><input type="date" id="data"></div>
-            <div style="grid-column: span 2"><label>Serviço</label><input type="text" id="serv"></div>
+            <div>
+                <label>RITM / CHAMADO</label>
+                <input type="text" id="ritm" placeholder="Digite a RITM">
+            </div>
+            <div>
+                <label>DATA DO REGISTRO</label>
+                <input type="date" id="data">
+            </div>
+            <div style="grid-column: span 2;">
+                <label>DESCRIÇÃO DO SERVIÇO</label>
+                <input type="text" id="serv" placeholder="O que está sendo realizado?">
+            </div>
         </div>
-        <button class="btn-success" onclick="salvar()">SALVAR NO BANCO NUVEM</button>
+        <button class="btn-success" style="margin-top: 24px; width: 100%;" onclick="salvar()">Gravar Registro na Nuvem</button>
     </div>
 
-    <div class="section-card">
+    <div class="table-container">
         <table>
-            <thead><tr><th>RITM</th><th>Analista</th><th>Serviço</th><th>Ação</th></tr></thead>
-            <tbody id="lista"></tbody>
+            <thead>
+                <tr>
+                    <th>RITM</th>
+                    <th>ANALISTA</th>
+                    <th>SERVIÇO REALIZADO</th>
+                    <th style="text-align: right;">AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
         </table>
     </div>
 </div>
@@ -89,56 +225,92 @@
         messagingSenderId: "38631596446",
         appId: "1:38631596446:web:f9470a5b648173e168b68f"
     };
+
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let userAtivo = null;
+    const database = firebase.database();
+    let logado = null;
+
     document.getElementById('data').valueAsDate = new Date();
 
     function autenticar() {
         const u = document.getElementById('lUser').value.toUpperCase().trim();
         const p = document.getElementById('lPass').value;
-        db.ref('usuarios/' + u).once('value', snap => {
-            const d = snap.val();
-            if(d && d.senha === p) {
-                userAtivo = { nome: u, role: d.role };
+        if(!u || !p) return alert("Preencha os dados de acesso!");
+
+        database.ref('usuarios/' + u).once('value', snap => {
+            const user = snap.val();
+            if(!user && u === "ADMIN") {
+                if(confirm("Configurar senha mestre para ADMIN?")) {
+                    database.ref('usuarios/ADMIN').set({ senha: p, role: 'admin' }).then(() => location.reload());
+                }
+            } else if(user && user.senha === p) {
+                logado = { nome: u, role: user.role };
                 document.getElementById('telaLogin').style.display = 'none';
-                document.getElementById('userName').innerText = "Olá, " + u;
-                if(d.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
-                escutar();
-            } else { alert("Acesso negado!"); }
+                document.getElementById('displayUser').innerText = u;
+                if(user.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
+                escutarBanco();
+            } else { alert("Acesso Inválido!"); }
         });
     }
 
-    function start() { document.getElementById('cardRegistro').classList.add('unlocked'); document.getElementById('btnStart').style.display='none'; }
-    function tAdmin() { const p = document.getElementById('painelAdmin'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
+    function iniciarTurno() {
+        document.getElementById('cardRegistro').classList.add('unlocked');
+        document.getElementById('btnIniciar').style.display = 'none';
+    }
+
+    function toggleAdmin() {
+        const p = document.getElementById('painelAdmin');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    }
 
     function salvar() {
-        const r = document.getElementById('ritm').value.toUpperCase();
-        if(!r) return alert("RITM obrigatória");
-        db.ref('chamados').push({
-            ritm: r, servico: document.getElementById('serv').value,
-            data: document.getElementById('data').value, analista: userAtivo.nome
-        });
+        const r = document.getElementById('ritm').value.toUpperCase().trim();
+        const s = document.getElementById('serv').value;
+        const d = document.getElementById('data').value;
+        if(!r || !s) return alert("Dados incompletos!");
+
+        database.ref('chamados').push({ ritm: r, servico: s, data: d, analista: logado.nome });
         document.getElementById('ritm').value = ""; document.getElementById('serv').value = "";
     }
 
-    function escutar() {
-        db.ref('chamados').on('value', snap => {
-            const list = document.getElementById('lista'); list.innerHTML = "";
+    function escutarBanco() {
+        database.ref('chamados').on('value', snap => {
+            const tbody = document.getElementById('corpoTabela');
+            const dataFiltro = document.getElementById('data').value;
+            tbody.innerHTML = "";
             snap.forEach(item => {
                 const c = item.val();
-                if(c.data === document.getElementById('data').value) {
-                    list.innerHTML = `<tr><td>${c.ritm}</td><td>${c.analista}</td><td>${c.servico}</td><td><button onclick="apagar('${item.key}')" style="background:none;color:red;width:auto">🗑</button></td></tr>` + list.innerHTML;
+                if(c.data === dataFiltro) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="badge-ritm">${c.ritm}</span></td>
+                        <td style="font-weight:600">${c.analista}</td>
+                        <td style="color:var(--text-dim)">${c.servico}</td>
+                        <td style="text-align: right;">
+                            <button onclick="excluir('${item.key}')" style="background:none; color:var(--danger); width:auto; display:inline; font-size:1.2rem">🗑</button>
+                        </td>`;
+                    tbody.prepend(tr);
                 }
             });
         });
     }
 
-    function apagar(k) { if(confirm("Apagar registro?")) db.ref('chamados/'+k).remove(); }
-    function cadastrar() {
-        const u = document.getElementById('nUser').value.toUpperCase().trim();
+    function excluir(id) { if(confirm("Excluir este registro?")) database.ref('chamados/'+id).remove(); }
+
+    function cadastrarAnalista() {
+        const n = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
-        if(u && p) { db.ref('usuarios/'+u).set({senha:p, role:'analista'}); alert("Analista cadastrado!"); }
+        if(n && p) {
+            database.ref('usuarios/'+n).set({ senha: p, role: 'analista' });
+            alert("Analista cadastrado!");
+            document.getElementById('nUser').value = ""; document.getElementById('nPass').value = "";
+        }
+    }
+
+    function exportarExcel() {
+        const table = document.querySelector("table");
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `Relatorio_OPS_${document.getElementById('data').value}.xlsx`);
     }
 </script>
 </body>
