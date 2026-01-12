@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YDUQS | Operations Command Center v25</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-body: #0f172a; --bg-card: #1e293b; --primary: #6366f1;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --text-main: #f8fafc; --text-dim: #94a3b8; --border: rgba(255, 255, 255, 0.1);
+        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg-body); color: var(--text-main); display: flex; min-height: 100vh; }
+        #telaLogin { position: fixed; inset: 0; background: radial-gradient(circle at top right, #1e1b4b, #0f172a); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--bg-card); padding: 48px; border-radius: 32px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .sidebar { width: 260px; background: #020617; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px; position: fixed; height: 100vh; }
+        .logo-area { font-weight: 800; font-size: 1.2rem; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 12px; color: var(--text-dim); cursor: pointer; border-radius: 8px; transition: 0.3s; margin-bottom: 8px; font-weight: 600; }
+        .nav-item:hover { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
+        .kpi-card { background: var(--bg-card); padding: 24px; border-radius: 20px; border: 1px solid var(--border); }
+        .kpi-title { color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; }
+        .section-card { background: var(--bg-card); border-radius: 24px; border: 1px solid var(--border); padding: 32px; margin-bottom: 32px; position: relative; }
+        #overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); z-index: 10; border-radius: 24px; backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .unlocked #overlay { display: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
+        input, select { width: 100%; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; height: 48px; padding: 0 16px; color: white; box-sizing: border-box; }
+        .task-area { grid-column: span 2; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; display: none; margin-top: 10px; }
+        button { height: 48px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 16px; color: var(--text-dim); font-size: 0.75rem; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .status-badge { padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; }
+        .resolvido { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .cancelado { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .reabertura { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+    </style>
+</head>
+<body>
+
+<div id="telaLogin">
+    <div class="login-card">
+        <div class="logo-area" style="justify-content: center;">⚡ COMMAND CENTER</div>
+        <p style="color: var(--text-dim); margin-bottom: 30px;">Identifique-se para acessar</p>
+        <input type="text" id="loginUser" placeholder="Usuário">
+        <input type="password" id="loginPass" placeholder="Senha">
+        <button class="btn-primary" style="margin-top: 20px;" onclick="autenticar()">CONECTAR</button>
+    </div>
+</div>
+
+<div class="sidebar">
+    <div class="logo-area">💎 YDUQS OPS</div>
+    <nav style="flex: 1;">
+        <div class="nav-item" onclick="location.reload()">📊 Dashboard</div>
+        <div id="navAdmin" class="nav-item" style="display:none; color: var(--warning);" onclick="toggleAdmin()">🛠 Painel Admin</div>
+    </nav>
+    <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+        <div id="userName" style="font-weight: 600; font-size: 0.9rem;">Analista</div>
+        <div style="color: var(--danger); font-size: 0.8rem; cursor: pointer; margin-top: 8px;" onclick="location.reload()">Sair</div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-title">Chamados Hoje</div><div class="kpi-value" id="totalContador">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Meta do Dia</div><div class="kpi-value" id="metaValor" style="color: var(--primary)">10</div></div>
+        <div class="kpi-card"><div class="kpi-title">Status Turno</div><div class="kpi-value" id="statusTurno" style="font-size: 1.2rem; color: var(--warning)">Bloqueado</div></div>
+    </div>
+
+    <div id="painelAdmin" class="section-card" style="display:none; border: 2px solid var(--primary);">
+        <h3 style="margin-top:0">Gestão de Analistas (Cloud)</h3>
+        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div><label>Nome Analista</label><input type="text" id="newUserName"></div>
+            <div><label>Senha Provisória</label><input type="text" id="newUserPass"></div>
+            <div style="display:flex; align-items:flex-end;"><button class="btn-success" onclick="cadastrarAnalista()">CRIAR ACESSO</button></div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 16px; margin-bottom: 30px;">
+        <button id="btnIniciar" class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">INICIAR TURNO</button>
+        <button id="btnFinalizar" class="btn-danger" style="width: 200px; display: none;" onclick="finalizarTurno()">ENCERRAR DIA</button>
+    </div>
+
+    <div class="section-card" id="mainCard">
+        <div id="overlay">ACESSO BLOQUEADO: INICIE O TURNO</div>
+        <div class="grid">
+            <div><label>Data</label><input type="date" id="data" onchange="escutarChamados()"></div>
+            <div><label>RITM</label><input type="text" id="ritm" placeholder="RITM0000000"></div>
+            <div style="grid-column: span 2;"><label>Link do Chamado (VPN YDUQS *)</label><input type="url" id="ritm_link"></div>
+            <div style="grid-column: span 2;"><label>Descrição Serviço</label><input type="text" id="desc" list="servicos"><datalist id="servicos"><option value="SIA"><option value="Digitaliza"><option value="Cadastro de Terceiro"></datalist></div>
+            <div><label>Teve Task?</label><select id="teveTask" onchange="toggleTasks()"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+            <div><label>Status Final</label><select id="statusFinal"><option value="Resolvido">Resolvido</option><option value="Cancelado">Cancelado</option><option value="Reabertura">Reabertura</option></select></div>
+            
+            <div id="taskArea" class="task-area">
+                <label>Nº de Tasks</label><input type="number" id="qtdTasks" value="1" min="1" oninput="gerarInputsTasks()" style="width:80px; margin-bottom:15px">
+                <div id="inputsTasks" class="grid"></div>
+            </div>
+            <button class="btn-success" style="grid-column: span 2; height: 55px;" onclick="salvarCloud()">SALVAR NO BANCO NUVEM</button>
+        </div>
+    </div>
+
+    <div class="section-card" style="padding: 0;">
+        <div style="padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Registros em Tempo Real</h3>
+            <button class="btn-primary" style="width: auto; padding: 0 20px;" onclick="exportarExcel()">📊 Exportar Excel</button>
+        </div>
+        <table>
+            <thead><tr><th>RITM</th><th>Analista</th><th>Tasks</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
+            <tbody id="corpoTabela"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // --- SUAS CHAVES DO FIREBASE APLICADAS ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
+        authDomain: "dashboard-command-1ef72.firebaseapp.com",
+        databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com",
+        projectId: "dashboard-command-1ef72",
+        storageBucket: "dashboard-command-1ef72.firebasestorage.app",
+        messagingSenderId: "38631596446",
+        appId: "1:38631596446:web:f9470a5b648173e168b68f"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    let usuarioLogado = null;
+    document.getElementById('data').valueAsDate = new Date();
+
+    function autenticar() {
+        const user = document.getElementById('loginUser').value.toUpperCase().trim();
+        const pass = document.getElementById('loginPass').value;
+        if(!user || !pass) return alert("Preencha tudo!");
+
+        database.ref('usuarios/' + user).once('value', snap => {
+            const d = snap.val();
+            if(!d && user === "ADMIN") {
+                if(confirm("Deseja definir esta como sua SENHA MESTRE?")) {
+                    database.ref('usuarios/ADMIN').set({ senha: pass, role: 'admin' }).then(() => location.reload());
+                }
+            } else if(d && d.senha === pass) {
+                usuarioLogado = { nome: user, role: d.role || 'analista' };
+                if(usuarioLogado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
+                document.getElementById('telaLogin').style.display = 'none';
+                document.getElementById('userName').innerText = user;
+                escutarChamados();
+            } else alert("Acesso Negado!");
+        });
+    }
+
+    function iniciarTurno() {
+        document.getElementById('mainCard').classList.add('unlocked');
+        document.getElementById('btnIniciar').style.display = 'none';
+        document.getElementById('btnFinalizar').style.display = 'block';
+        document.getElementById('statusTurno').innerText = "Em Operação";
+        document.getElementById('statusTurno').style.color = "var(--success)";
+    }
+
+    function finalizarTurno() {
+        if(confirm("Deseja encerrar e bloquear o dia?")) {
+            document.getElementById('mainCard').classList.remove('unlocked');
+            document.getElementById('btnIniciar').style.display = 'block';
+            document.getElementById('btnFinalizar').style.display = 'none';
+            document.getElementById('statusTurno').innerText = "Finalizado";
+        }
+    }
+
+    function toggleTasks() {
+        const display = document.getElementById('teveTask').value === "Sim" ? 'block' : 'none';
+        document.getElementById('taskArea').style.display = display;
+        if(display === 'block') gerarInputsTasks();
+    }
+
+    function gerarInputsTasks() {
+        const container = document.getElementById('inputsTasks');
+        container.innerHTML = "";
+        for(let i=1; i<=document.getElementById('qtdTasks').value; i++) {
+            container.innerHTML += `<input type="text" class="t-input" placeholder="Task ${i}">`;
+        }
+    }
+
+    function salvarCloud() {
+        const ritm = document.getElementById('ritm').value.toUpperCase().trim();
+        if(!ritm) return alert("RITM é obrigatória!");
+        let tasks = [];
+        document.querySelectorAll('.t-input').forEach(i => { if(i.value) tasks.push(i.value.toUpperCase()) });
+
+        database.ref('chamados').push({
+            ritm, analista: usuarioLogado.nome,
+            link: document.getElementById('ritm_link').value,
+            servico: document.getElementById('desc').value,
+            status: document.getElementById('statusFinal').value,
+            tasks: tasks,
+            data: document.getElementById('data').value,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        document.getElementById('ritm').value = ""; document.getElementById('ritm_link').value = "";
+    }
+
+    function escutarChamados() {
+        database.ref('chamados').on('value', snap => {
+            const corpo = document.getElementById('corpoTabela');
+            const dataRef = document.getElementById('data').value;
+            corpo.innerHTML = ""; let total = 0;
+            snap.forEach(item => {
+                const c = item.val();
+                if(c.data === dataRef) {
+                    if(usuarioLogado.role === 'admin' || c.analista === usuarioLogado.nome) {
+                        total++;
+                        const link = c.link ? `<a href="${c.link}" target="_blank" style="color:var(--primary);text-decoration:none">${c.ritm}</a>` : c.ritm;
+                        const tgs = c.tasks ? c.tasks.map(t => `<span style="font-size:10px;background:#334155;padding:2px 5px;border-radius:4px;margin-right:3px">${t}</span>`).join('') : '-';
+                        corpo.innerHTML = `<tr><td><b>${link}</b></td><td>${c.analista}</td><td>${tgs}</td><td><span class="status-badge ${c.status.toLowerCase()}">${c.status}</span></td><td style="text-align:right"><button onclick="excluir('${item.key}')" style="background:none;color:var(--danger);width:auto;display:inline">🗑️</button></td></tr>` + corpo.innerHTML;
+                    }
+                }
+            });
+            document.getElementById('totalContador').innerText = total;
+        });
+    }
+
+    function excluir(key) { if(confirm("Remover permanentemente?")) database.ref('chamados/' + key).remove(); }
+    function toggleAdmin() { const p = document.getElementById('painelAdmin'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
+    function cadastrarAnalista() {
+        const user = document.getElementById('newUserName').value.toUpperCase().trim();
+        const pass = document.getElementById('newUserPass').value;
+        if(user && pass) { database.ref('usuarios/' + user).set({ senha: pass, role: 'analista' }); alert("Analista Criado!"); }
+    }
+    
+    function exportarExcel() {
+        const tabela = document.getElementById("tabelaDados");
+        const wb = XLSX.utils.table_to_book(tabela, {sheet: "Chamados"});
+        XLSX.writeFile(wb, "Relatorio_Chamados.xlsx");
+    }
+</script>
+</body>
+</html>
