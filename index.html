@@ -151,8 +151,8 @@
             <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
                 <div><label style="font-size:0.6rem">NOME COMPLETO</label><input type="text" id="nCompleto" placeholder="Ex: Rodrigo Silva"></div>
                 <div><label style="font-size:0.6rem">LOGIN (USUÁRIO)</label><input type="text" id="nUser" placeholder="Ex: RODRIGO.SILVA"></div>
-                <div><label style="font-size:0.6rem">SENHA</label><input type="password" id="nPass" placeholder="Senha123"></div>
-                <div style="display:flex; align-items:flex-end;"><button class="btn-success" style="width:100%" onclick="cadastrarAnalista()">CADASTRAR</button></div>
+                <div><label style="font-size:0.6rem">SENHA (6-32 Caract. Alfanum + Símbolo)</label><input type="password" id="nPass" placeholder="Ex: Ops@123"></div>
+                <div style="display:flex; align-items:flex-end;"><button id="btnSalvarAnalista" class="btn-success" style="width:100%" onclick="cadastrarAnalista()">CADASTRAR</button></div>
             </div>
             <div style="margin-top: 30px;">
                 <h4>Analistas Cadastrados</h4>
@@ -188,7 +188,6 @@
     let logado = null;
     let chartInstance = null;
 
-    // FUNÇÕES AUXILIARES PARA TRATAR O PONTO NO FIREBASE
     function encodeKey(str) { return str.replace(/\./g, ','); }
     function decodeKey(str) { return str.replace(/,/g, '.'); }
 
@@ -254,7 +253,6 @@
         const uRaw = document.getElementById('lUser').value.toUpperCase().trim();
         const p = document.getElementById('lPass').value;
         const uEncoded = encodeKey(uRaw);
-        
         database.ref('usuarios/' + uEncoded).once('value', snap => {
             const user = snap.val();
             if(user && user.senha === p) {
@@ -338,9 +336,31 @@
             snap.forEach(u => {
                 const val = u.val();
                 const loginDecoded = decodeKey(u.key);
-                lista.innerHTML += `<tr><td>${val.nomeCompleto || '---'}</td><td><b>${loginDecoded}</b></td><td>••••••</td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none; cursor:pointer;">Remover</button></td></tr>`;
+                lista.innerHTML += `<tr>
+                    <td>${val.nomeCompleto || '---'}</td>
+                    <td><b>${loginDecoded}</b></td>
+                    <td>••••••</td>
+                    <td style="text-align:right">
+                        <button onclick="prepararEdicao('${loginDecoded}', '${val.nomeCompleto}')" style="color:var(--warning); background:none; cursor:pointer; margin-right:10px">Editar</button>
+                        <button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none; cursor:pointer;">Remover</button>
+                    </td>
+                </tr>`;
             });
         });
+    }
+
+    function prepararEdicao(login, nome) {
+        document.getElementById('nCompleto').value = nome;
+        document.getElementById('nUser').value = login;
+        document.getElementById('nPass').focus();
+        document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR";
+        document.getElementById('nUser').readOnly = true;
+    }
+
+    function validarSenha(senha) {
+        // Regex: Min 6, Max 32, Alfanumérico + Símbolo
+        const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
+        return regex.test(senha);
     }
 
     function cadastrarAnalista() {
@@ -349,13 +369,19 @@
         const p = document.getElementById('nPass').value;
         const uEncoded = encodeKey(uRaw);
 
+        if(!validarSenha(p)) {
+            return alert("A senha deve ter entre 6 e 32 caracteres, contendo pelo menos uma Letra, um Número e um Símbolo.");
+        }
+
         if(nc && uRaw && p) {
             database.ref('usuarios/' + uEncoded).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => {
-                alert("Cadastrado com sucesso!");
+                alert("Cadastro/Atualização realizada!");
                 document.getElementById('nCompleto').value = "";
                 document.getElementById('nUser').value = "";
                 document.getElementById('nPass').value = "";
-            }).catch(e => alert("Erro: " + e.message));
+                document.getElementById('btnSalvarAnalista').innerText = "CADASTRAR";
+                document.getElementById('nUser').readOnly = false;
+            });
         } else alert("Preencha todos os campos!");
     }
     
