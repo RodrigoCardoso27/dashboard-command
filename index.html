@@ -47,8 +47,7 @@
         .unlocked #overlay { display: none; }
 
         .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
-        input, select, textarea { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; color: white; font-family: inherit; transition: 0.2s; }
-        input:focus, select:focus { border-color: var(--primary); outline: none; }
+        input, select, textarea { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; color: white; font-family: inherit; }
         
         button { height: 45px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
@@ -94,6 +93,7 @@
         <div class="nav-item active" id="btnDash" onclick="switchView('dash')">🏠 Dashboard</div>
         <div class="nav-item" id="btnConsult" onclick="switchView('consult')">🔍 Consultas</div>
         <div class="nav-item" style="color: var(--success);" onclick="exportarExcel('corpoTabela')">📥 Baixar Relatório</div>
+        
         <div id="navAdmin" style="display: none; margin-top: 20px;">
             <div class="nav-item" style="color: var(--warning);" id="btnAdmin" onclick="switchView('admin')">🛠 Gestão de Equipe</div>
         </div>
@@ -106,6 +106,7 @@
 </div>
 
 <div class="main-content">
+    
     <div id="viewDash" class="view-section active">
         <div class="kpi-grid">
             <div class="kpi-box"><div class="kpi-label">Total RITMs (Hoje)</div><div class="kpi-value" id="kpiRitms">0</div></div>
@@ -120,9 +121,10 @@
         <div id="cardRegistro" class="section-card">
             <div id="overlay"><button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
             <div class="form-grid">
-                <div><label style="font-size:0.7rem; font-weight:700">RITM</label><input type="text" id="ritm" placeholder="RITM000"></div>
-                <div><label style="font-size:0.7rem; font-weight:700">STATUS</label>
+                <div><label style="font-size:0.7rem; font-weight:700">RITM*</label><input type="text" id="ritm" placeholder="RITM000"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">STATUS*</label>
                     <select id="statusRitm">
+                        <option value="">Selecione...</option>
                         <option value="Resolvido">Resolvido</option>
                         <option value="Cancelado">Cancelado</option>
                         <option value="Reaberto">Reaberto</option>
@@ -130,11 +132,11 @@
                 </div>
                 <div><label style="font-size:0.7rem; font-weight:700">POSSUI TASK?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
                 <div id="divQtdTask" style="visibility: hidden;"><label style="font-size:0.7rem; font-weight:700">QTD</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
-                <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" readonly style="background: #0f172a; cursor: not-allowed;"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="dataDisplay" disabled></div>
             </div>
             <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed var(--border);"></div>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-top:10px">
-                <div><label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA</label><input type="text" id="descResumida" placeholder="Descrição"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA*</label><input type="text" id="descResumida" placeholder="Descrição"></div>
                 <div><label style="font-size:0.7rem; font-weight:700">LINK (Opcional)</label><input type="text" id="linkRitm" placeholder="http://"></div>
             </div>
             <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">GRAVAR REGISTRO</button>
@@ -181,10 +183,6 @@
                 <tbody id="listaUsuarios"></tbody>
             </table>
         </div>
-        <div class="section-card" style="border-color: #818cf8;">
-            <h2 style="color: #818cf8;">Relatos de Erros</h2>
-            <table style="min-width: 100%;"><tbody id="listaReports"></tbody></table>
-        </div>
     </div>
 </div>
 
@@ -205,14 +203,11 @@
 
     function encodeKey(str) { return str.replace(/\./g, ','); }
     function decodeKey(str) { return str.replace(/,/g, '.'); }
-
-    // DATA HOJE FORMATADA
     function getHoje() { return new Date().toISOString().split('T')[0]; }
 
     window.onload = function() {
-        document.getElementById('data').value = getHoje();
+        document.getElementById('dataDisplay').value = getHoje();
         document.getElementById('dataConsulta').value = getHoje();
-        
         const salvo = localStorage.getItem('usuarioLogado');
         if (salvo) {
             logado = JSON.parse(salvo);
@@ -228,7 +223,7 @@
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); document.getElementById('btnDash').classList.add('active'); }
         else if(view === 'consult') { document.getElementById('viewConsult').classList.add('active'); document.getElementById('btnConsult').classList.add('active'); }
-        else { document.getElementById('viewAdmin').classList.add('active'); document.getElementById('btnAdmin').classList.add('active'); listarUsuarios(); listarReports(); }
+        else { document.getElementById('viewAdmin').classList.add('active'); document.getElementById('btnAdmin').classList.add('active'); listarUsuarios(); }
     }
 
     function toggleTaskInput() {
@@ -236,37 +231,35 @@
         document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
         document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
     }
+    
     function gerarCamposTask() {
         const qtd = parseInt(document.getElementById('taskQtd').value);
         const container = document.getElementById('containerTasksDinamicas'); container.innerHTML = "";
-        for(let i = 1; i <= qtd; i++) container.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`;
+        if(qtd > 0) { for(let i = 1; i <= qtd; i++) container.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`; }
     }
 
-    // FUNÇÃO SALVAR TOTALMENTE REVISADA
+    // FUNÇÃO SALVAR REVISADA - CORREÇÃO DEFINITIVA
     function salvar() {
-        const ritmVal = document.getElementById('ritm').value.toUpperCase().trim();
-        const statusVal = document.getElementById('statusRitm').value;
-        const descVal = document.getElementById('descResumida').value.trim();
-        const linkVal = document.getElementById('linkRitm').value.trim() || "---";
-        const dataVal = getHoje(); // Força a data de hoje para evitar erro de campo bloqueado
+        const r = document.getElementById('ritm').value.toUpperCase().trim();
+        const st = document.getElementById('statusRitm').value;
+        const d = document.getElementById('descResumida').value.trim();
+        const l = document.getElementById('linkRitm').value.trim() || "---";
+        const hoje = getHoje(); 
         const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
         
         let tasksArr = []; 
-        document.querySelectorAll('.input-task-dinamica').forEach(i => { 
-            if(i.value) tasksArr.push(i.value.toUpperCase().trim()); 
-        });
-        
-        if(!ritmVal || !descVal) {
-            alert("RITM e Descrição são campos obrigatórios!");
-            return;
-        }
+        document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tasksArr.push(i.value.toUpperCase().trim()); });
+
+        if(!r) return alert("O número da RITM é obrigatório!");
+        if(!st) return alert("Selecione um STATUS!");
+        if(!d) return alert("Preencha a DESCRIÇÃO!");
 
         const payload = {
-            ritm: ritmVal,
-            status: statusVal,
-            desc: descVal,
-            link: linkVal,
-            data: dataVal,
+            ritm: r,
+            status: st,
+            desc: d,
+            link: l,
+            data: hoje,
             analista: logado.nome,
             taskQtd: qtdT,
             tasks: tasksArr.length > 0 ? tasksArr.join(", ") : "Não possui"
@@ -274,15 +267,19 @@
 
         database.ref('chamados').push(payload)
         .then(() => {
+            alert("Gravado com sucesso!");
             document.getElementById('ritm').value = ""; 
             document.getElementById('descResumida').value = "";
             document.getElementById('linkRitm').value = ""; 
             document.getElementById('taskQtd').value = "";
+            document.getElementById('statusRitm').value = "";
             document.getElementById('temTask').value = "nao"; 
             toggleTaskInput();
-            console.log("Sucesso ao gravar!");
         })
-        .catch(err => alert("Erro ao gravar no banco: " + err.message));
+        .catch(err => {
+            console.error("Erro Firebase:", err);
+            alert("Erro ao gravar: " + err.message);
+        });
     }
 
     function escutarBanco() {
@@ -294,8 +291,8 @@
                 const c = item.val();
                 if(c.data === hoje) {
                     tR++; tT += (parseInt(c.taskQtd) || 0); cont[c.analista] = (cont[c.analista] || 0) + 1;
-                    const b = "badge-" + c.status.toLowerCase();
-                    tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${item.key}').remove()" style="background:none; cursor:pointer">🗑</button></td></tr>` + tbody.innerHTML;
+                    const b = "badge-" + (c.status ? c.status.toLowerCase() : 'resolvido');
+                    tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${item.key}').remove()">🗑</button></td></tr>` + tbody.innerHTML;
                 }
             });
             document.getElementById('kpiRitms').innerText = tR; document.getElementById('kpiTasks').innerText = tT; atualizarGrafico(cont);
@@ -309,7 +306,7 @@
             snap.forEach(item => {
                 const c = item.val();
                 if(c.data === dataC) {
-                    const b = "badge-" + c.status.toLowerCase();
+                    const b = "badge-" + (c.status ? c.status.toLowerCase() : 'resolvido');
                     tbody.innerHTML += `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
                 }
             });
@@ -325,7 +322,7 @@
                 datasets: [{ 
                     data: Object.values(dados), 
                     backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
-                    barThickness: 25 
+                    barThickness: 20 
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
@@ -346,45 +343,28 @@
     }
 
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
-    
     function verificarStatusTurno() {
         const hoje = getHoje();
         database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => {
-            const s = snap.val(); 
-            if(s && s.aberto && s.data === hoje) document.getElementById('cardRegistro').classList.add('unlocked');
+            const s = snap.val(); if(s && s.aberto && s.data === hoje) document.getElementById('cardRegistro').classList.add('unlocked');
         });
     }
-
-    function iniciarTurno() { 
-        database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: getHoje() }).then(() => location.reload()); 
-    }
-
-    function finalizarTurno() { 
-        if(confirm("Encerrar turno?")) {
-            database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); 
-        }
-    }
-
+    function iniciarTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: getHoje() }).then(() => location.reload()); }
+    function finalizarTurno() { if(confirm("Encerrar turno?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
+    
     function listarUsuarios() {
         database.ref('usuarios').on('value', snap => {
             const lista = document.getElementById('listaUsuarios'); lista.innerHTML = "";
-            snap.forEach(u => { const val = u.val(); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td>${decodeKey(u.key)}</td><td>••••</td><td style="text-align:right"><button onclick="prepararEdicao('${decodeKey(u.key)}', '${val.nomeCompleto}')" style="background:none; color:var(--warning); cursor:pointer; margin-right:10px">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()" style="background:none; color:var(--danger); cursor:pointer">Excluir</button></td></tr>`; });
+            snap.forEach(u => { const val = u.val(); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td>${decodeKey(u.key)}</td><td>••••</td><td style="text-align:right"><button onclick="prepararEdicao('${decodeKey(u.key)}', '${val.nomeCompleto}')">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()">Excluir</button></td></tr>`; });
         });
     }
-
-    function prepararEdicao(l, n) { 
-        document.getElementById('nCompleto').value = n; 
-        document.getElementById('nUser').value = l; 
-        document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; 
-        document.getElementById('nUser').readOnly = true; 
-    }
-
+    function prepararEdicao(l, n) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value.trim();
         const u = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
         const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
-        if(!regex.test(p)) return alert("Senha deve ter Letra, Número e Símbolo!");
+        if(!regex.test(p)) return alert("Senha fraca (Letra, Número e Símbolo)!");
         database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { alert("Sucesso!"); location.reload(); });
     }
 
@@ -394,7 +374,7 @@
         const cloneBody = document.getElementById(tbodyId).cloneNode(true);
         table.appendChild(cloneBody);
         const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `Relatorio_OPS.xlsx`);
+        XLSX.writeFile(wb, `Relatorio_OPS_${getHoje()}.xlsx`);
     }
 
     function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
@@ -403,12 +383,6 @@
         const m = document.getElementById('msgReport').value;
         if(!m) return;
         database.ref('reports').push({ analista: logado.nome, msg: m, data: new Date().toLocaleString() }).then(() => { alert("Enviado!"); fecharModalReport(); });
-    }
-    function listarReports() {
-        database.ref('reports').on('value', snap => {
-            const l = document.getElementById('listaReports'); l.innerHTML = "";
-            snap.forEach(i => { l.innerHTML += `<tr><td>${i.val().data}</td><td>${i.val().analista}</td><td>${i.val().msg}</td><td><button onclick="database.ref('reports').child('${i.key}').remove()" style="background:none; color:var(--danger); cursor:pointer">Arquivar</button></td></tr>`; });
-        });
     }
 </script>
 </body>
