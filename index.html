@@ -62,6 +62,9 @@
         .badge-resolvido { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
         .badge-cancelado { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
         .badge-reaberto { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+
+        .btn-acao-excluir { background: rgba(239, 68, 68, 0.1) !important; color: var(--danger) !important; width: 35px !important; height: 35px !important; border-radius: 8px !important; transition: 0.2s; }
+        .btn-acao-excluir:hover { background: var(--danger) !important; color: white !important; }
     </style>
 </head>
 <body>
@@ -154,7 +157,7 @@
 
     <div id="viewConsult" class="view-section">
         <div class="section-card">
-            <h2>Consultar Registros Antigos</h2>
+            <h2>Consultar Histórico</h2>
             <div style="display: flex; gap: 15px; margin-top: 20px; align-items: flex-end;">
                 <div style="flex: 1;"><label>SELECIONE A DATA</label><input type="date" id="dataConsulta"></div>
                 <button class="btn-primary" style="width: 200px;" onclick="consultarBanco()">Buscar</button>
@@ -238,7 +241,6 @@
         if(qtd > 0) { for(let i = 1; i <= qtd; i++) container.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`; }
     }
 
-    // FUNÇÃO SALVAR REVISADA - CORREÇÃO DEFINITIVA
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
@@ -246,39 +248,18 @@
         const l = document.getElementById('linkRitm').value.trim() || "---";
         const hoje = getHoje(); 
         const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
-        
         let tasksArr = []; 
         document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tasksArr.push(i.value.toUpperCase().trim()); });
 
-        if(!r) return alert("O número da RITM é obrigatório!");
-        if(!st) return alert("Selecione um STATUS!");
-        if(!d) return alert("Preencha a DESCRIÇÃO!");
+        if(!r || !st || !d) return alert("Preencha RITM, Status e Descrição!");
 
-        const payload = {
-            ritm: r,
-            status: st,
-            desc: d,
-            link: l,
-            data: hoje,
-            analista: logado.nome,
-            taskQtd: qtdT,
-            tasks: tasksArr.length > 0 ? tasksArr.join(", ") : "Não possui"
-        };
-
-        database.ref('chamados').push(payload)
-        .then(() => {
+        database.ref('chamados').push({
+            ritm: r, status: st, desc: d, link: l, data: hoje, analista: logado.nome, taskQtd: qtdT, tasks: tasksArr.length > 0 ? tasksArr.join(", ") : "Não possui"
+        }).then(() => {
             alert("Gravado com sucesso!");
-            document.getElementById('ritm').value = ""; 
-            document.getElementById('descResumida').value = "";
-            document.getElementById('linkRitm').value = ""; 
-            document.getElementById('taskQtd').value = "";
-            document.getElementById('statusRitm').value = "";
-            document.getElementById('temTask').value = "nao"; 
-            toggleTaskInput();
-        })
-        .catch(err => {
-            console.error("Erro Firebase:", err);
-            alert("Erro ao gravar: " + err.message);
+            document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = "";
+            document.getElementById('linkRitm').value = ""; document.getElementById('taskQtd').value = "";
+            document.getElementById('statusRitm').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput();
         });
     }
 
@@ -292,11 +273,17 @@
                 if(c.data === hoje) {
                     tR++; tT += (parseInt(c.taskQtd) || 0); cont[c.analista] = (cont[c.analista] || 0) + 1;
                     const b = "badge-" + (c.status ? c.status.toLowerCase() : 'resolvido');
-                    tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${item.key}').remove()">🗑</button></td></tr>` + tbody.innerHTML;
+                    tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td style="text-align:right"><button onclick="removerChamado('${item.key}')" class="btn-acao-excluir">🗑</button></td></tr>` + tbody.innerHTML;
                 }
             });
             document.getElementById('kpiRitms').innerText = tR; document.getElementById('kpiTasks').innerText = tT; atualizarGrafico(cont);
         });
+    }
+
+    function removerChamado(id) {
+        if(confirm("Deseja realmente excluir este chamado permanentemente?")) {
+            database.ref('chamados').child(id).remove().then(() => alert("Excluído!"));
+        }
     }
 
     function consultarBanco() {
@@ -305,11 +292,15 @@
             const tbody = document.getElementById('corpoConsulta'); tbody.innerHTML = "";
             snap.forEach(item => {
                 const c = item.val();
+                // REGRA: ANALISTA VÊ SÓ O DELE, ADMIN VÊ TUDO
                 if(c.data === dataC) {
-                    const b = "badge-" + (c.status ? c.status.toLowerCase() : 'resolvido');
-                    tbody.innerHTML += `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
+                    if(logado.role === 'admin' || c.analista === logado.nome) {
+                        const b = "badge-" + (c.status ? c.status.toLowerCase() : 'resolvido');
+                        tbody.innerHTML += `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
+                    }
                 }
             });
+            if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>Nenhum registro encontrado para esta data ou permissão.</td></tr>";
         });
     }
 
@@ -364,7 +355,7 @@
         const u = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
         const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
-        if(!regex.test(p)) return alert("Senha fraca (Letra, Número e Símbolo)!");
+        if(!regex.test(p)) return alert("Senha fraca!");
         database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { alert("Sucesso!"); location.reload(); });
     }
 
