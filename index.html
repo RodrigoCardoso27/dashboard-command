@@ -34,23 +34,20 @@
 
         .main-content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); }
         .view-section { display: none; }
-        .view-section.active { display: block; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .section-card { background: var(--bg-surface); border-radius: 24px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; position: relative; }
         
-        #modalReport { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--bg-surface); padding: 30px; border-radius: 24px; width: 400px; border: 1px solid var(--border); }
-
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .kpi-box { background: var(--glass); padding: 20px; border-radius: 20px; border: 1px solid var(--border); text-align: center; }
         .kpi-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
-        .kpi-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
 
         #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 10; border-radius: 24px; backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; }
         .unlocked #overlay { display: none; }
 
         .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
-        input, select, textarea { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; color: white; transition: 0.3s; font-family: inherit; }
+        input, select, textarea { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; color: white; font-family: inherit; }
         
         button { height: 45px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
@@ -69,9 +66,9 @@
 </head>
 <body>
 
-<div id="modalReport">
-    <div class="modal-content">
-        <h3 style="margin-bottom: 15px;">Reportar Erro ou Melhoria</h3>
+<div id="modalReport" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: var(--bg-surface); padding: 30px; border-radius: 24px; width: 400px; border: 1px solid var(--border);">
+        <h3 style="margin-bottom: 15px;">Reportar Erro</h3>
         <textarea id="msgReport" rows="5" placeholder="Descreva aqui..."></textarea>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn-danger" style="flex: 1;" onclick="fecharModalReport()">Cancelar</button>
@@ -85,7 +82,7 @@
         <div class="logo-area" style="justify-content: center;">🌐 COMMAND</div>
         <input type="text" id="lUser" placeholder="Usuário">
         <input type="password" id="lPass" placeholder="Senha" style="margin-top: 15px;">
-        <button class="btn-primary" style="margin-top: 24px;" onclick="autenticar()">Entrar no Sistema</button>
+        <button class="btn-primary" style="margin-top: 24px;" onclick="autenticar()">Acessar</button>
         <p id="errorMsg" style="color: var(--danger); font-size: 0.8rem; margin-top: 15px; display: none;">Dados incorretos!</p>
     </div>
 </div>
@@ -94,7 +91,7 @@
     <div class="logo-area">🌐 COMMAND</div>
     <div style="flex: 1;">
         <div class="nav-item active" id="btnDash" onclick="switchView('dash')">🏠 Dashboard</div>
-        <div class="nav-item" style="color: var(--success);" onclick="exportarExcel()">📥 Baixar Relatório</div>
+        <div class="nav-item" id="btnConsult" onclick="switchView('consult')">🔍 Consultas</div>
         <div id="navAdmin" style="display: none; margin-top: 20px;">
             <div class="nav-item" style="color: var(--warning);" id="btnAdmin" onclick="switchView('admin')">🛠 Gestão de Equipe</div>
         </div>
@@ -107,21 +104,18 @@
 </div>
 
 <div class="main-content">
+    
     <div id="viewDash" class="view-section active">
         <div class="kpi-grid">
-            <div class="kpi-box">
-                <div class="kpi-label">Total RITMs (Hoje)</div>
-                <div class="kpi-value" id="kpiRitms">0</div>
-            </div>
-            <div class="kpi-box">
-                <div class="kpi-label">Total Tasks (Hoje)</div>
-                <div class="kpi-value" id="kpiTasks" style="color: var(--success);">0</div>
-            </div>
+            <div class="kpi-box"><div class="kpi-label">Total RITMs (Hoje)</div><div class="kpi-value" id="kpiRitms">0</div></div>
+            <div class="kpi-box"><div class="kpi-label">Total Tasks (Hoje)</div><div class="kpi-value" id="kpiTasks" style="color: var(--success);">0</div></div>
         </div>
+
         <div class="section-card">
             <h2 style="margin-bottom: 20px;">Volume por Analista</h2>
             <div style="height: 250px;"><canvas id="meuGraficoBarras"></canvas></div>
         </div>
+
         <div id="cardRegistro" class="section-card">
             <div id="overlay"><button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
             <div class="form-grid">
@@ -133,38 +127,53 @@
                         <option value="Reaberto">Reaberto</option>
                     </select>
                 </div>
-                <div><label style="font-size:0.7rem; font-weight:700">TEM TASK?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                <div id="divQtdTask" style="visibility: hidden;"><label style="font-size:0.7rem; font-weight:700">QTD TASKS</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
-                <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" onchange="escutarBanco()"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">POSSUI TASK?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+                <div id="divQtdTask" style="visibility: hidden;"><label style="font-size:0.7rem; font-weight:700">QTD</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" disabled></div>
             </div>
             <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed var(--border);"></div>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-top:10px">
-                <div><label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA</label><input type="text" id="descResumida" placeholder="O que foi feito?"></div>
-                <div><label style="font-size:0.7rem; font-weight:700">LINK DA RITM (Opcional)</label><input type="text" id="linkRitm" placeholder="http://..."></div>
+                <div><label style="font-size:0.7rem; font-weight:700">DESCRIÇÃO RESUMIDA</label><input type="text" id="descResumida" placeholder="Descrição"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">LINK (Opcional)</label><input type="text" id="linkRitm" placeholder="http://"></div>
             </div>
-            <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">REGISTRAR NO BANCO</button>
-            <button class="btn-danger" style="margin-top: 10px; width: 100%; height: 35px; background: transparent; border: 1px solid #ef4444;" onclick="finalizarTurno()">Encerrar meu turno de hoje</button>
+            <button class="btn-success" style="margin-top: 15px;" onclick="salvar()">GRAVAR REGISTRO</button>
+            <button class="btn-danger" style="margin-top: 10px; width: 100%; height: 35px; background: transparent; border: 1px solid #ef4444;" onclick="finalizarTurno()">Encerrar Turno</button>
+        </div>
+
+        <div class="section-card">
+            <h3>Registros Ativos</h3>
+            <table style="min-width: 100%;">
+                <thead><tr><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="viewConsult" class="view-section">
+        <div class="section-card">
+            <h2>Consultar Registros Antigos</h2>
+            <div style="display: flex; gap: 15px; margin-top: 20px; align-items: flex-end;">
+                <div style="flex: 1;"><label>SELECIONE A DATA</label><input type="date" id="dataConsulta"></div>
+                <button class="btn-primary" style="width: 200px;" onclick="consultarBanco()">Buscar</button>
+                <button class="btn-success" style="width: 200px;" onclick="exportarExcel('tabelaConsulta')">Exportar Excel</button>
+            </div>
         </div>
         <div class="section-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3>Registros Ativos</h3>
-                <select id="filtroAnalista" onchange="escutarBanco()" style="width: 200px;"><option value="TODOS">TODOS OS ANALISTAS</option></select>
-            </div>
-            <table style="min-width: 100%;">
-                <thead><tr><th>RITM</th><th>STATUS</th><th>TASK(S)</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
-                <tbody id="corpoTabela"></tbody>
+            <table id="tabelaConsulta" style="min-width: 100%;">
+                <thead><tr><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>
+                <tbody id="corpoConsulta"></tbody>
             </table>
         </div>
     </div>
 
     <div id="viewAdmin" class="view-section">
         <div class="section-card">
-            <h2 style="color: var(--warning); margin-bottom: 20px;">Gestão de Equipe</h2>
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-                <div><label style="font-size:0.6rem">NOME COMPLETO</label><input type="text" id="nCompleto" placeholder="Rodrigo Silva"></div>
-                <div><label style="font-size:0.6rem">LOGIN (USUÁRIO)</label><input type="text" id="nUser" placeholder="RODRIGO.SILVA"></div>
-                <div><label style="font-size:0.6rem">SENHA (6-32 Caract. Alfanum + Símbolo)</label><input type="password" id="nPass" placeholder="Ops@123"></div>
-                <div style="display:flex; align-items:flex-end;"><button id="btnSalvarAnalista" class="btn-success" style="width:100%" onclick="cadastrarAnalista()">CADASTRAR</button></div>
+            <h2 style="color: var(--warning);">Gestão de Equipe</h2>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; margin-top: 20px;">
+                <input type="text" id="nCompleto" placeholder="Nome Completo">
+                <input type="text" id="nUser" placeholder="Login">
+                <input type="password" id="nPass" placeholder="Senha Forte">
+                <button id="btnSalvarAnalista" class="btn-success" onclick="cadastrarAnalista()">CADASTRAR</button>
             </div>
             <table style="min-width: 100%;">
                 <thead><tr><th>Nome</th><th>Login</th><th>Senha</th><th style="text-align:right">Ação</th></tr></thead>
@@ -172,8 +181,10 @@
             </table>
         </div>
         <div class="section-card" style="border-color: #818cf8;">
-            <h2 style="color: #818cf8; margin-bottom: 20px;">Relatos de Erros</h2>
-            <tbody id="listaReports"></tbody>
+            <h2 style="color: #818cf8;">Relatos de Erros</h2>
+            <table style="min-width: 100%;">
+                <tbody id="listaReports"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -197,6 +208,7 @@
     function decodeKey(str) { return str.replace(/,/g, '.'); }
 
     document.getElementById('data').valueAsDate = new Date();
+    document.getElementById('dataConsulta').valueAsDate = new Date();
 
     window.onload = function() {
         const salvo = localStorage.getItem('usuarioLogado');
@@ -205,32 +217,96 @@
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('displayUser').innerText = logado.nome;
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
-            verificarStatusTurno(); carregarFiltroAnalistas(); escutarBanco();
+            verificarStatusTurno(); escutarBanco();
         }
     };
 
-    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
-    function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
-    function enviarReport() {
-        const msg = document.getElementById('msgReport').value;
-        if(!msg) return;
-        database.ref('reports').push({ analista: logado.nome, mensagem: msg, data: new Date().toLocaleString() }).then(() => { alert("Enviado!"); fecharModalReport(); });
+    function switchView(view) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); document.getElementById('btnDash').classList.add('active'); }
+        else if(view === 'consult') { document.getElementById('viewConsult').classList.add('active'); document.getElementById('btnConsult').classList.add('active'); }
+        else { document.getElementById('viewAdmin').classList.add('active'); document.getElementById('btnAdmin').classList.add('active'); listarUsuarios(); listarReports(); }
     }
 
-    function verificarStatusTurno() {
-        const hoje = new Date().toISOString().split('T')[0];
-        database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => {
-            const status = snap.val();
-            if(status && status.aberto === true && status.data === hoje) document.getElementById('cardRegistro').classList.add('unlocked');
-            else finalizarTurno();
+    function toggleTaskInput() {
+        const t = document.getElementById('temTask').value === 'sim';
+        document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
+        document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
+    }
+    function gerarCamposTask() {
+        const qtd = parseInt(document.getElementById('taskQtd').value);
+        const container = document.getElementById('containerTasksDinamicas'); container.innerHTML = "";
+        for(let i = 1; i <= qtd; i++) container.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`;
+    }
+
+    // SALVAMENTO CORRIGIDO
+    function salvar() {
+        const ritmVal = document.getElementById('ritm').value.toUpperCase().trim();
+        const statusVal = document.getElementById('statusRitm').value;
+        const descVal = document.getElementById('descResumida').value;
+        const linkVal = document.getElementById('linkRitm').value || "---";
+        const dataVal = document.getElementById('data').value;
+        const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
+        let tasksArr = []; document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tasksArr.push(i.value.toUpperCase().trim()); });
+        
+        if(!ritmVal || !descVal) return alert("Preencha RITM e Descrição!");
+
+        database.ref('chamados').push({
+            ritm: ritmVal, status: statusVal, desc: descVal, link: linkVal, 
+            data: dataVal, analista: logado.nome, taskQtd: qtdT, tasks: tasksArr.join(", ") || "Não possui"
+        }).then(() => {
+            document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = "";
+            document.getElementById('linkRitm').value = ""; document.getElementById('taskQtd').value = "";
+            document.getElementById('temTask').value = "nao"; toggleTaskInput();
         });
     }
-    function iniciarTurno() {
-        const hoje = new Date().toISOString().split('T')[0];
-        database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: hoje }).then(() => document.getElementById('cardRegistro').classList.add('unlocked'));
+
+    function escutarBanco() {
+        const hoje = document.getElementById('data').value;
+        database.ref('chamados').on('value', snap => {
+            const tbody = document.getElementById('corpoTabela'); tbody.innerHTML = "";
+            let cont = {}; let tR = 0; let tT = 0;
+            snap.forEach(item => {
+                const c = item.val();
+                if(c.data === hoje) {
+                    tR++; tT += (parseInt(c.taskQtd) || 0); cont[c.analista] = (cont[c.analista] || 0) + 1;
+                    const b = "badge-" + c.status.toLowerCase();
+                    tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${item.key}').remove()">🗑</button></td></tr>` + tbody.innerHTML;
+                }
+            });
+            document.getElementById('kpiRitms').innerText = tR; document.getElementById('kpiTasks').innerText = tT; atualizarGrafico(cont);
+        });
     }
-    function finalizarTurno() {
-        database.ref('statusTurno/' + encodeKey(logado ? logado.nome : '')).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
+
+    function consultarBanco() {
+        const dataC = document.getElementById('dataConsulta').value;
+        database.ref('chamados').once('value', snap => {
+            const tbody = document.getElementById('corpoConsulta'); tbody.innerHTML = "";
+            snap.forEach(item => {
+                const c = item.val();
+                if(c.data === dataC) {
+                    const b = "badge-" + c.status.toLowerCase();
+                    tbody.innerHTML += `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
+                }
+            });
+        });
+    }
+
+    function atualizarGrafico(dados) {
+        const ctx = document.getElementById('meuGraficoBarras').getContext('2d'); if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dados),
+                datasets: [{ 
+                    data: Object.values(dados), 
+                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444'],
+                    barThickness: 25 // BARRA MAIS FINA
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
     }
 
     function autenticar() {
@@ -247,92 +323,42 @@
     }
 
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
-    function switchView(view) {
-        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-        if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); }
-        else { document.getElementById('viewAdmin').classList.add('active'); listarUsuarios(); }
-    }
-
-    function toggleTaskInput() {
-        const t = document.getElementById('temTask').value === 'sim';
-        document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
-        document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
-    }
-    function gerarCamposTask() {
-        const qtd = parseInt(document.getElementById('taskQtd').value);
-        const container = document.getElementById('containerTasksDinamicas'); container.innerHTML = "";
-        for(let i = 1; i <= qtd; i++) container.innerHTML += `<div><label style="font-size:0.6rem">TASK ${i}</label><input type="text" class="input-task-dinamica" placeholder="TASK..."></div>`;
-    }
-
-    function salvar() {
-        const r = document.getElementById('ritm').value.toUpperCase().trim();
-        const st = document.getElementById('statusRitm').value;
-        const d = document.getElementById('descResumida').value;
-        const l = document.getElementById('linkRitm').value || "---";
-        const dt = document.getElementById('data').value;
-        const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
-        let tasks = []; document.querySelectorAll('.input-task-dinamica').forEach(input => { if(input.value) tasks.push(input.value.toUpperCase().trim()); });
-        
-        if(!r || !d) return alert("Obrigatório!");
-        database.ref('chamados').push({ ritm: r, status: st, desc: d, link: l, data: dt, analista: logado.nome, taskQtd: qtdT, tasks: tasks.join(", ") || "Não possui" }).then(() => {
-            document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = "";
-            document.getElementById('taskQtd').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput();
+    function iniciarTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: document.getElementById('data').value }).then(() => location.reload()); }
+    function finalizarTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
+    function verificarStatusTurno() {
+        database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => {
+            const s = snap.val(); if(s && s.aberto && s.data === document.getElementById('data').value) document.getElementById('cardRegistro').classList.add('unlocked');
         });
     }
-
-    function escutarBanco() {
-        database.ref('chamados').on('value', snap => {
-            const tbody = document.getElementById('corpoTabela'); const dataF = document.getElementById('data').value;
-            tbody.innerHTML = ""; let cont = {}; let tR = 0; let tT = 0;
-            snap.forEach(item => {
-                const c = item.val();
-                if(c.data === dataF) {
-                    tR++; tT += (parseInt(c.taskQtd) || 0); cont[c.analista] = (cont[c.analista] || 0) + 1;
-                    const bCls = "badge-" + c.status.toLowerCase();
-                    tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${bCls}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td>${c.link !== "---" ? `<a href="${c.link}" target="_blank">Link</a>` : '---'}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${item.key}').remove()">🗑</button></td></tr>` + tbody.innerHTML;
-                }
-            });
-            document.getElementById('kpiRitms').innerText = tR; document.getElementById('kpiTasks').innerText = tT; atualizarGrafico(cont);
-        });
-    }
-
-    function atualizarGrafico(dados) {
-        const ctx = document.getElementById('meuGraficoBarras').getContext('2d'); if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dados), datasets: [{ data: Object.values(dados), backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
-    }
-
     function listarUsuarios() {
         database.ref('usuarios').on('value', snap => {
             const lista = document.getElementById('listaUsuarios'); lista.innerHTML = "";
-            snap.forEach(u => {
-                const val = u.val(); const login = decodeKey(u.key);
-                lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td>••••••</td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}')">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()">Remover</button></td></tr>`;
-            });
+            snap.forEach(u => { const val = u.val(); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td>${decodeKey(u.key)}</td><td>••••</td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()">Excluir</button></td></tr>`; });
         });
     }
-
-    function prepararEdicao(l, n) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
-
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value.trim();
         const u = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
         const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
-        if(!regex.test(p)) return alert("Senha fraca!");
+        if(!regex.test(p)) return alert("Senha deve ter Letra, Número e Símbolo!");
         database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { alert("Sucesso!"); location.reload(); });
     }
-
-    function carregarFiltroAnalistas() {
-        database.ref('usuarios').on('value', snap => {
-            const select = document.getElementById('filtroAnalista'); select.innerHTML = '<option value="TODOS">TODOS</option>';
-            snap.forEach(u => { select.innerHTML += `<option value="${decodeKey(u.key)}">${decodeKey(u.key)}</option>`; });
-        });
-    }
-
-    function exportarExcel() {
-        const table = document.querySelector("#viewDash table"); 
-        const wb = XLSX.utils.table_to_book(table);
+    function exportarExcel(id) {
+        const table = document.getElementById(id); const wb = XLSX.utils.table_to_book(table);
         XLSX.writeFile(wb, `Relatorio_OPS.xlsx`);
+    }
+    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
+    function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; }
+    function enviarReport() {
+        const m = document.getElementById('msgReport').value;
+        database.ref('reports').push({ analista: logado.nome, msg: m, data: new Date().toLocaleString() }).then(() => { alert("Enviado!"); fecharModalReport(); });
+    }
+    function listarReports() {
+        database.ref('reports').on('value', snap => {
+            const l = document.getElementById('listaReports'); l.innerHTML = "";
+            snap.forEach(i => { l.innerHTML += `<tr><td>${i.val().data}</td><td>${i.val().analista}</td><td>${i.val().msg}</td></tr>`; });
+        });
     }
 </script>
 </body>
