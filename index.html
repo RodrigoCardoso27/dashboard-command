@@ -49,7 +49,7 @@
         #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 10; border-radius: 24px; backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; }
         .unlocked #overlay { display: none; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
+        .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 15px; }
         input, select, textarea { width: 100%; background: #020617; border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; color: white; transition: 0.3s; font-family: inherit; }
         
         button { height: 45px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -60,6 +60,11 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { text-align: left; padding: 12px; color: var(--text-dim); font-size: 0.7rem; border-bottom: 1px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+        .badge-resolvido { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .badge-cancelado { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .badge-reaberto { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning); }
     </style>
 </head>
 <body>
@@ -67,10 +72,10 @@
 <div id="modalReport">
     <div class="modal-content">
         <h3 style="margin-bottom: 15px;">Reportar Erro ou Melhoria</h3>
-        <textarea id="msgReport" rows="5" placeholder="Descreva aqui o erro ou sua sugestão de melhoria..."></textarea>
+        <textarea id="msgReport" rows="5" placeholder="Descreva aqui..."></textarea>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn-danger" style="flex: 1;" onclick="fecharModalReport()">Cancelar</button>
-            <button class="btn-success" style="flex: 1;" onclick="enviarReport()">Enviar Relato</button>
+            <button class="btn-success" style="flex: 1;" onclick="enviarReport()">Enviar</button>
         </div>
     </div>
 </div>
@@ -121,6 +126,13 @@
             <div id="overlay"><button class="btn-primary" style="width: 200px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
             <div class="form-grid">
                 <div><label style="font-size:0.7rem; font-weight:700">RITM</label><input type="text" id="ritm" placeholder="RITM000"></div>
+                <div><label style="font-size:0.7rem; font-weight:700">STATUS</label>
+                    <select id="statusRitm">
+                        <option value="Resolvido">Resolvido</option>
+                        <option value="Cancelado">Cancelado</option>
+                        <option value="Reaberto">Reaberto</option>
+                    </select>
+                </div>
                 <div><label style="font-size:0.7rem; font-weight:700">TEM TASK?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
                 <div id="divQtdTask" style="visibility: hidden;"><label style="font-size:0.7rem; font-weight:700">QTD TASKS</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
                 <div><label style="font-size:0.7rem; font-weight:700">DATA</label><input type="date" id="data" onchange="escutarBanco()"></div>
@@ -139,7 +151,7 @@
                 <select id="filtroAnalista" onchange="escutarBanco()" style="width: 200px;"><option value="TODOS">TODOS OS ANALISTAS</option></select>
             </div>
             <table style="min-width: 100%;">
-                <thead><tr><th>RITM</th><th>TASK(S)</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
+                <thead><tr><th>RITM</th><th>STATUS</th><th>TASK(S)</th><th>ANALISTA</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
@@ -149,25 +161,19 @@
         <div class="section-card">
             <h2 style="color: var(--warning); margin-bottom: 20px;">Gestão de Equipe</h2>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-                <div><label style="font-size:0.6rem">NOME COMPLETO</label><input type="text" id="nCompleto" placeholder="Ex: Rodrigo Silva"></div>
-                <div><label style="font-size:0.6rem">LOGIN (USUÁRIO)</label><input type="text" id="nUser" placeholder="Ex: RODRIGO.SILVA"></div>
-                <div><label style="font-size:0.6rem">SENHA (6-32 Caract. Alfanum + Símbolo)</label><input type="password" id="nPass" placeholder="Ex: Ops@123"></div>
+                <div><label style="font-size:0.6rem">NOME COMPLETO</label><input type="text" id="nCompleto" placeholder="Rodrigo Silva"></div>
+                <div><label style="font-size:0.6rem">LOGIN (USUÁRIO)</label><input type="text" id="nUser" placeholder="RODRIGO.SILVA"></div>
+                <div><label style="font-size:0.6rem">SENHA (6-32 Caract. Alfanum + Símbolo)</label><input type="password" id="nPass" placeholder="Ops@123"></div>
                 <div style="display:flex; align-items:flex-end;"><button id="btnSalvarAnalista" class="btn-success" style="width:100%" onclick="cadastrarAnalista()">CADASTRAR</button></div>
             </div>
-            <div style="margin-top: 30px;">
-                <h4>Analistas Cadastrados</h4>
-                <table style="min-width: 100%;">
-                    <thead><tr><th>Nome Completo</th><th>Login</th><th>Senha</th><th style="text-align:right">Ação</th></tr></thead>
-                    <tbody id="listaUsuarios"></tbody>
-                </table>
-            </div>
+            <table style="min-width: 100%;">
+                <thead><tr><th>Nome</th><th>Login</th><th>Senha</th><th style="text-align:right">Ação</th></tr></thead>
+                <tbody id="listaUsuarios"></tbody>
+            </table>
         </div>
         <div class="section-card" style="border-color: #818cf8;">
-            <h2 style="color: #818cf8; margin-bottom: 20px;">Relatos de Erros / Sugestões</h2>
-            <table style="min-width: 100%;">
-                <thead><tr><th>Data</th><th>Analista</th><th>Relato</th><th style="text-align:right">Ação</th></tr></thead>
-                <tbody id="listaReports"></tbody>
-            </table>
+            <h2 style="color: #818cf8; margin-bottom: 20px;">Relatos de Erros</h2>
+            <tbody id="listaReports"></tbody>
         </div>
     </div>
 </div>
@@ -185,8 +191,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    let logado = null;
-    let chartInstance = null;
+    let logado = null; let chartInstance = null;
 
     function encodeKey(str) { return str.replace(/\./g, ','); }
     function decodeKey(str) { return str.replace(/,/g, '.'); }
@@ -200,9 +205,7 @@
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('displayUser').innerText = logado.nome;
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
-            verificarStatusTurno();
-            carregarFiltroAnalistas();
-            escutarBanco();
+            verificarStatusTurno(); carregarFiltroAnalistas(); escutarBanco();
         }
     };
 
@@ -210,53 +213,33 @@
     function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
     function enviarReport() {
         const msg = document.getElementById('msgReport').value;
-        if(!msg) return alert("Escreva algo.");
-        database.ref('reports').push({ analista: logado.nome, mensagem: msg, data: new Date().toLocaleString() }).then(() => {
-            alert("Enviado!"); fecharModalReport();
-        });
+        if(!msg) return;
+        database.ref('reports').push({ analista: logado.nome, mensagem: msg, data: new Date().toLocaleString() }).then(() => { alert("Enviado!"); fecharModalReport(); });
     }
 
-    function listarReports() {
-        database.ref('reports').on('value', snap => {
-            const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
-            snap.forEach(item => {
-                const r = item.val();
-                tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.mensagem}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${item.key}').remove()" style="background:none; color:var(--danger); cursor:pointer;">Arquivar</button></td></tr>`;
-            });
-        });
-    }
-    
     function verificarStatusTurno() {
         const hoje = new Date().toISOString().split('T')[0];
-        const userKey = encodeKey(logado.nome);
-        database.ref('statusTurno/' + userKey).once('value', snap => {
+        database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => {
             const status = snap.val();
-            if(status && status.aberto === true) {
-                if(status.data === hoje) document.getElementById('cardRegistro').classList.add('unlocked');
-                else finalizarTurno();
-            }
+            if(status && status.aberto === true && status.data === hoje) document.getElementById('cardRegistro').classList.add('unlocked');
+            else finalizarTurno();
         });
     }
     function iniciarTurno() {
         const hoje = new Date().toISOString().split('T')[0];
-        const userKey = encodeKey(logado.nome);
-        database.ref('statusTurno/' + userKey).set({ aberto: true, data: hoje }).then(() => document.getElementById('cardRegistro').classList.add('unlocked'));
+        database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: hoje }).then(() => document.getElementById('cardRegistro').classList.add('unlocked'));
     }
     function finalizarTurno() {
-        if(confirm("Encerrar turno?")) {
-            const userKey = encodeKey(logado ? logado.nome : '');
-            database.ref('statusTurno/' + userKey).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
-        }
+        database.ref('statusTurno/' + encodeKey(logado ? logado.nome : '')).set({ aberto: false, data: '' }).then(() => document.getElementById('cardRegistro').classList.remove('unlocked'));
     }
 
     function autenticar() {
-        const uRaw = document.getElementById('lUser').value.toUpperCase().trim();
+        const u = document.getElementById('lUser').value.toUpperCase().trim();
         const p = document.getElementById('lPass').value;
-        const uEncoded = encodeKey(uRaw);
-        database.ref('usuarios/' + uEncoded).once('value', snap => {
+        database.ref('usuarios/' + encodeKey(u)).once('value', snap => {
             const user = snap.val();
             if(user && user.senha === p) {
-                logado = { nome: uRaw, role: user.role };
+                logado = { nome: u, role: user.role };
                 localStorage.setItem('usuarioLogado', JSON.stringify(logado));
                 location.reload();
             } else { document.getElementById('errorMsg').style.display = 'block'; }
@@ -266,31 +249,32 @@
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
     function switchView(view) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); document.getElementById('btnDash').classList.add('active'); }
-        else { document.getElementById('viewAdmin').classList.add('active'); document.getElementById('btnAdmin').classList.add('active'); listarUsuarios(); listarReports(); }
+        if(view === 'dash') { document.getElementById('viewDash').classList.add('active'); }
+        else { document.getElementById('viewAdmin').classList.add('active'); listarUsuarios(); }
     }
 
     function toggleTaskInput() {
-        const temTask = document.getElementById('temTask').value;
-        document.getElementById('divQtdTask').style.visibility = (temTask === 'sim') ? 'visible' : 'hidden';
-        document.getElementById('containerTasksDinamicas').style.display = (temTask === 'sim') ? 'grid' : 'none';
+        const t = document.getElementById('temTask').value === 'sim';
+        document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
+        document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
     }
     function gerarCamposTask() {
         const qtd = parseInt(document.getElementById('taskQtd').value);
         const container = document.getElementById('containerTasksDinamicas'); container.innerHTML = "";
-        if(qtd > 0) { for(let i = 1; i <= qtd; i++) { container.innerHTML += `<div><label style="font-size:0.6rem">TASK ${i}</label><input type="text" class="input-task-dinamica" placeholder="TASK..."></div>`; } }
+        for(let i = 1; i <= qtd; i++) container.innerHTML += `<div><label style="font-size:0.6rem">TASK ${i}</label><input type="text" class="input-task-dinamica" placeholder="TASK..."></div>`;
     }
 
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
+        const st = document.getElementById('statusRitm').value;
         const d = document.getElementById('descResumida').value;
         const l = document.getElementById('linkRitm').value || "---";
         const dt = document.getElementById('data').value;
         const qtdT = parseInt(document.getElementById('taskQtd').value) || 0;
         let tasks = []; document.querySelectorAll('.input-task-dinamica').forEach(input => { if(input.value) tasks.push(input.value.toUpperCase().trim()); });
+        
         if(!r || !d) return alert("Obrigatório!");
-        database.ref('chamados').push({ ritm: r, desc: d, link: l, data: dt, analista: logado.nome, taskQtd: qtdT, tasks: tasks.join(", ") || "Não possui" }).then(() => {
+        database.ref('chamados').push({ ritm: r, status: st, desc: d, link: l, data: dt, analista: logado.nome, taskQtd: qtdT, tasks: tasks.join(", ") || "Não possui" }).then(() => {
             document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = "";
             document.getElementById('taskQtd').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput();
         });
@@ -299,15 +283,13 @@
     function escutarBanco() {
         database.ref('chamados').on('value', snap => {
             const tbody = document.getElementById('corpoTabela'); const dataF = document.getElementById('data').value;
-            const analistaF = document.getElementById('filtroAnalista').value; tbody.innerHTML = "";
-            let cont = {}; let tR = 0; let tT = 0;
+            tbody.innerHTML = ""; let cont = {}; let tR = 0; let tT = 0;
             snap.forEach(item => {
-                const c = item.val(); const key = item.key;
+                const c = item.val();
                 if(c.data === dataF) {
                     tR++; tT += (parseInt(c.taskQtd) || 0); cont[c.analista] = (cont[c.analista] || 0) + 1;
-                    if(analistaF === "TODOS" || c.analista === analistaF) {
-                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td>${c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:#6366f1">Link</a>` : '---'}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${key}').remove()" style="background:none; color:var(--danger); font-size:1.2rem; cursor:pointer;">🗑</button></td></tr>` + tbody.innerHTML;
-                    }
+                    const bCls = "badge-" + c.status.toLowerCase();
+                    tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${bCls}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td><td>${c.link !== "---" ? `<a href="${c.link}" target="_blank">Link</a>` : '---'}</td><td style="text-align:right"><button onclick="database.ref('chamados').child('${item.key}').remove()">🗑</button></td></tr>` + tbody.innerHTML;
                 }
             });
             document.getElementById('kpiRitms').innerText = tR; document.getElementById('kpiTasks').innerText = tT; atualizarGrafico(cont);
@@ -316,79 +298,41 @@
 
     function atualizarGrafico(dados) {
         const ctx = document.getElementById('meuGraficoBarras').getContext('2d'); if(chartInstance) chartInstance.destroy();
-        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
-        chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dados), datasets: [{ label: 'Chamados', data: Object.values(dados), backgroundColor: Object.keys(dados).map((_, i) => colors[i % colors.length]), borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
-    }
-
-    function carregarFiltroAnalistas() {
-        database.ref('usuarios').on('value', snap => {
-            const select = document.getElementById('filtroAnalista'); select.innerHTML = '<option value="TODOS">TODOS OS ANALISTAS</option>';
-            snap.forEach(u => { 
-                const loginDecoded = decodeKey(u.key);
-                select.innerHTML += `<option value="${loginDecoded}">${loginDecoded}</option>`; 
-            });
-        });
+        chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dados), datasets: [{ data: Object.values(dados), backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
     }
 
     function listarUsuarios() {
         database.ref('usuarios').on('value', snap => {
             const lista = document.getElementById('listaUsuarios'); lista.innerHTML = "";
             snap.forEach(u => {
-                const val = u.val();
-                const loginDecoded = decodeKey(u.key);
-                lista.innerHTML += `<tr>
-                    <td>${val.nomeCompleto || '---'}</td>
-                    <td><b>${loginDecoded}</b></td>
-                    <td>••••••</td>
-                    <td style="text-align:right">
-                        <button onclick="prepararEdicao('${loginDecoded}', '${val.nomeCompleto}')" style="color:var(--warning); background:none; cursor:pointer; margin-right:10px">Editar</button>
-                        <button onclick="database.ref('usuarios').child('${u.key}').remove()" style="color:var(--danger); background:none; cursor:pointer;">Remover</button>
-                    </td>
-                </tr>`;
+                const val = u.val(); const login = decodeKey(u.key);
+                lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td>••••••</td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}')">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()">Remover</button></td></tr>`;
             });
         });
     }
 
-    function prepararEdicao(login, nome) {
-        document.getElementById('nCompleto').value = nome;
-        document.getElementById('nUser').value = login;
-        document.getElementById('nPass').focus();
-        document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR";
-        document.getElementById('nUser').readOnly = true;
-    }
-
-    function validarSenha(senha) {
-        // Regex: Min 6, Max 32, Alfanumérico + Símbolo
-        const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
-        return regex.test(senha);
-    }
+    function prepararEdicao(l, n) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
 
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value.trim();
-        const uRaw = document.getElementById('nUser').value.toUpperCase().trim();
+        const u = document.getElementById('nUser').value.toUpperCase().trim();
         const p = document.getElementById('nPass').value;
-        const uEncoded = encodeKey(uRaw);
-
-        if(!validarSenha(p)) {
-            return alert("A senha deve ter entre 6 e 32 caracteres, contendo pelo menos uma Letra, um Número e um Símbolo.");
-        }
-
-        if(nc && uRaw && p) {
-            database.ref('usuarios/' + uEncoded).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => {
-                alert("Cadastro/Atualização realizada!");
-                document.getElementById('nCompleto').value = "";
-                document.getElementById('nUser').value = "";
-                document.getElementById('nPass').value = "";
-                document.getElementById('btnSalvarAnalista').innerText = "CADASTRAR";
-                document.getElementById('nUser').readOnly = false;
-            });
-        } else alert("Preencha todos os campos!");
+        const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
+        if(!regex.test(p)) return alert("Senha fraca!");
+        database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { alert("Sucesso!"); location.reload(); });
     }
-    
+
+    function carregarFiltroAnalistas() {
+        database.ref('usuarios').on('value', snap => {
+            const select = document.getElementById('filtroAnalista'); select.innerHTML = '<option value="TODOS">TODOS</option>';
+            snap.forEach(u => { select.innerHTML += `<option value="${decodeKey(u.key)}">${decodeKey(u.key)}</option>`; });
+        });
+    }
+
     function exportarExcel() {
         const table = document.querySelector("#viewDash table"); 
         const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `Relatorio_OPS_${document.getElementById('data').value}.xlsx`);
+        XLSX.writeFile(wb, `Relatorio_OPS.xlsx`);
     }
 </script>
 </body>
