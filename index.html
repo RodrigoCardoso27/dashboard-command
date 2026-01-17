@@ -51,7 +51,7 @@
         .section-card { background: var(--bg-card); border-radius: 32px; border: 1px solid var(--border); padding: 35px; margin-bottom: 30px; }
         .section-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 28px; letter-spacing: -0.5px; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
         label { font-size: 0.7rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; display: block; letter-spacing: 1px; }
         input, select, textarea { width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; color: var(--text-main); font-family: inherit; font-size: 0.95rem; }
 
@@ -71,6 +71,12 @@
 
         .btn-delete-pro { background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: none; }
         .btn-delete-pro:hover { background: var(--danger); color: white; }
+
+        /* KPI CONSULTA ESTILO */
+        .kpi-consult-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .kpi-consult-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; }
+        .kpi-consult-box label { margin-bottom: 5px; font-size: 0.6rem; }
+        .kpi-consult-box span { font-size: 1.2rem; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -178,6 +184,14 @@
                 <div style="display:flex; align-items:flex-end;"><button class="btn-success" style="width: 100%; height: 52px;" onclick="exportarExcel('corpoConsulta')">EXCEL</button></div>
             </div>
         </div>
+        
+        <div class="kpi-consult-grid">
+            <div class="kpi-consult-box"><label>Filtrados</label><br><span id="cTotal">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--success);"><label>Resolvidos</label><br><span id="cResolvidos" style="color: var(--success);">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--danger);"><label>Cancelados</label><br><span id="cCancelados" style="color: var(--danger);">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--warning);"><label>Reabertos</label><br><span id="cReabertos" style="color: var(--warning);">0</span></div>
+        </div>
+
         <div class="section-card">
             <table>
                 <thead><tr><th>DATA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>
@@ -214,7 +228,7 @@
             </table>
         </div>
         <div class="section-card" style="border-color: var(--primary);">
-            <h2 class="section-title">💬 Feedbacks e Erros Reportados</h2>
+            <h2 class="section-title">💬 Feedback da Equipe</h2>
             <table>
                 <thead><tr><th>Data</th><th>Analista</th><th>Mensagem</th><th style="text-align:right">Ação</th></tr></thead>
                 <tbody id="listaReports"></tbody>
@@ -282,25 +296,17 @@
         if(v === 'admin') { listarUsuarios(); listarReports(); }
     }
 
-    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
     function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
-    
+    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
     function enviarReport() {
         const m = document.getElementById('msgReport').value;
-        if(!m) return showToast("Escreva sua mensagem!", "error");
-        database.ref('reports').push({ analista: logado.nome, msg: m, data: new Date().toLocaleString() }).then(() => {
-            showToast("Relato enviado com sucesso!");
-            fecharModalReport();
-        });
+        if(!m) return showToast("Escreva algo!", "error");
+        database.ref('reports').push({ analista: logado.nome, msg: m, data: new Date().toLocaleString() }).then(() => { showToast("Enviado!"); fecharModalReport(); });
     }
-
     function listarReports() {
         database.ref('reports').on('value', snap => {
             const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
-            snap.forEach(i => {
-                const r = i.val();
-                tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()">Arquivar</button></td></tr>`;
-            });
+            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()">Arquivar</button></td></tr>`; });
         });
     }
 
@@ -323,9 +329,7 @@
         const l = document.getElementById('linkRitm').value.trim() || "---";
         let tArr = []; document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tArr.push(i.value.toUpperCase().trim()); });
         if(!r || !st || !d) return showToast("Campos obrigatórios faltando!", "error");
-
-        database.ref('chamados').push({ ritm: r, status: st, desc: d, link: l, data: getHoje(), analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não possui" })
-        .then(() => { showToast("Gravado!"); document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = ""; document.getElementById('taskQtd').value = ""; document.getElementById('statusRitm').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput(); });
+        database.ref('chamados').push({ ritm: r, status: st, desc: d, link: l, data: getHoje(), analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não" }).then(() => { showToast("Gravado!"); document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = ""; document.getElementById('taskQtd').value = ""; document.getElementById('statusRitm').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput(); });
     }
 
     function escutarBanco() {
@@ -340,8 +344,7 @@
                     if(logado.role === 'admin' || c.analista === logado.nome) {
                         tR++; tT += (c.taskQtd || 0);
                         const b = "badge-" + c.status.toLowerCase();
-                        const linkHtml = c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
-                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${c.link!=='---'?`<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>`:'---'}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -354,13 +357,23 @@
         const fim = document.getElementById('dataFim').value;
         database.ref('chamados').once('value', snap => {
             const tbody = document.getElementById('corpoConsulta'); tbody.innerHTML = "";
+            let t = 0, res = 0, can = 0, rea = 0;
             snap.forEach(item => {
                 const c = item.val();
                 if(c.data >= ini && c.data <= fim && (logado.role === 'admin' || c.analista === logado.nome)) {
+                    t++;
+                    if(c.status === "Resolvido") res++;
+                    else if(c.status === "Cancelado") can++;
+                    else if(c.status === "Reaberto") rea++;
+
                     const b = "badge-" + c.status.toLowerCase();
                     tbody.innerHTML += `<tr><td>${c.data}</td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
                 }
             });
+            document.getElementById('cTotal').innerText = t;
+            document.getElementById('cResolvidos').innerText = res;
+            document.getElementById('cCancelados').innerText = can;
+            document.getElementById('cReabertos').innerText = rea;
         });
     }
 
@@ -383,14 +396,8 @@
     function logout() { localStorage.clear(); location.reload(); }
     function verificarStatusTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => { const s = snap.val(); if(s && s.aberto && s.data === getHoje()) document.getElementById('cardRegistro').classList.add('unlocked'); }); }
     function iniciarTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: getHoje() }).then(() => location.reload()); }
-    function finalizarTurno() { if(confirm("Deseja encerrar o turno?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
-    
-    function listarUsuarios() {
-        database.ref('usuarios').on('value', snap => {
-            const lista = document.getElementById('listaUsuarios'); lista.innerHTML = "";
-            snap.forEach(u => { const val = u.val(); const login = decodeKey(u.key); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}')">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()">Excluir</button></td></tr>`; });
-        });
-    }
+    function finalizarTurno() { if(confirm("Encerrar turno?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
+    function listarUsuarios() { database.ref('usuarios').on('value', snap => { const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; snap.forEach(u => { const val = u.val(); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${decodeKey(u.key)}</b></td><td style="text-align:right"><button onclick="prepararEdicao('${decodeKey(u.key)}', '${val.nomeCompleto}')">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()">Excluir</button></td></tr>`; }); }); }
     function prepararEdicao(l, n) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value; const u = document.getElementById('nUser').value.toUpperCase().trim(); const p = document.getElementById('nPass').value;
@@ -398,7 +405,7 @@
         if(!regex.test(p)) return showToast("Senha deve ter letras, números e símbolos!", "error");
         database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { showToast("Sucesso!"); location.reload(); });
     }
-    function exportarExcel(id) { const table = document.createElement("table"); table.innerHTML = `<thead><tr><th>DATA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>`; const clone = document.getElementById(id).cloneNode(true); table.appendChild(clone); const wb = XLSX.utils.table_to_book(table); XLSX.writeFile(wb, `Relatorio_OPS.xlsx`); }
+    function exportarExcel(id) { const table = document.createElement("table"); table.innerHTML = `<thead><tr><th>DATA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>`; const clone = document.getElementById(id).cloneNode(true); table.appendChild(clone); const wb = XLSX.utils.table_to_book(table); XLSX.writeFile(wb, `Relatorio_OPS.xlsx`); }
 </script>
 </body>
 </html>
