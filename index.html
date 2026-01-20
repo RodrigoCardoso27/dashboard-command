@@ -51,7 +51,7 @@
         .section-card { background: var(--bg-card); border-radius: 32px; border: 1px solid var(--border); padding: 35px; margin-bottom: 30px; }
         .section-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 28px; letter-spacing: -0.5px; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
         label { font-size: 0.7rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; display: block; letter-spacing: 1px; }
         input, select, textarea { width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; color: var(--text-main); font-family: inherit; font-size: 0.95rem; }
 
@@ -76,6 +76,8 @@
         .kpi-consult-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; }
         .kpi-consult-box label { margin-bottom: 5px; font-size: 0.6rem; }
         .kpi-consult-box span { font-size: 1.2rem; font-weight: 800; }
+        
+        .time-text { font-family: monospace; font-size: 0.85rem; color: var(--primary); font-weight: 700; background: rgba(99, 102, 241, 0.1); padding: 4px 8px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -167,7 +169,7 @@
         <div class="section-card">
             <h2 class="section-title">📋 Meus Lançamentos de Hoje</h2>
             <table id="tabelaHoje">
-                <thead><tr><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
+                <thead><tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
@@ -191,7 +193,7 @@
         </div>
         <div class="section-card">
             <table>
-                <thead><tr><th>DATA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>
+                <thead><tr><th>DATA</th><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>
                 <tbody id="corpoConsulta"></tbody>
             </table>
         </div>
@@ -252,6 +254,7 @@
     function encodeKey(str) { return str.replace(/\./g, ','); }
     function decodeKey(str) { return str.replace(/,/g, '.'); }
     function getHoje() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function getHora() { const d = new Date(); return d.toLocaleTimeString('pt-BR'); }
 
     function showToast(msg, type = 'success') {
         const c = document.getElementById('toast-container');
@@ -303,7 +306,7 @@
     function listarReports() {
         database.ref('reports').on('value', snap => {
             const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
-            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()">Arquivar</button></td></tr>`; });
+            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()" style="background:none; color:var(--danger); cursor:pointer; border:none; font-weight:bold;">Arquivar</button></td></tr>`; });
         });
     }
 
@@ -319,18 +322,17 @@
         for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`;
     }
 
-    // FUNÇÃO SALVAR COM INTELIGÊNCIA DE REABERTURA (SUBSTITUIÇÃO)
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
         const d = document.getElementById('descResumida').value.trim();
         const l = document.getElementById('linkRitm').value.trim() || "---";
         const hoje = getHoje();
+        const hora = getHora();
         let tArr = []; document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tArr.push(i.value.toUpperCase().trim()); });
         
         if(!r || !st || !d) return showToast("Campos obrigatórios faltando!", "error");
 
-        // BUSCA SE A RITM JÁ FOI LANÇADA HOJE PELO MESMO ANALISTA
         database.ref('chamados').once('value', snap => {
             let registroExistenteId = null;
             snap.forEach(item => {
@@ -341,20 +343,18 @@
             });
 
             const payload = { 
-                ritm: r, status: st, desc: d, link: l, data: hoje, 
+                ritm: r, status: st, desc: d, link: l, data: hoje, hora: hora,
                 analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não" 
             };
 
             if(registroExistenteId) {
-                // ATUALIZA (CASO DE REABERTURA OU CORREÇÃO)
                 database.ref('chamados').child(registroExistenteId).update(payload).then(() => {
-                    showToast("Registro atualizado (Status substituído)!");
+                    showToast("Registro atualizado às " + hora);
                     limparFormulario();
                 });
             } else {
-                // CRIA NOVO
                 database.ref('chamados').push(payload).then(() => {
-                    showToast("Gravado com sucesso!");
+                    showToast("Gravado às " + hora);
                     limparFormulario();
                 });
             }
@@ -379,8 +379,8 @@
                     if(logado.role === 'admin' || c.analista === logado.nome) {
                         tR++; tT += (c.taskQtd || 0);
                         const b = "badge-" + c.status.toLowerCase();
-                        const linkHtml = c.link !== "---" ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
-                        tbody.innerHTML = `<tr><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
+                        const time = c.hora || '--:--';
+                        tbody.innerHTML = `<tr><td><span class="time-text">${time}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${c.link!=='---'?`<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>`:'---'}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -402,7 +402,8 @@
                     else if(c.status === "Cancelado") can++;
                     else if(c.status === "Reaberto") rea++;
                     const b = "badge-" + c.status.toLowerCase();
-                    tbody.innerHTML += `<tr><td>${c.data}</td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
+                    const time = c.hora || '--:--';
+                    tbody.innerHTML += `<tr><td>${c.data}</td><td><span class="time-text">${time}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
                 }
             });
             document.getElementById('cTotal').innerText = t;
@@ -431,8 +432,8 @@
     function logout() { localStorage.clear(); location.reload(); }
     function verificarStatusTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => { const s = snap.val(); if(s && s.aberto && s.data === getHoje()) document.getElementById('cardRegistro').classList.add('unlocked'); }); }
     function iniciarTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: getHoje() }).then(() => location.reload()); }
-    function finalizarTurno() { if(confirm("Encerrar turno?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
-    function listarUsuarios() { database.ref('usuarios').on('value', snap => { const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; snap.forEach(u => { const val = u.val(); const login = decodeKey(u.key); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}')">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()">Excluir</button></td></tr>`; }); }); }
+    function finalizarTurno() { if(confirm("Deseja encerrar o turno?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
+    function listarUsuarios() { database.ref('usuarios').on('value', snap => { const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; snap.forEach(u => { const val = u.val(); const login = decodeKey(u.key); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}')" style="background:none; color:var(--warning); margin-right:15px; cursor:pointer; border:none; font-weight:bold;">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()" style="background:none; color:var(--danger); cursor:pointer; border:none; font-weight:bold;">Excluir</button></td></tr>`; }); }); }
     function prepararEdicao(l, n) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value; const u = document.getElementById('nUser').value.toUpperCase().trim(); const p = document.getElementById('nPass').value;
@@ -440,7 +441,7 @@
         if(!regex.test(p)) return showToast("Senha Fraca!", "error");
         database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { showToast("Sucesso!"); location.reload(); });
     }
-    function exportarExcel(id) { const table = document.createElement("table"); table.innerHTML = `<thead><tr><th>DATA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>`; const clone = document.getElementById(id).cloneNode(true); table.appendChild(clone); const wb = XLSX.utils.table_to_book(table); XLSX.writeFile(wb, `Relatorio_OPS.xlsx`); }
+    function exportarExcel(id) { const table = document.createElement("table"); table.innerHTML = `<thead><tr><th>DATA</th><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>`; const clone = document.getElementById(id).cloneNode(true); table.appendChild(clone); const wb = XLSX.utils.table_to_book(table); XLSX.writeFile(wb, `Relatorio_OPS.xlsx`); }
 </script>
 </body>
 </html>
