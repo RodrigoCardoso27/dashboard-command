@@ -15,7 +15,7 @@
         :root {
             --bg-deep: #020617; --bg-surface: #0f172a; --bg-card: rgba(15, 23, 42, 0.9);
             --primary: #6366f1; --primary-glow: rgba(99, 102, 241, 0.4);
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --pending: #3b82f6;
             --text-main: #f8fafc; --text-dim: #94a3b8; --border: rgba(255, 255, 255, 0.08);
         }
 
@@ -27,9 +27,9 @@
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-deep); color: var(--text-main); display: flex; min-height: 100vh; overflow: hidden; transition: 0.4s ease; }
 
-        #toast-container { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 11000; pointer-events: none; }
+        #toast-container { position: fixed; top: 24px; right: 24px; z-index: 11000; pointer-events: none; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
         .toast { background: var(--bg-surface); border: 1px solid var(--primary); padding: 14px 28px; border-radius: 16px; color: var(--text-main); font-weight: 700; font-size: 0.9rem; box-shadow: 0 15px 40px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 12px; animation: toastIn 0.5s forwards; }
-        @keyframes toastIn { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; display: none; align-items: center; justify-content: center; }
         .modal-box { background: var(--bg-surface); border: 1px solid var(--border); padding: 40px; border-radius: 32px; width: 90%; max-width: 420px; text-align: center; }
@@ -65,6 +65,7 @@
         .badge-resolvido { color: #10b981; background: rgba(16, 185, 129, 0.1); }
         .badge-cancelado { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .badge-reaberto { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .badge-pendente { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
 
         #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.85); z-index: 10; border-radius: 32px; backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; }
         .unlocked #overlay { display: none; }
@@ -72,7 +73,7 @@
         .btn-delete-pro { background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: none; }
         .btn-delete-pro:hover { background: var(--danger); color: white; }
 
-        .kpi-consult-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .kpi-consult-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 25px; }
         .kpi-consult-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; }
         .kpi-consult-box label { margin-bottom: 5px; font-size: 0.6rem; }
         .kpi-consult-box span { font-size: 1.2rem; font-weight: 800; }
@@ -139,7 +140,7 @@
     <div id="viewDash" class="view-section active">
         <div class="kpi-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
             <div class="section-card" style="margin-bottom: 0; text-align: center; padding: 25px;">
-                <label>Meus Chamados Hoje</label><div class="kpi-value" id="kpiRitms">0</div>
+                <label>Meus Chamados Concluídos</label><div class="kpi-value" id="kpiRitms">0</div>
             </div>
             <div class="section-card" style="margin-bottom: 0; text-align: center; padding: 25px;">
                 <label>Minhas Tasks Hoje</label><div class="kpi-value" id="kpiTasks" style="color: var(--success);">0</div>
@@ -154,7 +155,13 @@
             <h2 class="section-title">✍️ Registrar Atendimento</h2>
             <div class="form-grid">
                 <div><label>RITM*</label><input type="text" id="ritm" placeholder="RITM000"></div>
-                <div><label>Status*</label><select id="statusRitm"><option value="">Selecione</option><option value="Resolvido">Resolvido</option><option value="Cancelado">Cancelado</option><option value="Reaberto">Reaberto</option></select></div>
+                <div><label>Status*</label><select id="statusRitm">
+                    <option value="">Selecione</option>
+                    <option value="Resolvido">Resolvido</option>
+                    <option value="Cancelado">Cancelado</option>
+                    <option value="Reaberto">Reaberto</option>
+                    <option value="Pendente">Pendente (Aguard. Solicitante)</option>
+                </select></div>
                 <div><label>Possui Task?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
                 <div id="divQtdTask" style="visibility: hidden;"><label>Quantidade</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
                 <div><label>Data</label><input type="date" id="dataDisplay" disabled style="opacity: 0.6;"></div>
@@ -186,10 +193,11 @@
             </div>
         </div>
         <div class="kpi-consult-grid">
-            <div class="kpi-consult-box"><label>Filtrados</label><br><span id="cTotal">0</span></div>
+            <div class="kpi-consult-box"><label>Total Geral</label><br><span id="cTotal">0</span></div>
             <div class="kpi-consult-box" style="border-bottom: 3px solid var(--success);"><label>Resolvidos</label><br><span id="cResolvidos" style="color: var(--success);">0</span></div>
             <div class="kpi-consult-box" style="border-bottom: 3px solid var(--danger);"><label>Cancelados</label><br><span id="cCancelados" style="color: var(--danger);">0</span></div>
             <div class="kpi-consult-box" style="border-bottom: 3px solid var(--warning);"><label>Reabertos</label><br><span id="cReabertos" style="color: var(--warning);">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--pending);"><label>Pendentes</label><br><span id="cPendentes" style="color: var(--pending);">0</span></div>
         </div>
         <div class="section-card">
             <table>
@@ -259,9 +267,28 @@
     function showToast(msg, type = 'success') {
         const c = document.getElementById('toast-container');
         const t = document.createElement('div'); t.className = 'toast';
-        t.style.borderColor = type === 'success' ? 'var(--success)' : 'var(--danger)';
-        t.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
-        c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+        t.style.borderColor = type === 'success' ? 'var(--success)' : (type === 'alert' ? 'var(--warning)' : 'var(--danger)');
+        t.innerHTML = `<span>${type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌')}</span> ${msg}`;
+        c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 5000);
+    }
+
+    // MONITOR DE PENDÊNCIAS (6 HORAS)
+    function checkPendencias() {
+        if (!logado) return;
+        database.ref('chamados').once('value', snap => {
+            let temAlerta = false;
+            const agora = new Date().getTime();
+            snap.forEach(item => {
+                const c = item.val();
+                if(c.status === 'Pendente' && c.analista === logado.nome) {
+                    // Tenta calcular o tempo desde a gravação
+                    const dataHoraStr = `${c.data} ${c.hora}`;
+                    const dataGrava = new Date(dataHoraStr).getTime();
+                    if (agora - dataGrava > (6 * 60 * 60 * 1000)) temAlerta = true;
+                }
+            });
+            if (temAlerta) showToast("Atenção: Você possui pendências aguardando verificação (+6h)!", "alert");
+        });
     }
 
     function openConfirm(id) { idParaExcluir = id; document.getElementById('modalConfirm').style.display = 'flex'; }
@@ -284,6 +311,8 @@
             document.getElementById('displayUser').innerText = logado.nome;
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
             verificarStatusTurno(); escutarBanco();
+            setInterval(checkPendencias, 1800000); // Checa a cada 30 min
+            setTimeout(checkPendencias, 5000); // Checa ao logar
         }
     };
 
@@ -306,7 +335,7 @@
     function listarReports() {
         database.ref('reports').on('value', snap => {
             const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
-            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()" style="background:none; color:var(--danger); cursor:pointer; border:none; font-weight:bold;">Arquivar</button></td></tr>`; });
+            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()">Arquivar</button></td></tr>`; });
         });
     }
 
@@ -337,9 +366,7 @@
             let registroExistenteId = null;
             snap.forEach(item => {
                 const c = item.val();
-                if(c.ritm === r && c.analista === logado.nome && c.data === hoje) {
-                    registroExistenteId = item.key;
-                }
+                if(c.ritm === r && c.analista === logado.nome && c.data === hoje) registroExistenteId = item.key;
             });
 
             const payload = { 
@@ -377,10 +404,10 @@
                 if(c.data === hoje) {
                     cont[c.analista] = (cont[c.analista] || 0) + 1;
                     if(logado.role === 'admin' || c.analista === logado.nome) {
-                        tR++; tT += (c.taskQtd || 0);
+                        // REGRA: SÓ CONTA KPI SE NÃO FOR PENDENTE
+                        if(c.status !== 'Pendente') { tR++; tT += (c.taskQtd || 0); }
                         const b = "badge-" + c.status.toLowerCase();
-                        const time = c.hora || '--:--';
-                        tbody.innerHTML = `<tr><td><span class="time-text">${time}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${c.link!=='---'?`<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>`:'---'}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--:--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${c.link!=='---'?`<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>`:'---'}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -393,7 +420,7 @@
         const fim = document.getElementById('dataFim').value;
         database.ref('chamados').once('value', snap => {
             const tbody = document.getElementById('corpoConsulta'); tbody.innerHTML = "";
-            let t = 0, res = 0, can = 0, rea = 0;
+            let t = 0, res = 0, can = 0, rea = 0, pen = 0;
             snap.forEach(item => {
                 const c = item.val();
                 if(c.data >= ini && c.data <= fim && (logado.role === 'admin' || c.analista === logado.nome)) {
@@ -401,15 +428,16 @@
                     if(c.status === "Resolvido") res++;
                     else if(c.status === "Cancelado") can++;
                     else if(c.status === "Reaberto") rea++;
+                    else if(c.status === "Pendente") pen++;
                     const b = "badge-" + c.status.toLowerCase();
-                    const time = c.hora || '--:--';
-                    tbody.innerHTML += `<tr><td>${c.data}</td><td><span class="time-text">${time}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
+                    tbody.innerHTML += `<tr><td>${c.data}</td><td><span class="time-text">${c.hora || '--:--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
                 }
             });
             document.getElementById('cTotal').innerText = t;
             document.getElementById('cResolvidos').innerText = res;
             document.getElementById('cCancelados').innerText = can;
             document.getElementById('cReabertos').innerText = rea;
+            document.getElementById('cPendentes').innerText = pen;
         });
     }
 
