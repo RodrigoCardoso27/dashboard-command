@@ -15,7 +15,8 @@
         :root {
             --bg-deep: #020617; --bg-surface: #0f172a; --bg-card: rgba(15, 23, 42, 0.9);
             --primary: #6366f1; --primary-glow: rgba(99, 102, 241, 0.4);
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --pending: #3b82f6;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b; 
+            --pending: #3b82f6; --ga: #8b5cf6; /* Roxinho para GA */
             --text-main: #f8fafc; --text-dim: #94a3b8; --border: rgba(255, 255, 255, 0.08);
         }
 
@@ -28,7 +29,7 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-deep); color: var(--text-main); display: flex; min-height: 100vh; overflow: hidden; transition: 0.4s ease; }
 
         #toast-container { position: fixed; top: 24px; right: 24px; z-index: 11000; pointer-events: none; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
-        .toast { background: var(--bg-surface); border: 1px solid var(--primary); padding: 14px 28px; border-radius: 16px; color: var(--text-main); font-weight: 700; font-size: 0.9rem; box-shadow: 0 15px 40px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 12px; animation: toastIn 0.5s forwards; }
+        .toast { background: var(--bg-surface); border: 1px solid var(--primary); padding: 14px 28px; border-radius: 16px; color: var(--text-main); font-weight: 700; font-size: 0.9rem; box-shadow: 0 15px 40px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 12px; animation: toastIn 0.5s forwards; max-width: 380px; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; display: none; align-items: center; justify-content: center; }
@@ -40,7 +41,6 @@
         .sidebar { width: 300px; background: rgba(2, 6, 23, 0.4); backdrop-filter: blur(20px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 48px 30px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; }
         .logo-area { font-weight: 800; font-size: 1.6rem; background: linear-gradient(135deg, #fff 0%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 50px; }
         .nav-item { padding: 16px 20px; border-radius: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; font-weight: 600; color: var(--text-dim); display: flex; align-items: center; gap: 14px; font-size: 0.9rem; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-item.active { background: var(--primary); color: white; box-shadow: 0 10px 25px var(--primary-glow); }
 
         .main-content { margin-left: 300px; padding: 60px; width: calc(100% - 300px); overflow-y: auto; height: 100vh; scroll-behavior: smooth; }
@@ -66,6 +66,7 @@
         .badge-cancelado { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .badge-reaberto { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
         .badge-pendente { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .badge-ga { color: #a78bfa; background: rgba(139, 92, 246, 0.1); }
 
         #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.85); z-index: 10; border-radius: 32px; backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; }
         .unlocked #overlay { display: none; }
@@ -73,11 +74,9 @@
         .btn-delete-pro { background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: none; }
         .btn-delete-pro:hover { background: var(--danger); color: white; }
 
-        .kpi-consult-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 25px; }
+        .kpi-consult-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 25px; }
         .kpi-consult-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; }
-        .kpi-consult-box label { margin-bottom: 5px; font-size: 0.6rem; }
-        .kpi-consult-box span { font-size: 1.2rem; font-weight: 800; }
-        
+        .kpi-consult-box span { font-size: 1.1rem; font-weight: 800; }
         .time-text { font-family: monospace; font-size: 0.85rem; color: var(--primary); font-weight: 700; background: rgba(99, 102, 241, 0.1); padding: 4px 8px; border-radius: 6px; }
     </style>
 </head>
@@ -87,21 +86,21 @@
 
 <div id="modalReport" class="modal-overlay">
     <div class="modal-box">
-        <h3 style="font-size: 1.5rem; margin-bottom: 15px;">Reportar Erro / Melhoria</h3>
-        <textarea id="msgReport" rows="5" placeholder="Descreva aqui..."></textarea>
+        <h3>Reportar Erro / Melhoria</h3>
+        <textarea id="msgReport" rows="5" style="margin-top:20px" placeholder="Descreva aqui..."></textarea>
         <div style="display: flex; gap: 15px; margin-top: 25px;">
             <button class="btn-primary" style="flex: 1; background: #334155; height: 48px;" onclick="fecharModalReport()">Cancelar</button>
-            <button class="btn-success" style="flex: 1; height: 48px;" onclick="enviarReport()">Enviar Relato</button>
+            <button class="btn-success" style="flex: 1; height: 48px;" onclick="enviarReport()">Enviar</button>
         </div>
     </div>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
     <div class="modal-box">
-        <h3 style="font-size: 1.5rem; margin-bottom: 12px;">Confirmar Exclusão</h3>
-        <p style="color: var(--text-dim); margin-bottom: 32px;">O registro será removido permanentemente.</p>
-        <div style="display: flex; gap: 15px;">
-            <button class="btn-primary" style="flex: 1; background: #334155; height: 48px;" onclick="closeConfirm()">Cancelar</button>
+        <h3>Excluir Registro?</h3>
+        <p style="color: var(--text-dim); margin-top: 15px;">Essa ação é definitiva.</p>
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button class="btn-primary" style="flex: 1; background: #334155; height: 48px;" onclick="closeConfirm()">Sair</button>
             <button class="btn-success" style="flex: 1; background: var(--danger); height: 48px;" id="btnConfirmExcluir">Excluir</button>
         </div>
     </div>
@@ -110,29 +109,29 @@
 <div id="telaLogin">
     <div class="login-card">
         <div class="logo-area">🌐 COMMAND CENTER</div>
-        <input type="text" id="lUser" placeholder="Usuário">
+        <input type="text" id="lUser" placeholder="Login">
         <input type="password" id="lPass" placeholder="Senha" style="margin-top: 20px;">
-        <button class="btn-primary" style="margin-top: 40px; width: 100%; height: 54px;" onclick="autenticar()">Acessar Sistema</button>
-        <p id="errorMsg" style="color: var(--danger); font-size: 0.85rem; margin-top: 20px; display: none; font-weight: 600;">Credenciais inválidas!</p>
+        <button class="btn-primary" style="margin-top: 40px; width: 100%; height: 54px;" onclick="autenticar()">Acessar</button>
+        <p id="errorMsg" style="color: var(--danger); font-size: 0.85rem; margin-top: 20px; display: none;">Credenciais inválidas!</p>
     </div>
 </div>
 
 <div class="sidebar">
     <div class="logo-area">🌐 COMMAND</div>
     <div style="flex: 1;">
-        <div class="nav-item active" id="btnDash" onclick="switchView('dash')">🏠 Dashboard</div>
-        <div class="nav-item" id="btnConsult" onclick="switchView('consult')">🔍 Consultas</div>
-        <div class="nav-item" id="btnThemes" onclick="switchView('themes')">🎨 Aparência</div>
+        <div class="nav-item active" onclick="switchView('dash')">🏠 Dashboard</div>
+        <div class="nav-item" onclick="switchView('consult')">🔍 Consultas</div>
+        <div class="nav-item" onclick="switchView('themes')">🎨 Aparência</div>
         <div class="nav-item" style="color: var(--success);" onclick="exportarExcel('corpoTabela')">📥 Relatório</div>
         
         <div id="navAdmin" style="display: none; border-top: 1px solid var(--border); margin-top: 25px; padding-top: 25px;">
-            <div class="nav-item" style="color: var(--warning);" id="btnAdmin" onclick="switchView('admin')">🛠 Gestão</div>
+            <div class="nav-item" style="color: var(--warning);" onclick="switchView('admin')">🛠 Gestão</div>
         </div>
     </div>
-    <div style="margin-top: auto; padding-top: 20px;">
-        <button class="btn-primary" style="height: 44px; width: 100%; margin-bottom: 15px; background: rgba(99, 102, 241, 0.15); color: var(--primary); border: 1px solid var(--primary-glow);" onclick="abrirModalReport()">📣 Feedback</button>
-        <div id="displayUser" style="font-weight: 800; color: white; font-size: 1rem; margin-bottom: 8px;">Analista</div>
-        <div onclick="logout()" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">🚪 SAIR DO SISTEMA</div>
+    <div style="margin-top: auto;">
+        <button class="btn-primary" style="height: 44px; width: 100%; margin-bottom: 15px; background: rgba(99, 102, 241, 0.15); color: var(--primary);" onclick="abrirModalReport()">📣 Feedback</button>
+        <div id="displayUser" style="font-weight: 800; color: white; margin-bottom: 8px;">Analista</div>
+        <div onclick="logout()" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; cursor: pointer;">🚪 SAIR</div>
     </div>
 </div>
 
@@ -146,13 +145,15 @@
                 <label>Minhas Tasks Hoje</label><div class="kpi-value" id="kpiTasks" style="color: var(--success);">0</div>
             </div>
         </div>
+        
         <div class="section-card">
-            <h2 class="section-title">📊 Desempenho Diário</h2>
+            <h2 class="section-title">📊 Desempenho</h2>
             <div style="height: 280px;"><canvas id="meuGraficoBarras"></canvas></div>
         </div>
+
         <div id="cardRegistro" class="section-card" style="position: relative;">
             <div id="overlay"><button class="btn-primary" style="width: 250px; height: 56px;" onclick="iniciarTurno()">🚀 INICIAR TURNO</button></div>
-            <h2 class="section-title">✍️ Registrar Atendimento</h2>
+            <h2 class="section-title">✍️ Registrar</h2>
             <div class="form-grid">
                 <div><label>RITM*</label><input type="text" id="ritm" placeholder="RITM000"></div>
                 <div><label>Status*</label><select id="statusRitm">
@@ -160,23 +161,25 @@
                     <option value="Resolvido">Resolvido</option>
                     <option value="Cancelado">Cancelado</option>
                     <option value="Reaberto">Reaberto</option>
-                    <option value="Pendente">Pendente (Aguard. Solicitante)</option>
+                    <option value="Pendente">Pendente (Solicitante)</option>
+                    <option value="GA">Aguardando GA (Ações Externas)</option>
                 </select></div>
-                <div><label>Possui Task?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                <div id="divQtdTask" style="visibility: hidden;"><label>Quantidade</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
-                <div><label>Data</label><input type="date" id="dataDisplay" disabled style="opacity: 0.6;"></div>
+                <div><label>Tasks?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+                <div id="divQtdTask" style="visibility: hidden;"><label>Qtd</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
+                <div><label>Data</label><input type="date" id="dataDisplay" disabled></div>
             </div>
             <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;"></div>
             <div class="form-grid" style="grid-template-columns: 1.5fr 1fr; margin-top: 25px;">
-                <div><label>Descrição Resumida*</label><input type="text" id="descResumida"></div>
-                <div><label>URL / Link da RITM</label><input type="text" id="linkRitm" placeholder="http://..."></div>
+                <input type="text" id="descResumida" placeholder="Descrição Resumida*">
+                <input type="text" id="linkRitm" placeholder="Link da RITM">
             </div>
-            <button class="btn-success" style="width: 100%; height: 54px; margin-top: 30px;" onclick="salvar()">GRAVAR NO BANCO</button>
+            <button class="btn-success" style="width: 100%; height: 54px; margin-top: 30px;" onclick="salvar()">GRAVAR</button>
         </div>
+
         <div class="section-card">
-            <h2 class="section-title">📋 Meus Lançamentos de Hoje</h2>
-            <table id="tabelaHoje">
-                <thead><tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th>LINK</th><th style="text-align:right">AÇÃO</th></tr></thead>
+            <h2 class="section-title">📋 Meus Lançamentos</h2>
+            <table>
+                <thead><tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th>AÇÃO</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
@@ -184,7 +187,7 @@
 
     <div id="viewConsult" class="view-section">
         <div class="section-card">
-            <h2 class="section-title">🔍 Filtro por Período</h2>
+            <h2 class="section-title">🔍 Filtro de Histórico</h2>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr 150px 150px;">
                 <div><label>Início</label><input type="date" id="dataInicio"></div>
                 <div><label>Fim</label><input type="date" id="dataFim"></div>
@@ -193,18 +196,14 @@
             </div>
         </div>
         <div class="kpi-consult-grid">
-            <div class="kpi-consult-box"><label>Total Geral</label><br><span id="cTotal">0</span></div>
-            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--success);"><label>Resolvidos</label><br><span id="cResolvidos" style="color: var(--success);">0</span></div>
-            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--danger);"><label>Cancelados</label><br><span id="cCancelados" style="color: var(--danger);">0</span></div>
-            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--warning);"><label>Reabertos</label><br><span id="cReabertos" style="color: var(--warning);">0</span></div>
-            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--pending);"><label>Pendentes</label><br><span id="cPendentes" style="color: var(--pending);">0</span></div>
+            <div class="kpi-consult-box"><label>Geral</label><br><span id="cTotal">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--success);"><label>Res.</label><br><span id="cResolvidos" style="color: var(--success);">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--danger);"><label>Can.</label><br><span id="cCancelados" style="color: var(--danger);">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--warning);"><label>Reab.</label><br><span id="cReabertos" style="color: var(--warning);">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--pending);"><label>Pend.</label><br><span id="cPendentes" style="color: var(--pending);">0</span></div>
+            <div class="kpi-consult-box" style="border-bottom: 3px solid var(--ga);"><label>GA</label><br><span id="cGA" style="color: var(--ga);">0</span></div>
         </div>
-        <div class="section-card">
-            <table>
-                <thead><tr><th>DATA</th><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>
-                <tbody id="corpoConsulta"></tbody>
-            </table>
-        </div>
+        <div class="section-card"><table><tbody id="corpoConsulta"></tbody></table></div>
     </div>
 
     <div id="viewThemes" class="view-section">
@@ -222,25 +221,16 @@
 
     <div id="viewAdmin" class="view-section">
         <div class="section-card">
-            <h2 class="section-title">🛠 Gestão de Equipe</h2>
+            <h2 class="section-title">Gestão</h2>
             <div class="form-grid">
-                <input type="text" id="nCompleto" placeholder="Nome Completo">
+                <input type="text" id="nCompleto" placeholder="Nome">
                 <input type="text" id="nUser" placeholder="Login">
                 <input type="password" id="nPass" placeholder="Senha">
-                <button id="btnSalvarAnalista" class="btn-success" onclick="cadastrarAnalista()">SALVAR</button>
+                <button class="btn-success" onclick="cadastrarAnalista()">SALVAR</button>
             </div>
-            <table style="margin-top: 40px;">
-                <thead><tr><th>Nome</th><th>Login</th><th style="text-align:right">Ação</th></tr></thead>
-                <tbody id="listaUsuarios"></tbody>
-            </table>
+            <table style="margin-top: 30px;"><tbody id="listaUsuarios"></tbody></table>
         </div>
-        <div class="section-card" style="border-color: var(--primary);">
-            <h2 class="section-title">💬 Feedback da Equipe</h2>
-            <table>
-                <thead><tr><th>Data</th><th>Analista</th><th>Mensagem</th><th style="text-align:right">Ação</th></tr></thead>
-                <tbody id="listaReports"></tbody>
-            </table>
-        </div>
+        <div class="section-card"><h2 class="section-title">Feedbacks</h2><table style="margin-top: 20px;"><tbody id="listaReports"></tbody></table></div>
     </div>
 </div>
 
@@ -258,44 +248,47 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     let logado = null; let chartInstance = null; let idParaExcluir = null;
+    let cacheStatus = {};
 
     function encodeKey(str) { return str.replace(/\./g, ','); }
     function decodeKey(str) { return str.replace(/,/g, '.'); }
     function getHoje() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function getHora() { const d = new Date(); return d.toLocaleTimeString('pt-BR'); }
+    function getHora() { return new Date().toLocaleTimeString('pt-BR'); }
 
     function showToast(msg, type = 'success') {
         const c = document.getElementById('toast-container');
         const t = document.createElement('div'); t.className = 'toast';
         t.style.borderColor = type === 'success' ? 'var(--success)' : (type === 'alert' ? 'var(--warning)' : 'var(--danger)');
         t.innerHTML = `<span>${type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌')}</span> ${msg}`;
-        c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 5000);
+        c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 6000);
     }
 
-    // MONITOR DE PENDÊNCIAS (6 HORAS)
-    function checkPendencias() {
+    function monitorar() {
         if (!logado) return;
         database.ref('chamados').once('value', snap => {
-            let temAlerta = false;
             const agora = new Date().getTime();
             snap.forEach(item => {
                 const c = item.val();
-                if(c.status === 'Pendente' && c.analista === logado.nome) {
-                    // Tenta calcular o tempo desde a gravação
-                    const dataHoraStr = `${c.data} ${c.hora}`;
-                    const dataGrava = new Date(dataHoraStr).getTime();
-                    if (agora - dataGrava > (6 * 60 * 60 * 1000)) temAlerta = true;
+                if(c.analista === logado.nome) {
+                    // Monitor de 6 horas para Pendente e GA
+                    if(c.status === 'Pendente' || c.status === 'GA') {
+                        const dGrava = new Date(`${c.data} ${c.hora}`).getTime();
+                        if (agora - dGrava > (6 * 60 * 60 * 1000)) showToast(`Verificação necessária (${c.status}): ${c.ritm}`, "alert");
+                    }
+                    if(cacheStatus[c.ritm] && cacheStatus[c.ritm] !== c.status) {
+                        if(c.status === 'Reaberto') showToast(`RITM ${c.ritm} REABERTA!`, "alert");
+                        if((cacheStatus[c.ritm] === 'Pendente' || cacheStatus[c.ritm] === 'GA') && c.status === 'Resolvido') showToast(`RITM ${c.ritm} ATUALIZADA!`, "success");
+                    }
+                    cacheStatus[c.ritm] = c.status;
                 }
             });
-            if (temAlerta) showToast("Atenção: Você possui pendências aguardando verificação (+6h)!", "alert");
         });
     }
 
     function openConfirm(id) { idParaExcluir = id; document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeConfirm() { document.getElementById('modalConfirm').style.display = 'none'; idParaExcluir = null; }
-    
     document.getElementById('btnConfirmExcluir').onclick = function() {
-        database.ref('chamados').child(idParaExcluir).remove().then(() => { showToast("Registro removido."); closeConfirm(); });
+        database.ref('chamados').child(idParaExcluir).remove().then(() => { showToast("Removido."); closeConfirm(); });
     };
 
     window.onload = function() {
@@ -311,16 +304,14 @@
             document.getElementById('displayUser').innerText = logado.nome;
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
             verificarStatusTurno(); escutarBanco();
-            setInterval(checkPendencias, 1800000); // Checa a cada 30 min
-            setTimeout(checkPendencias, 5000); // Checa ao logar
+            setInterval(monitorar, 30000);
+            setTimeout(monitorar, 5000);
         }
     };
 
     function setTheme(t) { document.body.className = ''; if(t !== 'midnight') document.body.classList.add('theme-' + t); localStorage.setItem('command_theme', t); }
-
     function switchView(v) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1)).classList.add('active');
         if(v === 'admin') { listarUsuarios(); listarReports(); }
     }
@@ -329,13 +320,13 @@
     function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
     function enviarReport() {
         const m = document.getElementById('msgReport').value;
-        if(!m) return showToast("Escreva algo!", "error");
-        database.ref('reports').push({ analista: logado.nome, msg: m, data: new Date().toLocaleString() }).then(() => { showToast("Enviado!"); fecharModalReport(); });
+        if(!m) return;
+        database.ref('reports').push({ analista: logado.nome, msg: m, data: new Date().toLocaleString() }).then(() => { showToast("Feedback enviado!"); fecharModalReport(); });
     }
     function listarReports() {
         database.ref('reports').on('value', snap => {
             const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
-            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()">Arquivar</button></td></tr>`; });
+            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td><button onclick="database.ref('reports').child('${i.key}').remove()">Ok</button></td></tr>`; });
         });
     }
 
@@ -344,7 +335,6 @@
         document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
         document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
     }
-    
     function gerarCamposTask() {
         const qtd = parseInt(document.getElementById('taskQtd').value);
         const c = document.getElementById('containerTasksDinamicas'); c.innerHTML = "";
@@ -356,39 +346,20 @@
         const st = document.getElementById('statusRitm').value;
         const d = document.getElementById('descResumida').value.trim();
         const l = document.getElementById('linkRitm').value.trim() || "---";
-        const hoje = getHoje();
-        const hora = getHora();
+        const hoje = getHoje(); const hora = getHora();
         let tArr = []; document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tArr.push(i.value.toUpperCase().trim()); });
-        
-        if(!r || !st || !d) return showToast("Campos obrigatórios faltando!", "error");
+        if(!r || !st || !d) return showToast("Faltam dados!", "error");
 
         database.ref('chamados').once('value', snap => {
-            let registroExistenteId = null;
-            snap.forEach(item => {
-                const c = item.val();
-                if(c.ritm === r && c.analista === logado.nome && c.data === hoje) registroExistenteId = item.key;
-            });
-
-            const payload = { 
-                ritm: r, status: st, desc: d, link: l, data: hoje, hora: hora,
-                analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não" 
-            };
-
-            if(registroExistenteId) {
-                database.ref('chamados').child(registroExistenteId).update(payload).then(() => {
-                    showToast("Registro atualizado às " + hora);
-                    limparFormulario();
-                });
-            } else {
-                database.ref('chamados').push(payload).then(() => {
-                    showToast("Gravado às " + hora);
-                    limparFormulario();
-                });
-            }
+            let idEx = null;
+            snap.forEach(item => { if(item.val().ritm === r && item.val().analista === logado.nome && item.val().data === hoje) idEx = item.key; });
+            const p = { ritm: r, status: st, desc: d, link: l, data: hoje, hora: hora, analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não" };
+            if(idEx) database.ref('chamados').child(idEx).update(p).then(() => { showToast("Atualizado!"); limpar(); });
+            else database.ref('chamados').push(p).then(() => { showToast("Gravado!"); limpar(); });
         });
     }
 
-    function limparFormulario() {
+    function limpar() {
         document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = ""; 
         document.getElementById('taskQtd').value = ""; document.getElementById('statusRitm').value = ""; 
         document.getElementById('temTask').value = "nao"; toggleTaskInput();
@@ -404,10 +375,10 @@
                 if(c.data === hoje) {
                     cont[c.analista] = (cont[c.analista] || 0) + 1;
                     if(logado.role === 'admin' || c.analista === logado.nome) {
-                        // REGRA: SÓ CONTA KPI SE NÃO FOR PENDENTE
-                        if(c.status !== 'Pendente') { tR++; tT += (c.taskQtd || 0); }
+                        // Não conta como concluído se for Pendente ou GA
+                        if(c.status !== 'Pendente' && c.status !== 'GA') { tR++; tT += (c.taskQtd || 0); }
                         const b = "badge-" + c.status.toLowerCase();
-                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--:--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${c.link!=='---'?`<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>`:'---'}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -420,24 +391,26 @@
         const fim = document.getElementById('dataFim').value;
         database.ref('chamados').once('value', snap => {
             const tbody = document.getElementById('corpoConsulta'); tbody.innerHTML = "";
-            let t = 0, res = 0, can = 0, rea = 0, pen = 0;
+            let t = 0, res = 0, can = 0, rea = 0, pen = 0, ga = 0;
             snap.forEach(item => {
                 const c = item.val();
                 if(c.data >= ini && c.data <= fim && (logado.role === 'admin' || c.analista === logado.nome)) {
-                    t++;
-                    if(c.status === "Resolvido") res++;
-                    else if(c.status === "Cancelado") can++;
-                    else if(c.status === "Reaberto") rea++;
+                    t++; 
+                    if(c.status === "Resolvido") res++; 
+                    else if(c.status === "Cancelado") can++; 
+                    else if(c.status === "Reaberto") rea++; 
                     else if(c.status === "Pendente") pen++;
+                    else if(c.status === "GA") ga++;
                     const b = "badge-" + c.status.toLowerCase();
-                    tbody.innerHTML += `<tr><td>${c.data}</td><td><span class="time-text">${c.hora || '--:--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
+                    tbody.innerHTML += `<tr><td>${c.data}</td><td>${c.hora}</td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
                 }
             });
-            document.getElementById('cTotal').innerText = t;
-            document.getElementById('cResolvidos').innerText = res;
-            document.getElementById('cCancelados').innerText = can;
-            document.getElementById('cReabertos').innerText = rea;
+            document.getElementById('cTotal').innerText = t; 
+            document.getElementById('cResolvidos').innerText = res; 
+            document.getElementById('cCancelados').innerText = can; 
+            document.getElementById('cReabertos').innerText = rea; 
             document.getElementById('cPendentes').innerText = pen;
+            document.getElementById('cGA').innerText = ga;
         });
     }
 
@@ -460,14 +433,13 @@
     function logout() { localStorage.clear(); location.reload(); }
     function verificarStatusTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => { const s = snap.val(); if(s && s.aberto && s.data === getHoje()) document.getElementById('cardRegistro').classList.add('unlocked'); }); }
     function iniciarTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: getHoje() }).then(() => location.reload()); }
-    function finalizarTurno() { if(confirm("Deseja encerrar o turno?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
-    function listarUsuarios() { database.ref('usuarios').on('value', snap => { const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; snap.forEach(u => { const val = u.val(); const login = decodeKey(u.key); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}')" style="background:none; color:var(--warning); margin-right:15px; cursor:pointer; border:none; font-weight:bold;">Editar</button> <button onclick="database.ref('usuarios').child('${u.key}').remove()" style="background:none; color:var(--danger); cursor:pointer; border:none; font-weight:bold;">Excluir</button></td></tr>`; }); }); }
-    function prepararEdicao(l, n) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
+    function finalizarTurno() { if(confirm("Encerrar?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
+    function listarUsuarios() { database.ref('usuarios').on('value', snap => { const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; snap.forEach(u => { const val = u.val(); const login = decodeKey(u.key); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td><button onclick="database.ref('usuarios').child('${u.key}').remove()">X</button></td></tr>`; }); }); }
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value; const u = document.getElementById('nUser').value.toUpperCase().trim(); const p = document.getElementById('nPass').value;
         const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
         if(!regex.test(p)) return showToast("Senha Fraca!", "error");
-        database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { showToast("Sucesso!"); location.reload(); });
+        database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => location.reload());
     }
     function exportarExcel(id) { const table = document.createElement("table"); table.innerHTML = `<thead><tr><th>DATA</th><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>`; const clone = document.getElementById(id).cloneNode(true); table.appendChild(clone); const wb = XLSX.utils.table_to_book(table); XLSX.writeFile(wb, `Relatorio_OPS.xlsx`); }
 </script>
