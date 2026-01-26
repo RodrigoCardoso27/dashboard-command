@@ -157,7 +157,7 @@
             <div class="form-grid">
                 <div><label>RITM*</label><input type="text" id="ritm" placeholder="RITM000"></div>
                 <div><label>Status*</label><select id="statusRitm">
-                    <option value="">Selecione</option>
+                    <option value="">Selecione...</option>
                     <option value="Resolvido">Resolvido</option>
                     <option value="Cancelado">Cancelado</option>
                     <option value="Reaberto">Reaberto</option>
@@ -171,7 +171,7 @@
             <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;"></div>
             <div class="form-grid" style="grid-template-columns: 1.5fr 1fr; margin-top: 25px;">
                 <input type="text" id="descResumida" placeholder="Descrição Resumida*">
-                <input type="text" id="linkRitm" placeholder="Cole a URL da RITM aqui">
+                <input type="text" id="linkRitm" placeholder="Link da RITM">
             </div>
             <button class="btn-success" style="width: 100%; height: 54px; margin-top: 30px;" onclick="salvar()">GRAVAR</button>
         </div>
@@ -275,12 +275,13 @@
         if(link && link !== '---') { t.classList.add('clickable'); t.onclick = () => window.open(link, '_blank'); t.title = "Abrir RITM"; }
         t.style.borderColor = type === 'success' ? 'var(--success)' : (type === 'alert' ? 'var(--warning)' : 'var(--danger)');
         const icon = type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌');
-        t.innerHTML = `<span>${icon}</span> ${msg}${link && link !== '---' ? ' 🔗' : ''}`;
+        t.innerHTML = `<span>${icon}</span> ${msg}`;
         c.appendChild(t);
         const duration = (parseInt(localStorage.getItem('command_toast_duration')) || 5) * 1000;
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, duration);
     }
 
+    // FUNÇÃO MONITORAR CORRIGIDA - EVITA ALERTA EM REGISTROS JÁ RESOLVIDOS
     function monitorar() {
         if (!logado) return;
         database.ref('chamados').once('value', snap => {
@@ -288,14 +289,28 @@
             snap.forEach(item => {
                 const c = item.val();
                 if(c.analista === logado.nome) {
+                    
+                    // 1. Monitor de 6 horas APENAS para Pendente e GA ativos
                     if(c.status === 'Pendente' || c.status === 'GA') {
                         const dGrava = new Date(`${c.data} ${c.hora}`).getTime();
                         if (agora - dGrava > (6 * 60 * 60 * 1000)) showToast(`Verificar ${c.status}: ${c.ritm}`, "alert", c.link);
                     }
+
+                    // 2. Alertas de Mudança Inteligentes
                     if(cacheStatus[c.ritm] && cacheStatus[c.ritm] !== c.status) {
-                        if(c.status === 'Reaberto') showToast(`${c.ritm} REABERTA!`, "alert", c.link);
-                        if((cacheStatus[c.ritm] === 'Pendente' || cacheStatus[c.ritm] === 'GA') && c.status === 'Resolvido') showToast(`${c.ritm} RESOLVIDA!`, "success", c.link);
+                        
+                        // CASO A: Tornou-se Reaberto agora
+                        if(c.status === 'Reaberto') {
+                            showToast(`A RITM ${c.ritm} foi REABERTA!`, "alert", c.link);
+                        }
+                        
+                        // CASO B: Estava Pendente/GA e agora foi Resolvido (Notifica a resposta)
+                        else if((cacheStatus[c.ritm] === 'Pendente' || cacheStatus[c.ritm] === 'GA') && c.status === 'Resolvido') {
+                            showToast(`A RITM ${c.ritm} foi RESPONDIDA/RESOLVIDA!`, "success", c.link);
+                        }
                     }
+                    
+                    // Atualiza o cache para a próxima volta do monitoramento
                     cacheStatus[c.ritm] = c.status;
                 }
             });
@@ -357,8 +372,8 @@
                             tR++; tT += (parseInt(c.taskQtd) || 0); 
                         }
                         const b = "badge-" + c.status.toLowerCase();
-                        const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary); font-weight:800;">Link</a>` : '---';
-                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
+                        const lHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary); font-weight:800;">Link</a>` : '---';
+                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${lHtml}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
