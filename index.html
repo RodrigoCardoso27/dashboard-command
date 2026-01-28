@@ -254,7 +254,9 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     let logado = null; let chartInstance = null; let idParaExcluir = null;
-    let cacheStatus = {};
+    
+    let cacheStatus = {}; // Guarda o último status conhecido
+    let ritsNotificadas = new Set(); // Guarda RITMs que já dispararam alerta visual para não repetir
 
     const colorPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#14b8a6'];
     const analystColors = {};
@@ -281,7 +283,7 @@
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, duration);
     }
 
-    // FUNÇÃO MONITORAR CORRIGIDA - EVITA ALERTA EM REGISTROS JÁ RESOLVIDOS
+    // MONITOR CORRIGIDO: EVITA REPETIÇÃO E IGNORA RESOLVIDOS
     function monitorar() {
         if (!logado) return;
         database.ref('chamados').once('value', snap => {
@@ -290,27 +292,35 @@
                 const c = item.val();
                 if(c.analista === logado.nome) {
                     
-                    // 1. Monitor de 6 horas APENAS para Pendente e GA ativos
-                    if(c.status === 'Pendente' || c.status === 'GA') {
-                        const dGrava = new Date(`${c.data} ${c.hora}`).getTime();
-                        if (agora - dGrava > (6 * 60 * 60 * 1000)) showToast(`Verificar ${c.status}: ${c.ritm}`, "alert", c.link);
+                    // SE JÁ ESTÁ RESOLVIDO NO BANCO, NUNCA DISPARA ALERTA (FIM DO LOOP)
+                    if(c.status === 'Resolvido' || c.status === 'Cancelado') {
+                        cacheStatus[c.ritm] = c.status;
+                        return; 
                     }
 
-                    // 2. Alertas de Mudança Inteligentes
+                    // 1. Alerta de 6 horas (Avisa uma vez por sessão até que mude)
+                    if((c.status === 'Pendente' || c.status === 'GA') && !ritsNotificadas.has(c.ritm + "_6h")) {
+                        const dGrava = new Date(`${c.data} ${c.hora}`).getTime();
+                        if (agora - dGrava > (6 * 60 * 60 * 1000)) {
+                            showToast(`Verificação necessária (${c.status}): ${c.ritm}`, "alert", c.link);
+                            ritsNotificadas.add(c.ritm + "_6h"); // Marca como avisado
+                        }
+                    }
+
+                    // 2. Alerta de Mudança de Status (Reabertura ou Resposta)
                     if(cacheStatus[c.ritm] && cacheStatus[c.ritm] !== c.status) {
                         
-                        // CASO A: Tornou-se Reaberto agora
+                        // Mudou para Reaberto agora?
                         if(c.status === 'Reaberto') {
                             showToast(`A RITM ${c.ritm} foi REABERTA!`, "alert", c.link);
                         }
                         
-                        // CASO B: Estava Pendente/GA e agora foi Resolvido (Notifica a resposta)
+                        // Foi respondida (saiu de Pendência para Resolvido)?
                         else if((cacheStatus[c.ritm] === 'Pendente' || cacheStatus[c.ritm] === 'GA') && c.status === 'Resolvido') {
                             showToast(`A RITM ${c.ritm} foi RESPONDIDA/RESOLVIDA!`, "success", c.link);
                         }
                     }
                     
-                    // Atualiza o cache para a próxima volta do monitoramento
                     cacheStatus[c.ritm] = c.status;
                 }
             });
@@ -372,8 +382,8 @@
                             tR++; tT += (parseInt(c.taskQtd) || 0); 
                         }
                         const b = "badge-" + c.status.toLowerCase();
-                        const lHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary); font-weight:800;">Link</a>` : '---';
-                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${lHtml}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
+                        const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary); font-weight:800;">Link</a>` : '---';
+                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button onclick="openConfirm('${item.key}')" class="btn-delete-pro">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
@@ -415,7 +425,7 @@
     function verificarStatusTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => { const s = snap.val(); if(s && s.aberto && s.data === getHoje()) document.getElementById('cardRegistro').classList.add('unlocked'); }); }
     function iniciarTurno() { database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: getHoje() }).then(() => location.reload()); }
     function finalizarTurno() { if(confirm("Encerrar?")) database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: false }).then(() => location.reload()); }
-    function listarUsuarios() { database.ref('usuarios').on('value', snap => { const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; snap.forEach(u => { const val = u.val(); const login = decodeKey(u.key); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td><button onclick="database.ref('usuarios').child('${u.key}').remove()">X</button></td></tr>`; }); }); }
+    function listarUsuarios() { database.ref('usuarios').on('value', snap => { const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; snap.forEach(u => { const val = u.val(); const login = decodeKey(u.key); lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td style="text-align:right"><button onclick="database.ref('usuarios').child('${u.key}').remove()">Ok</button></td></tr>`; }); }); }
     function cadastrarAnalista() { const nc = document.getElementById('nCompleto').value; const u = document.getElementById('nUser').value.toUpperCase().trim(); const p = document.getElementById('nPass').value; const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/; if(!regex.test(p)) return showToast("Senha Fraca!", "error"); database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => location.reload()); }
     function exportarExcel(id) { const table = document.createElement("table"); table.innerHTML = `<thead><tr><th>DATA</th><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>ANALISTA</th><th>DESCRIÇÃO</th></tr></thead>`; const clone = document.getElementById(id).cloneNode(true); table.appendChild(clone); const wb = XLSX.utils.table_to_book(table); XLSX.writeFile(wb, `Relatorio_OPS.xlsx`); }
     function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; }
