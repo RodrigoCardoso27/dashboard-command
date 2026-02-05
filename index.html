@@ -72,13 +72,9 @@
         .badge-ga { color: #a78bfa; background: rgba(139, 92, 246, 0.1); }
 
         .kpi-value { font-size: 2.2rem; font-weight: 800; margin-top: 5px; }
-        .btn-delete-pro { background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: none; }
-        .btn-delete-pro:hover { background: var(--danger); color: white; }
+        .btn-action { background: none; border: none; cursor: pointer; padding: 5px; transition: 0.2s; font-size: 1.1rem; }
+        .btn-action:hover { transform: scale(1.2); }
 
-        .kpi-consult-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 25px; }
-        .kpi-consult-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; }
-        .time-text { font-family: monospace; font-size: 0.85rem; color: var(--primary); font-weight: 700; background: rgba(99, 102, 241, 0.1); padding: 4px 8px; border-radius: 6px; }
-        
         .slider-container { display: flex; align-items: center; gap: 20px; margin-top: 10px; }
         input[type=range] { flex: 1; accent-color: var(--primary); }
         #overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.85); z-index: 10; border-radius: 32px; backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; }
@@ -87,6 +83,8 @@
         .btn-primary { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: 800; transition: 0.3s; width: 100%; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--primary-glow); }
         .btn-success { background: var(--success); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: 800; transition: 0.3s; width: 100%; }
+        
+        .tag-origem { display: inline-block; font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 8px; color: var(--warning); }
     </style>
 </head>
 <body>
@@ -360,6 +358,14 @@
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, duration);
     }
 
+    // NOVA FUNÇÃO: ATIVAR/DESATIVAR NOTIFICAÇÃO INDIVIDUAL
+    function toggleNotificacao(id, novoStatus) {
+        database.ref('chamados').child(id).update({ notificar: novoStatus }).then(() => {
+            const msg = novoStatus ? "Notificações ATIVADAS" : "Notificações SILENCIADAS";
+            showToast(msg, novoStatus ? "success" : "alert");
+        });
+    }
+
     function monitorar() {
         if (!logado) return;
         database.ref('chamados').once('value', snap => {
@@ -367,7 +373,10 @@
             snap.forEach(item => {
                 const c = item.val();
                 if(c.analista === logado.nome) {
-                    if(c.status === 'Resolvido' || c.status === 'Cancelado') { cacheStatus[c.ritm] = c.status; return; }
+                    // TRAVA DE SILÊNCIO MANUAL OU FINAL
+                    if(c.notificar === false || c.status === 'Resolvido' || c.status === 'Cancelado') { 
+                        cacheStatus[c.ritm] = c.status; return; 
+                    }
                     
                     if((c.status === 'Pendente' || c.status === 'GA') && !ritsNotificadas.has(c.ritm + "_6h")) {
                         const dGrava = new Date(`${c.data} ${c.hora}`).getTime();
@@ -433,6 +442,7 @@
     function toggleTaskInput() { const t = document.getElementById('temTask').value === 'sim'; document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden'; document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none'; }
     function gerarCamposTask() { const qtd = parseInt(document.getElementById('taskQtd').value); const c = document.getElementById('containerTasksDinamicas'); c.innerHTML = ""; for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`; }
 
+    // SALVAR COM LÓGICA DE HISTÓRICO (PRESERVA RITM PASSADA)
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
@@ -443,11 +453,39 @@
         if(!r || !st || !d) return showToast("Faltam dados!", "error");
         
         database.ref('chamados').once('value', snap => {
-            let idEx = null;
-            snap.forEach(item => { if(item.val().ritm === r && item.val().analista === logado.nome && item.val().data === hoje) idEx = item.key; });
-            const p = { ritm: r, status: st, desc: d, link: l, data: hoje, hora: hora, analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não" };
-            if(idEx) database.ref('chamados').child(idEx).update(p).then(() => { showToast("Atualizado!"); limpar(); });
-            else database.ref('chamados').push(p).then(() => { showToast("Gravado!"); limpar(); });
+            let registroHoje = null;
+            let registroPassado = null;
+
+            snap.forEach(item => {
+                const c = item.val();
+                if(c.ritm === r && c.analista === logado.nome) {
+                    if(c.data === hoje) {
+                        registroHoje = item.key;
+                    } else {
+                        // Encontra o registro mais recente do passado para referenciar
+                        if(!registroPassado || c.data > registroPassado.data) {
+                            registroPassado = { key: item.key, data: c.data };
+                        }
+                    }
+                }
+            });
+
+            const p = { 
+                ritm: r, status: st, desc: d, link: l, data: hoje, hora: hora, 
+                analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não", 
+                notificar: true 
+            };
+
+            if(registroHoje) {
+                // Atualiza o de hoje (substitui)
+                database.ref('chamados').child(registroHoje).update(p).then(() => { showToast("Atualizado!"); limpar(); });
+            } else {
+                // Cria um novo (preserva o passado)
+                if(st === "Reaberto" && registroPassado) {
+                    p.desc += ` <span class='tag-origem'>Ref. ${registroPassado.data}</span>`;
+                }
+                database.ref('chamados').push(p).then(() => { showToast("Novo Registro!"); limpar(); });
+            }
         });
     }
 
@@ -466,7 +504,14 @@
                         if(c.status !== 'Pendente' && c.status !== 'GA') { tR++; tT += (parseInt(c.taskQtd) || 0); }
                         const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
                         const b = "badge-" + c.status.toLowerCase();
-                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button class="btn-delete-pro" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
+                        
+                        // ÍCONE DE SINO
+                        const isMuted = c.notificar === false;
+                        const bellIcon = isMuted ? '🔕' : '🔔';
+                        const bellColor = isMuted ? 'var(--text-dim)' : 'var(--warning)';
+                        const bellAction = `<button onclick="toggleNotificacao('${item.key}', ${!c.notificar && c.notificar !== undefined ? 'true' : 'false'})" class="btn-action" style="color:${bellColor}" title="${isMuted ? 'Ativar Notificações' : 'Silenciar'}">${bellIcon}</button>`;
+
+                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right">${bellAction} <button class="btn-action" style="color:var(--danger)" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
