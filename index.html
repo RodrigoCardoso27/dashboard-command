@@ -85,6 +85,10 @@
         .btn-success { background: var(--success); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: 800; transition: 0.3s; width: 100%; }
         
         .tag-origem { display: inline-block; font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 8px; color: var(--warning); }
+        
+        /* CHECKBOX ESTILIZADO */
+        .check-container { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        .check-box { width: 24px; height: 24px; accent-color: var(--success); cursor: pointer; }
     </style>
 </head>
 <body>
@@ -237,19 +241,26 @@
     <div id="viewThemes" class="view-section">
         <div class="section-card">
             <h2 class="section-title">🎨 Personalização</h2>
-            <div class="form-grid">
-                <div onclick="setTheme('midnight')" style="background:#020617; border:2px solid #6366f1; padding:25px; border-radius:20px; cursor:pointer; text-align:center;">Midnight</div>
-                <div onclick="setTheme('emerald')" style="background:#050505; border:2px solid #10b981; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#10b981;">Emerald</div>
-                <div onclick="setTheme('rose')" style="background:#0f0a14; border:2px solid #ec4899; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#ec4899;">Rose</div>
-                <div onclick="setTheme('gold')" style="background:#0c0a09; border:2px solid #eab308; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#eab308;">Gold</div>
-                <div onclick="setTheme('nordic')" style="background:#f1f5f9; border:2px solid #1e293b; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#1e293b;">Nordic</div>
+            
+            <div class="check-container">
+                <input type="checkbox" id="checkGlobalNotify" class="check-box" onchange="toggleGlobalNotifications(this.checked)">
+                <div style="font-weight: 800; font-size: 1.1rem;">🔔 Ativar Alertas Sonoros/Visuais</div>
             </div>
-            <div class="section-card" style="margin-top:30px; background:rgba(255,255,255,0.02)">
+
+            <div class="section-card" style="margin-top:20px; background:rgba(255,255,255,0.02)">
                 <h3>⏱️ Duração da Notificação</h3>
                 <div class="slider-container">
                     <input type="range" id="toastDuration" min="1" max="30" value="5" oninput="updateToastDurationLabel(this.value)">
                     <span id="durationLabel" style="font-weight:800; color:var(--primary); min-width: 100px;">5 segundos</span>
                 </div>
+            </div>
+
+            <div class="form-grid" style="margin-top: 30px;">
+                <div onclick="setTheme('midnight')" style="background:#020617; border:2px solid #6366f1; padding:25px; border-radius:20px; cursor:pointer; text-align:center;">Midnight</div>
+                <div onclick="setTheme('emerald')" style="background:#050505; border:2px solid #10b981; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#10b981;">Emerald</div>
+                <div onclick="setTheme('rose')" style="background:#0f0a14; border:2px solid #ec4899; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#ec4899;">Rose</div>
+                <div onclick="setTheme('gold')" style="background:#0c0a09; border:2px solid #eab308; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#eab308;">Gold</div>
+                <div onclick="setTheme('nordic')" style="background:#f1f5f9; border:2px solid #1e293b; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#1e293b;">Nordic</div>
             </div>
         </div>
     </div>
@@ -346,7 +357,16 @@
 
     // ------ MONITOR E UI ------
     function updateToastDurationLabel(val) { document.getElementById('durationLabel').innerText = val + " segundos"; localStorage.setItem('command_toast_duration', val); }
+    function toggleGlobalNotifications(isChecked) {
+        localStorage.setItem('command_notifications_enabled', isChecked);
+        showToast(isChecked ? "Notificações ATIVADAS" : "Notificações DESATIVADAS", isChecked ? "success" : "alert");
+    }
+
     function showToast(msg, type = 'success', link = null) {
+        // CHECAGEM GLOBAL DE NOTIFICAÇÃO
+        const isEnabled = localStorage.getItem('command_notifications_enabled') !== 'false';
+        if (!isEnabled && type !== 'success') return; // Se desligado, só mostra toasts de ação (salvar/excluir), ignora alertas.
+
         const c = document.getElementById('toast-container');
         const t = document.createElement('div'); t.className = 'toast';
         if(link && link !== '---') { t.classList.add('clickable'); t.onclick = () => window.open(link, '_blank'); t.title = "Abrir RITM"; }
@@ -358,25 +378,18 @@
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, duration);
     }
 
-    // NOVA FUNÇÃO: ATIVAR/DESATIVAR NOTIFICAÇÃO INDIVIDUAL
-    function toggleNotificacao(id, novoStatus) {
-        database.ref('chamados').child(id).update({ notificar: novoStatus }).then(() => {
-            const msg = novoStatus ? "Notificações ATIVADAS" : "Notificações SILENCIADAS";
-            showToast(msg, novoStatus ? "success" : "alert");
-        });
-    }
-
     function monitorar() {
         if (!logado) return;
+        
+        // Verifica se notificações estão ativas globalmente antes de processar
+        if (localStorage.getItem('command_notifications_enabled') === 'false') return;
+
         database.ref('chamados').once('value', snap => {
             const agora = new Date().getTime();
             snap.forEach(item => {
                 const c = item.val();
                 if(c.analista === logado.nome) {
-                    // TRAVA DE SILÊNCIO MANUAL OU FINAL
-                    if(c.notificar === false || c.status === 'Resolvido' || c.status === 'Cancelado') { 
-                        cacheStatus[c.ritm] = c.status; return; 
-                    }
+                    if(c.status === 'Resolvido' || c.status === 'Cancelado') { cacheStatus[c.ritm] = c.status; return; }
                     
                     if((c.status === 'Pendente' || c.status === 'GA') && !ritsNotificadas.has(c.ritm + "_6h")) {
                         const dGrava = new Date(`${c.data} ${c.hora}`).getTime();
@@ -422,6 +435,10 @@
         const t = localStorage.getItem('command_theme'); if(t) setTheme(t);
         const d = localStorage.getItem('command_toast_duration'); if(d) { document.getElementById('toastDuration').value = d; document.getElementById('durationLabel').innerText = d + " segundos"; }
         
+        // Carrega estado do checkbox de notificação
+        const notifEnabled = localStorage.getItem('command_notifications_enabled') !== 'false';
+        document.getElementById('checkGlobalNotify').checked = notifEnabled;
+
         const salvo = localStorage.getItem('usuarioLogado');
         if (salvo) { 
             logado = JSON.parse(salvo); 
@@ -472,8 +489,7 @@
 
             const p = { 
                 ritm: r, status: st, desc: d, link: l, data: hoje, hora: hora, 
-                analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não", 
-                notificar: true 
+                analista: logado.nome, taskQtd: tArr.length, tasks: tArr.join(", ") || "Não"
             };
 
             if(registroHoje) {
@@ -505,13 +521,7 @@
                         const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
                         const b = "badge-" + c.status.toLowerCase();
                         
-                        // ÍCONE DE SINO
-                        const isMuted = c.notificar === false;
-                        const bellIcon = isMuted ? '🔕' : '🔔';
-                        const bellColor = isMuted ? 'var(--text-dim)' : 'var(--warning)';
-                        const bellAction = `<button onclick="toggleNotificacao('${item.key}', ${!c.notificar && c.notificar !== undefined ? 'true' : 'false'})" class="btn-action" style="color:${bellColor}" title="${isMuted ? 'Ativar Notificações' : 'Silenciar'}">${bellIcon}</button>`;
-
-                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right">${bellAction} <button class="btn-action" style="color:var(--danger)" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
+                        tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button class="btn-delete-pro" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
             });
