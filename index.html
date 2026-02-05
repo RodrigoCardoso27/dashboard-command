@@ -85,8 +85,6 @@
         .btn-success { background: var(--success); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: 800; transition: 0.3s; width: 100%; }
         
         .tag-origem { display: inline-block; font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 8px; color: var(--warning); }
-        
-        /* CHECKBOX ESTILIZADO */
         .check-container { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
         .check-box { width: 24px; height: 24px; accent-color: var(--success); cursor: pointer; }
     </style>
@@ -160,22 +158,21 @@
 
 <div class="main-content">
     <div id="viewDash" class="view-section active">
-        <div class="kpi-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;">
-                <label style="font-size:0.6rem">RITMs RESOLVIDAS</label>
-                <div class="kpi-value" id="kpiRitms">0</div>
+        <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px;">
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--danger);">
+                <label style="font-size:0.6rem">FILA (N.I)</label><div class="kpi-value" id="kpiNi">0</div>
+            </div>
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--warning);">
+                <label style="font-size:0.6rem">FILA (AND.)</label><div class="kpi-value" id="kpiEa">0</div>
+            </div>
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--success);">
+                <label style="font-size:0.6rem">RESOLVIDOS</label><div class="kpi-value" id="kpiRitms">0</div>
             </div>
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;">
-                <label style="font-size:0.6rem">PENDÊNCIA INICIAL</label>
-                <div class="kpi-value" id="kpiPendencia" style="color: var(--warning);">0</div>
+                <label style="font-size:0.6rem">EFICIÊNCIA</label><div class="kpi-value" id="kpiMedia" style="color: var(--success);">0%</div>
             </div>
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;">
-                <label style="font-size:0.6rem">EFICIÊNCIA ATUAL</label>
-                <div class="kpi-value" id="kpiMedia" style="color: var(--success);">0%</div>
-            </div>
-            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;">
-                <label style="font-size:0.6rem">TASKS CONCLUÍDAS</label>
-                <div class="kpi-value" id="kpiTasks" style="color: var(--primary);">0</div>
+                <label style="font-size:0.6rem">TASKS</label><div class="kpi-value" id="kpiTasks" style="color: var(--primary);">0</div>
             </div>
         </div>
 
@@ -272,10 +269,14 @@
                 <input type="text" id="nCompleto" placeholder="Nome Completo">
                 <input type="text" id="nUser" placeholder="Login">
                 <input type="password" id="nPass" placeholder="Senha">
+                <select id="nRole">
+                    <option value="padrao">Padrão</option>
+                    <option value="admin">Admin</option>
+                </select>
                 <button class="btn-success" id="btnSalvarAnalista" onclick="cadastrarAnalista()">CADASTRAR</button>
             </div>
             <table style="margin-top: 40px;">
-                <thead><tr><th>Nome</th><th>Login</th><th style="text-align:right">Ação</th></tr></thead>
+                <thead><tr><th>Nome</th><th>Login</th><th>Permissão</th><th style="text-align:right">Ação</th></tr></thead>
                 <tbody id="listaUsuarios"></tbody>
             </table>
         </div>
@@ -325,7 +326,7 @@
     function listarReports() {
         database.ref('reports').on('value', snap => {
             const tbody = document.getElementById('listaReports'); tbody.innerHTML = "";
-            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()" class="btn-delete-pro">🗑</button></td></tr>`; });
+            snap.forEach(i => { const r = i.val(); tbody.innerHTML += `<tr><td>${r.data}</td><td><b>${r.analista}</b></td><td>${r.msg}</td><td style="text-align:right"><button onclick="database.ref('reports').child('${i.key}').remove()" class="btn-action">✅</button></td></tr>`; });
         });
     }
 
@@ -335,7 +336,7 @@
         const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
         const ea = parseInt(document.getElementById('startEmAndamento').value) || 0;
         database.ref('statusTurno/' + encodeKey(logado.nome)).set({
-            aberto: true, data: getHoje(), totalInicial: ni + ea
+            aberto: true, data: getHoje(), ni: ni, ea: ea, totalInicial: ni + ea
         }).then(() => location.reload());
     }
     function verificarStatusTurno() {
@@ -344,7 +345,8 @@
             if(s && s.aberto && s.data === getHoje()) {
                 document.getElementById('cardRegistro').classList.add('unlocked');
                 document.getElementById('btnFinalizar').style.display = 'block';
-                document.getElementById('kpiPendencia').innerText = s.totalInicial;
+                document.getElementById('kpiNi').innerText = s.ni || 0;
+                document.getElementById('kpiEa').innerText = s.ea || 0;
                 pendenciaTotal = s.totalInicial;
             }
         });
@@ -363,9 +365,8 @@
     }
 
     function showToast(msg, type = 'success', link = null) {
-        // CHECAGEM GLOBAL DE NOTIFICAÇÃO
         const isEnabled = localStorage.getItem('command_notifications_enabled') !== 'false';
-        if (!isEnabled && type !== 'success') return; // Se desligado, só mostra toasts de ação (salvar/excluir), ignora alertas.
+        if (!isEnabled && type !== 'success') return; 
 
         const c = document.getElementById('toast-container');
         const t = document.createElement('div'); t.className = 'toast';
@@ -380,8 +381,6 @@
 
     function monitorar() {
         if (!logado) return;
-        
-        // Verifica se notificações estão ativas globalmente antes de processar
         if (localStorage.getItem('command_notifications_enabled') === 'false') return;
 
         database.ref('chamados').once('value', snap => {
@@ -416,16 +415,26 @@
             const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; 
             snap.forEach(u => { 
                 const val = u.val(); const login = decodeKey(u.key); 
-                lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}')" style="background:none; color:var(--warning); cursor:pointer; border:none; margin-right:10px;">✏️</button><button onclick="database.ref('usuarios').child('${u.key}').remove()" class="btn-delete-pro">🗑</button></td></tr>`; 
+                // APENAS O SUPER ADMIN ("ADMIN") PODE VER O BOTÃO DE EXCLUIR
+                const isSuperAdmin = logado.nome === 'ADMIN'; 
+                const deleteBtn = isSuperAdmin ? `<button onclick="database.ref('usuarios').child('${u.key}').remove()" class="btn-action" style="color:var(--danger)">🗑</button>` : '';
+                
+                lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td>${val.role === 'admin' ? 'Admin' : 'Padrão'}</td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}', '${val.role}')" style="background:none; color:var(--warning); cursor:pointer; border:none; margin-right:10px;">✏️</button>${deleteBtn}</td></tr>`; 
             }); 
         }); 
     }
-    function prepararEdicao(l, n) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
+    function prepararEdicao(l, n, r) { 
+        document.getElementById('nCompleto').value = n; 
+        document.getElementById('nUser').value = l; 
+        document.getElementById('nRole').value = r || 'padrao';
+        document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; 
+        document.getElementById('nUser').readOnly = true; 
+    }
     function cadastrarAnalista() {
-        const nc = document.getElementById('nCompleto').value; const u = document.getElementById('nUser').value.toUpperCase().trim(); const p = document.getElementById('nPass').value;
+        const nc = document.getElementById('nCompleto').value; const u = document.getElementById('nUser').value.toUpperCase().trim(); const p = document.getElementById('nPass').value; const r = document.getElementById('nRole').value;
         const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,32}$/;
         if(!regex.test(p)) return showToast("Senha Fraca!", "error");
-        database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: 'analista' }).then(() => { showToast("Salvo!"); location.reload(); });
+        database.ref('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: r }).then(() => { showToast("Salvo!"); location.reload(); });
     }
 
     // ------ CORE ------
@@ -435,7 +444,6 @@
         const t = localStorage.getItem('command_theme'); if(t) setTheme(t);
         const d = localStorage.getItem('command_toast_duration'); if(d) { document.getElementById('toastDuration').value = d; document.getElementById('durationLabel').innerText = d + " segundos"; }
         
-        // Carrega estado do checkbox de notificação
         const notifEnabled = localStorage.getItem('command_notifications_enabled') !== 'false';
         document.getElementById('checkGlobalNotify').checked = notifEnabled;
 
@@ -459,7 +467,6 @@
     function toggleTaskInput() { const t = document.getElementById('temTask').value === 'sim'; document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden'; document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none'; }
     function gerarCamposTask() { const qtd = parseInt(document.getElementById('taskQtd').value); const c = document.getElementById('containerTasksDinamicas'); c.innerHTML = ""; for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`; }
 
-    // SALVAR COM LÓGICA DE HISTÓRICO (PRESERVA RITM PASSADA)
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
@@ -479,7 +486,6 @@
                     if(c.data === hoje) {
                         registroHoje = item.key;
                     } else {
-                        // Encontra o registro mais recente do passado para referenciar
                         if(!registroPassado || c.data > registroPassado.data) {
                             registroPassado = { key: item.key, data: c.data };
                         }
@@ -493,10 +499,8 @@
             };
 
             if(registroHoje) {
-                // Atualiza o de hoje (substitui)
                 database.ref('chamados').child(registroHoje).update(p).then(() => { showToast("Atualizado!"); limpar(); });
             } else {
-                // Cria um novo (preserva o passado)
                 if(st === "Reaberto" && registroPassado) {
                     p.desc += ` <span class='tag-origem'>Ref. ${registroPassado.data}</span>`;
                 }
@@ -516,11 +520,13 @@
                 const c = item.val();
                 if(c.data === hoje) {
                     if(c.status === 'Resolvido' || c.status === 'Cancelado') cont[c.analista] = (cont[c.analista] || 0) + 1;
-                    if(logado.role === 'admin' || c.analista === logado.nome) {
+                    
+                    // FILTRO DE SEGURANÇA: Se for Admin, vê tudo. Se Padrão, só vê o dele.
+                    const isAdmin = logado.role === 'admin';
+                    if(isAdmin || c.analista === logado.nome) {
                         if(c.status !== 'Pendente' && c.status !== 'GA') { tR++; tT += (parseInt(c.taskQtd) || 0); }
                         const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
                         const b = "badge-" + c.status.toLowerCase();
-                        
                         tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button class="btn-delete-pro" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
@@ -538,7 +544,8 @@
             let t = 0, res = 0, can = 0, rea = 0, pen = 0, ga = 0;
             snap.forEach(item => {
                 const c = item.val();
-                if(c.data >= ini && c.data <= fim && (logado.role === 'admin' || c.analista === logado.nome)) {
+                const isAdmin = logado.role === 'admin';
+                if(c.data >= ini && c.data <= fim && (isAdmin || c.analista === logado.nome)) {
                     t++; if(c.status === "Resolvido") res++; else if(c.status === "Cancelado") can++; else if(c.status === "Reaberto") rea++; else if(c.status === "Pendente") pen++; else if(c.status === "GA") ga++;
                     const b = "badge-" + c.status.toLowerCase();
                     tbody.innerHTML += `<tr><td>${c.data}</td><td>${c.hora}</td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.analista}</td><td>${c.desc}</td></tr>`;
