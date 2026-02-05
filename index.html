@@ -415,10 +415,8 @@
             const lista = document.getElementById('listaUsuarios'); lista.innerHTML = ""; 
             snap.forEach(u => { 
                 const val = u.val(); const login = decodeKey(u.key); 
-                // APENAS O SUPER ADMIN ("ADMIN") PODE VER O BOTÃO DE EXCLUIR
                 const isSuperAdmin = logado.nome === 'ADMIN'; 
                 const deleteBtn = isSuperAdmin ? `<button onclick="database.ref('usuarios').child('${u.key}').remove()" class="btn-action" style="color:var(--danger)">🗑</button>` : '';
-                
                 lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td>${val.role === 'admin' ? 'Admin' : 'Padrão'}</td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}', '${val.role}')" style="background:none; color:var(--warning); cursor:pointer; border:none; margin-right:10px;">✏️</button>${deleteBtn}</td></tr>`; 
             }); 
         }); 
@@ -467,6 +465,7 @@
     function toggleTaskInput() { const t = document.getElementById('temTask').value === 'sim'; document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden'; document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none'; }
     function gerarCamposTask() { const qtd = parseInt(document.getElementById('taskQtd').value); const c = document.getElementById('containerTasksDinamicas'); c.innerHTML = ""; for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`; }
 
+    // SALVAR COM LÓGICA DE HISTÓRICO (PRESERVA RITM PASSADA)
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
@@ -521,7 +520,6 @@
                 if(c.data === hoje) {
                     if(c.status === 'Resolvido' || c.status === 'Cancelado') cont[c.analista] = (cont[c.analista] || 0) + 1;
                     
-                    // FILTRO DE SEGURANÇA: Se for Admin, vê tudo. Se Padrão, só vê o dele.
                     const isAdmin = logado.role === 'admin';
                     if(isAdmin || c.analista === logado.nome) {
                         if(c.status !== 'Pendente' && c.status !== 'GA') { tR++; tT += (parseInt(c.taskQtd) || 0); }
