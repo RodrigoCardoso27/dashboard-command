@@ -71,7 +71,12 @@
         .badge-pendente { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
         .badge-ga { color: #a78bfa; background: rgba(139, 92, 246, 0.1); }
 
-        .kpi-value { font-size: 2.2rem; font-weight: 800; margin-top: 5px; }
+        /* KPIs */
+        .kpi-value { font-size: 2.2rem; font-weight: 800; margin-top: 5px; transition: 0.2s; cursor: default; }
+        .kpi-value.editable { cursor: pointer; }
+        .kpi-value.editable:hover { color: var(--warning); transform: scale(1.1); }
+        .kpi-editable-hint { font-size: 0.6rem; color: var(--text-dim); opacity: 0.5; margin-top: 5px; display: none; } /* Oculto por padrão */
+
         .btn-action { background: none; border: none; cursor: pointer; padding: 5px; transition: 0.2s; font-size: 1.1rem; }
         .btn-action:hover { transform: scale(1.2); }
 
@@ -159,18 +164,27 @@
 <div class="main-content">
     <div id="viewDash" class="view-section active">
         <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px;">
+            
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--danger);">
-                <label style="font-size:0.6rem">FILA (N.I)</label><div class="kpi-value" id="kpiNi">0</div>
+                <label style="font-size:0.6rem">FILA (N.I)</label>
+                <div class="kpi-value" id="kpiNi" onclick="corrigirKpi('ni')">0</div>
+                <span class="kpi-editable-hint" id="hintNi">clique para editar</span>
             </div>
+
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--warning);">
-                <label style="font-size:0.6rem">FILA (AND.)</label><div class="kpi-value" id="kpiEa">0</div>
+                <label style="font-size:0.6rem">FILA (AND.)</label>
+                <div class="kpi-value" id="kpiEa" onclick="corrigirKpi('ea')">0</div>
+                <span class="kpi-editable-hint" id="hintEa">clique para editar</span>
             </div>
+
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--success);">
                 <label style="font-size:0.6rem">RESOLVIDOS</label><div class="kpi-value" id="kpiRitms">0</div>
             </div>
+
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;">
                 <label style="font-size:0.6rem">EFICIÊNCIA</label><div class="kpi-value" id="kpiMedia" style="color: var(--success);">0%</div>
             </div>
+
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;">
                 <label style="font-size:0.6rem">TASKS</label><div class="kpi-value" id="kpiTasks" style="color: var(--primary);">0</div>
             </div>
@@ -340,17 +354,55 @@
         }).then(() => location.reload());
     }
     function verificarStatusTurno() {
-        database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', snap => {
+        database.ref('statusTurno/' + encodeKey(logado.nome)).on('value', snap => {
             const s = snap.val();
             if(s && s.aberto && s.data === getHoje()) {
                 document.getElementById('cardRegistro').classList.add('unlocked');
                 document.getElementById('btnFinalizar').style.display = 'block';
-                document.getElementById('kpiNi').innerText = s.ni || 0;
-                document.getElementById('kpiEa').innerText = s.ea || 0;
-                pendenciaTotal = s.totalInicial;
+                
+                const ni = s.ni || 0;
+                const ea = s.ea || 0;
+                document.getElementById('kpiNi').innerText = ni;
+                document.getElementById('kpiEa').innerText = ea;
+                
+                pendenciaTotal = s.totalInicial || (ni + ea);
+                
+                const tR = parseInt(document.getElementById('kpiRitms').innerText) || 0;
+                if(pendenciaTotal > 0) document.getElementById('kpiMedia').innerText = ((tR / pendenciaTotal) * 100).toFixed(1) + "%";
+
+                // Se for Admin, libera edição visual
+                if (logado.role === 'admin') {
+                    document.getElementById('kpiNi').classList.add('editable');
+                    document.getElementById('kpiEa').classList.add('editable');
+                    document.getElementById('hintNi').style.display = 'block';
+                    document.getElementById('hintEa').style.display = 'block';
+                }
             }
         });
     }
+    
+    // CORREÇÃO MANUAL DE KPI (Só Admin)
+    function corrigirKpi(tipo) {
+        if (logado.role !== 'admin') return showToast("Apenas Gestores podem alterar!", "error");
+
+        const atual = parseInt(document.getElementById(tipo === 'ni' ? 'kpiNi' : 'kpiEa').innerText);
+        const novo = prompt("Corrigir valor para:", atual);
+        
+        if (novo !== null && !isNaN(novo)) {
+            const valor = parseInt(novo);
+            const path = 'statusTurno/' + encodeKey(logado.nome);
+            
+            database.ref(path).once('value', snap => {
+                const s = snap.val();
+                let updates = {};
+                updates[tipo] = valor;
+                const outro = tipo === 'ni' ? (s.ea || 0) : (s.ni || 0);
+                updates.totalInicial = valor + outro;
+                database.ref(path).update(updates).then(() => showToast("Corrigido!", "success"));
+            });
+        }
+    }
+
     function finalizarTurno() {
         if(confirm("Encerrar o turno e limpar o painel?")) {
             database.ref('statusTurno/' + encodeKey(logado.nome)).update({ aberto: false }).then(() => location.reload());
@@ -525,6 +577,7 @@
                         if(c.status !== 'Pendente' && c.status !== 'GA') { tR++; tT += (parseInt(c.taskQtd) || 0); }
                         const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
                         const b = "badge-" + c.status.toLowerCase();
+                        
                         tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button class="btn-delete-pro" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
