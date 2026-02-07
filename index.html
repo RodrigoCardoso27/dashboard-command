@@ -71,11 +71,10 @@
         .badge-pendente { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
         .badge-ga { color: #a78bfa; background: rgba(139, 92, 246, 0.1); }
 
-        /* KPIs */
         .kpi-value { font-size: 2.2rem; font-weight: 800; margin-top: 5px; transition: 0.2s; cursor: default; }
         .kpi-value.editable { cursor: pointer; }
         .kpi-value.editable:hover { color: var(--warning); transform: scale(1.1); }
-        .kpi-editable-hint { font-size: 0.6rem; color: var(--text-dim); opacity: 0.5; margin-top: 5px; display: none; } /* Oculto por padrão */
+        .kpi-editable-hint { font-size: 0.6rem; color: var(--text-dim); opacity: 0.5; margin-top: 5px; display: none; }
 
         .btn-action { background: none; border: none; cursor: pointer; padding: 5px; transition: 0.2s; font-size: 1.1rem; }
         .btn-action:hover { transform: scale(1.2); }
@@ -370,7 +369,6 @@
                 const tR = parseInt(document.getElementById('kpiRitms').innerText) || 0;
                 if(pendenciaTotal > 0) document.getElementById('kpiMedia').innerText = ((tR / pendenciaTotal) * 100).toFixed(1) + "%";
 
-                // Se for Admin, libera edição visual
                 if (logado.role === 'admin') {
                     document.getElementById('kpiNi').classList.add('editable');
                     document.getElementById('kpiEa').classList.add('editable');
@@ -381,7 +379,6 @@
         });
     }
     
-    // CORREÇÃO MANUAL DE KPI (Só Admin)
     function corrigirKpi(tipo) {
         if (logado.role !== 'admin') return showToast("Apenas Gestores podem alterar!", "error");
 
@@ -553,6 +550,8 @@
                 database.ref('chamados').child(registroHoje).update(p).then(() => { showToast("Atualizado!"); limpar(); });
             } else {
                 if(st === "Reaberto" && registroPassado) {
+                    // DELETA O PASSADO E CRIA HOJE (MOVIMENTAÇÃO)
+                    database.ref('chamados').child(registroPassado.key).remove();
                     p.desc += ` <span class='tag-origem'>Ref. ${registroPassado.data}</span>`;
                 }
                 database.ref('chamados').push(p).then(() => { showToast("Novo Registro!"); limpar(); });
@@ -570,14 +569,13 @@
             snap.forEach(item => {
                 const c = item.val();
                 if(c.data === hoje) {
-                    if(c.status === 'Resolvido' || c.status === 'Cancelado') cont[c.analista] = (cont[c.analista] || 0) + 1;
+                    if(c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto') cont[c.analista] = (cont[c.analista] || 0) + 1;
                     
                     const isAdmin = logado.role === 'admin';
                     if(isAdmin || c.analista === logado.nome) {
                         if(c.status !== 'Pendente' && c.status !== 'GA') { tR++; tT += (parseInt(c.taskQtd) || 0); }
                         const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
                         const b = "badge-" + c.status.toLowerCase();
-                        
                         tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button class="btn-delete-pro" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
                     }
                 }
