@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COMMAND CENTER | OPS Premium</title>
+    <title>COMMAND CENTER | OPS Enterprise</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -133,12 +133,12 @@
         
         <div class="resumo-grid">
             <div class="resumo-box">
-                <div style="font-size:0.7rem; color:var(--text-dim)">RESOLVIDOS</div>
+                <div style="font-size:0.7rem; color:var(--text-dim)">MEUS RESOLVIDOS</div>
                 <div class="resumo-val" id="resumoResolvidos">0</div>
             </div>
             <div class="resumo-box">
-                <div style="font-size:0.7rem; color:var(--text-dim)">EFICIÊNCIA</div>
-                <div class="resumo-val" id="resumoEficiencia" style="color:var(--success)">0%</div>
+                <div style="font-size:0.7rem; color:var(--text-dim)">MINHA META</div>
+                <div class="resumo-val" id="resumoMeta" style="color:var(--success)">0</div>
             </div>
         </div>
 
@@ -196,7 +196,7 @@
 
 <div class="main-content">
     <div id="viewDash" class="view-section active">
-        <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px;">
+        <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; margin-bottom: 30px;">
             
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--danger);">
                 <label style="font-size:0.6rem">FILA (N.I)</label>
@@ -208,6 +208,11 @@
                 <label style="font-size:0.6rem">FILA (AND.)</label>
                 <div class="kpi-value" id="kpiEa" onclick="corrigirKpi('ea')">0</div>
                 <span class="kpi-editable-hint" id="hintEa">clique para editar</span>
+            </div>
+
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--ga);">
+                <label style="font-size:0.6rem">MINHA META</label>
+                <div class="kpi-value" id="kpiMeta">0</div>
             </div>
 
             <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--success);">
@@ -353,6 +358,7 @@
     let logado = null; let chartInstance = null; let chartResumo = null; let idParaExcluir = null;
     let cacheStatus = {}; let ritsNotificadas = new Set();
     let pendenciaTotal = 0; let kpiDataForReport = { resolvido: 0, cancelado: 0, reaberto: 0 };
+    let metaDoDia = 0;
 
     const colorPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16'];
     const analystColors = {};
@@ -377,72 +383,115 @@
         });
     }
 
-    // ------ TURNO & RESUMO ------
+    // ------ TURNO & FILA GLOBAL ------
     function abrirModalTurno() { document.getElementById('modalStartTurn').style.display = 'flex'; }
+    
     function confirmarInicioTurno() {
         const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
         const ea = parseInt(document.getElementById('startEmAndamento').value) || 0;
-        database.ref('statusTurno/' + encodeKey(logado.nome)).set({
-            aberto: true, data: getHoje(), ni: ni, ea: ea, totalInicial: ni + ea
-        }).then(() => location.reload());
+        
+        // Grava no nó GLOBAL do dia
+        database.ref('dailyStats/' + getHoje()).set({
+            ni: ni, ea: ea, totalInicial: ni + ea, createdBy: logado.nome
+        }).then(() => {
+            // Também marca que o usuário iniciou o turno dele
+            database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
+            location.reload();
+        });
     }
-    function verificarStatusTurno() {
-        database.ref('statusTurno/' + encodeKey(logado.nome)).on('value', snap => {
-            const s = snap.val();
-            if(s && s.aberto && s.data === getHoje()) {
-                document.getElementById('cardRegistro').classList.add('unlocked');
-                document.getElementById('btnFinalizar').style.display = 'block';
-                
-                const ni = s.ni || 0;
-                const ea = s.ea || 0;
-                document.getElementById('kpiNi').innerText = ni;
-                document.getElementById('kpiEa').innerText = ea;
-                
-                pendenciaTotal = s.totalInicial || (ni + ea);
-                
-                const tR = parseInt(document.getElementById('kpiRitms').innerText) || 0;
-                if(pendenciaTotal > 0) document.getElementById('kpiMedia').innerText = ((tR / pendenciaTotal) * 100).toFixed(1) + "%";
 
-                if (logado.role === 'admin') {
-                    document.getElementById('kpiNi').classList.add('editable');
-                    document.getElementById('kpiEa').classList.add('editable');
-                    document.getElementById('hintNi').style.display = 'block';
-                    document.getElementById('hintEa').style.display = 'block';
+    function verificarStatusTurno() {
+        // 1. Verifica se já existe estatística do DIA (fila global)
+        database.ref('dailyStats/' + getHoje()).on('value', snap => {
+            const stats = snap.val();
+            
+            // Verifica status individual do usuário
+            database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', userSnap => {
+                const userStatus = userSnap.val();
+                
+                // Se existe fila global preenchida
+                if (stats) {
+                    document.getElementById('kpiNi').innerText = stats.ni || 0;
+                    document.getElementById('kpiEa').innerText = stats.ea || 0;
+                    pendenciaTotal = stats.totalInicial;
+                    
+                    // Se usuário não tem turno aberto, abre automaticamente pois o dia já começou
+                    if (!userStatus || !userStatus.aberto) {
+                        database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
+                    }
+                    
+                    document.getElementById('cardRegistro').classList.add('unlocked');
+                    document.getElementById('btnFinalizar').style.display = 'block';
+                    
+                    // Admin pode editar
+                    if (logado.role === 'admin') {
+                        document.getElementById('kpiNi').classList.add('editable');
+                        document.getElementById('kpiEa').classList.add('editable');
+                        document.getElementById('hintNi').style.display = 'block';
+                        document.getElementById('hintEa').style.display = 'block';
+                    }
+                } else {
+                    // Se não existe fila global E usuário tenta logar, mostra modal para ser o pioneiro
+                    if (!userStatus || !userStatus.aberto) {
+                        // Não faz nada, espera o clique em "INICIAR TURNO" que abre o modal
+                    } else {
+                        // Caso estranho onde usuário tem turno mas não tem stats global (deletado?), força modal
+                    }
                 }
-            }
+            });
         });
     }
     
+    // CÁLCULO DE META PESSOAL (MÉDIA HISTÓRICA)
+    function calcularMetaPessoal() {
+        database.ref('chamados').once('value', snap => {
+            let diasTrabalhados = new Set();
+            let totalResolvidos = 0;
+            
+            snap.forEach(item => {
+                const c = item.val();
+                if (c.analista === logado.nome && (c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto')) {
+                    diasTrabalhados.add(c.data);
+                    totalResolvidos++;
+                }
+            });
+            
+            const qtdDias = diasTrabalhados.size;
+            if (qtdDias > 0) {
+                metaDoDia = Math.ceil(totalResolvidos / qtdDias); // Arredonda pra cima
+                document.getElementById('kpiMeta').innerText = metaDoDia;
+            } else {
+                document.getElementById('kpiMeta').innerText = "--";
+            }
+        });
+    }
+
     function corrigirKpi(tipo) {
         if (logado.role !== 'admin') return showToast("Apenas Gestores podem alterar!", "error");
         const atual = parseInt(document.getElementById(tipo === 'ni' ? 'kpiNi' : 'kpiEa').innerText);
-        const novo = prompt("Corrigir valor para:", atual);
+        const novo = prompt("Corrigir valor GLOBAL para:", atual);
         if (novo !== null && !isNaN(novo)) {
             const valor = parseInt(novo);
-            const path = 'statusTurno/' + encodeKey(logado.nome);
-            database.ref(path).once('value', snap => {
+            database.ref('dailyStats/' + getHoje()).once('value', snap => {
                 const s = snap.val();
                 let updates = {}; updates[tipo] = valor;
                 const outro = tipo === 'ni' ? (s.ea || 0) : (s.ni || 0);
                 updates.totalInicial = valor + outro;
-                database.ref(path).update(updates).then(() => showToast("Corrigido!", "success"));
+                database.ref('dailyStats/' + getHoje()).update(updates).then(() => showToast("Fila Global Atualizada!", "success"));
             });
         }
     }
 
     function prepararFimTurno() {
-        // Preenche dados do modal
-        const resolvidos = kpiDataForReport.resolvido + kpiDataForReport.reaberto; // Reaberto tb conta
+        const resolvidos = kpiDataForReport.resolvido + kpiDataForReport.reaberto; 
         const media = document.getElementById('kpiMedia').innerText;
         document.getElementById('resumoResolvidos').innerText = resolvidos;
-        document.getElementById('resumoEficiencia').innerText = media;
+        document.getElementById('resumoMeta').innerText = metaDoDia;
         
-        // Mensagem dinâmica
-        const effNum = parseFloat(media);
-        const msg = effNum >= 80 ? "🔥 Excelente Produtividade!" : (effNum >= 50 ? "👍 Bom trabalho!" : "⚠️ Atenção à meta!");
+        const effNum = parseInt(resolvidos);
+        const msg = effNum >= metaDoDia ? "🔥 Meta Batida! Parabéns!" : "⚠️ Quase lá! Amanhã será melhor.";
         document.getElementById('msgParabens').innerText = msg;
 
-        // Gráfico de Rosca no Modal
         const ctx = document.getElementById('chartResumo').getContext('2d');
         if (chartResumo) chartResumo.destroy();
         chartResumo = new Chart(ctx, {
@@ -497,7 +546,12 @@
             const agora = new Date().getTime();
             snap.forEach(item => {
                 const c = item.val();
-                if(c.analista === logado.nome) {
+                
+                // PRIVACIDADE NO MONITOR: Se não sou eu e não sou admin, ignora notificação de outros
+                const isAdmin = logado.role === 'admin';
+                if (!isAdmin && c.analista !== logado.nome) return;
+
+                if(c.analista === logado.nome || isAdmin) {
                     if(c.status === 'Resolvido' || c.status === 'Cancelado') { cacheStatus[c.ritm] = c.status; return; }
                     
                     if((c.status === 'Pendente' || c.status === 'GA') && !ritsNotificadas.has(c.ritm + "_6h")) {
@@ -562,6 +616,7 @@
             document.getElementById('displayUser').innerText = logado.nome; 
             if(logado.role === 'admin') document.getElementById('navAdmin').style.display = 'block';
             verificarStatusTurno(); escutarBanco(); setInterval(monitorar, 30000); 
+            calcularMetaPessoal(); // CALCULA A META ASSIM QUE LOGA
         }
     };
 
@@ -575,7 +630,7 @@
     function toggleTaskInput() { const t = document.getElementById('temTask').value === 'sim'; document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden'; document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none'; }
     function gerarCamposTask() { const qtd = parseInt(document.getElementById('taskQtd').value); const c = document.getElementById('containerTasksDinamicas'); c.innerHTML = ""; for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`; }
 
-    // SALVAR COM LÓGICA DE HISTÓRICO (PRESERVA RITM PASSADA)
+    // SALVAR COM LÓGICA DE HISTÓRICO E LIMPEZA DE TASKS
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
@@ -619,7 +674,16 @@
         });
     }
 
-    function limpar() { document.getElementById('ritm').value = ""; document.getElementById('descResumida').value = ""; document.getElementById('linkRitm').value = ""; document.getElementById('taskQtd').value = ""; document.getElementById('statusRitm').value = ""; document.getElementById('temTask').value = "nao"; toggleTaskInput(); }
+    function limpar() { 
+        document.getElementById('ritm').value = ""; 
+        document.getElementById('descResumida').value = ""; 
+        document.getElementById('linkRitm').value = ""; 
+        document.getElementById('taskQtd').value = ""; 
+        document.getElementById('statusRitm').value = ""; 
+        document.getElementById('temTask').value = "nao"; 
+        document.getElementById('containerTasksDinamicas').innerHTML = ""; // LIMPA TASKS FANTASMAS
+        toggleTaskInput(); 
+    }
 
     function escutarBanco() {
         const hoje = getHoje();
@@ -627,30 +691,30 @@
             const tbody = document.getElementById('corpoTabela'); tbody.innerHTML = "";
             let cont = {}; let tR = 0; let tT = 0;
             
-            // Zera contadores do relatório
             kpiDataForReport = { resolvido: 0, cancelado: 0, reaberto: 0 };
 
             snap.forEach(item => {
                 const c = item.val();
                 if(c.data === hoje) {
-                    if(c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto') cont[c.analista] = (cont[c.analista] || 0) + 1;
+                    // Contagem global para o gráfico (apenas Admin vê tudo, Analista vê só o dele no gráfico)
+                    if(c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto') {
+                         if (logado.role === 'admin' || c.analista === logado.nome) {
+                             cont[c.analista] = (cont[c.analista] || 0) + 1;
+                         }
+                    }
                     
+                    // FILTRO ESTRITO DA TABELA E KPIS
                     const isAdmin = logado.role === 'admin';
                     if(isAdmin || c.analista === logado.nome) {
-                        // Lógica de Contagem de Produtividade (Resolvido + Reaberto)
                         if(c.status !== 'Pendente' && c.status !== 'GA') { 
-                            // Soma KPIs gerais
-                            tR++; 
-                            tT += (parseInt(c.taskQtd) || 0); 
-                            
-                            // Popula dados para o relatório final (apenas do analista logado se não for admin ver todos)
-                            if(c.analista === logado.nome) {
+                            // KPIs individuais só somam se for o próprio analista (para não ver meta dos outros)
+                            if (c.analista === logado.nome) {
+                                tR++; tT += (parseInt(c.taskQtd) || 0); 
                                 if(c.status === 'Resolvido') kpiDataForReport.resolvido++;
                                 if(c.status === 'Cancelado') kpiDataForReport.cancelado++;
                                 if(c.status === 'Reaberto') kpiDataForReport.reaberto++;
                             }
                         }
-
                         const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" style="color:var(--primary)">Link</a>` : '---';
                         const b = "badge-" + c.status.toLowerCase();
                         tbody.innerHTML = `<tr><td><span class="time-text">${c.hora || '--'}</span></td><td><b>${c.ritm}</b></td><td><span class="badge ${b}">${c.status}</span></td><td>${c.tasks}</td><td>${c.desc}</td><td>${linkHtml}</td><td style="text-align:right"><button class="btn-delete-pro" onclick="openConfirm('${item.key}')">🗑</button></td></tr>` + tbody.innerHTML;
