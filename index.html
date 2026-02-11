@@ -358,7 +358,7 @@
     let logado = null; let chartInstance = null; let chartResumo = null; let idParaExcluir = null;
     let cacheStatus = {}; let ritsNotificadas = new Set();
     let pendenciaTotal = 0; let kpiDataForReport = { resolvido: 0, cancelado: 0, reaberto: 0 };
-    let metaDoDia = 0;
+    let metaDoDia = 0; let resolvidosTotal = 0;
 
     const colorPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16'];
     const analystColors = {};
@@ -401,21 +401,22 @@
     }
 
     function verificarStatusTurno() {
-        // 1. Verifica se já existe estatística do DIA (fila global)
         database.ref('dailyStats/' + getHoje()).on('value', snap => {
             const stats = snap.val();
             
-            // Verifica status individual do usuário
             database.ref('statusTurno/' + encodeKey(logado.nome)).once('value', userSnap => {
                 const userStatus = userSnap.val();
                 
-                // Se existe fila global preenchida
                 if (stats) {
                     document.getElementById('kpiNi').innerText = stats.ni || 0;
                     document.getElementById('kpiEa').innerText = stats.ea || 0;
                     pendenciaTotal = stats.totalInicial;
                     
-                    // Se usuário não tem turno aberto, abre automaticamente pois o dia já começou
+                    // Cálculo de Eficiência Imediato
+                    if(pendenciaTotal > 0 && resolvidosTotal > 0) {
+                        document.getElementById('kpiMedia').innerText = ((resolvidosTotal / pendenciaTotal) * 100).toFixed(1) + "%";
+                    }
+
                     if (!userStatus || !userStatus.aberto) {
                         database.ref('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
                     }
@@ -423,26 +424,17 @@
                     document.getElementById('cardRegistro').classList.add('unlocked');
                     document.getElementById('btnFinalizar').style.display = 'block';
                     
-                    // Admin pode editar
                     if (logado.role === 'admin') {
                         document.getElementById('kpiNi').classList.add('editable');
                         document.getElementById('kpiEa').classList.add('editable');
                         document.getElementById('hintNi').style.display = 'block';
                         document.getElementById('hintEa').style.display = 'block';
                     }
-                } else {
-                    // Se não existe fila global E usuário tenta logar, mostra modal para ser o pioneiro
-                    if (!userStatus || !userStatus.aberto) {
-                        // Não faz nada, espera o clique em "INICIAR TURNO" que abre o modal
-                    } else {
-                        // Caso estranho onde usuário tem turno mas não tem stats global (deletado?), força modal
-                    }
-                }
+                } 
             });
         });
     }
     
-    // CÁLCULO DE META PESSOAL (MÉDIA HISTÓRICA)
     function calcularMetaPessoal() {
         database.ref('chamados').once('value', snap => {
             let diasTrabalhados = new Set();
@@ -458,7 +450,7 @@
             
             const qtdDias = diasTrabalhados.size;
             if (qtdDias > 0) {
-                metaDoDia = Math.ceil(totalResolvidos / qtdDias); // Arredonda pra cima
+                metaDoDia = Math.ceil(totalResolvidos / qtdDias); 
                 document.getElementById('kpiMeta').innerText = metaDoDia;
             } else {
                 document.getElementById('kpiMeta').innerText = "--";
@@ -547,7 +539,6 @@
             snap.forEach(item => {
                 const c = item.val();
                 
-                // PRIVACIDADE NO MONITOR: Se não sou eu e não sou admin, ignora notificação de outros
                 const isAdmin = logado.role === 'admin';
                 if (!isAdmin && c.analista !== logado.nome) return;
 
@@ -630,7 +621,7 @@
     function toggleTaskInput() { const t = document.getElementById('temTask').value === 'sim'; document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden'; document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none'; }
     function gerarCamposTask() { const qtd = parseInt(document.getElementById('taskQtd').value); const c = document.getElementById('containerTasksDinamicas'); c.innerHTML = ""; for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`; }
 
-    // SALVAR COM LÓGICA DE HISTÓRICO E LIMPEZA DE TASKS
+    // SALVAR COM LÓGICA DE HISTÓRICO (PRESERVA RITM PASSADA)
     function salvar() {
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
@@ -681,7 +672,7 @@
         document.getElementById('taskQtd').value = ""; 
         document.getElementById('statusRitm').value = ""; 
         document.getElementById('temTask').value = "nao"; 
-        document.getElementById('containerTasksDinamicas').innerHTML = ""; // LIMPA TASKS FANTASMAS
+        document.getElementById('containerTasksDinamicas').innerHTML = ""; 
         toggleTaskInput(); 
     }
 
@@ -692,6 +683,7 @@
             let cont = {}; let tR = 0; let tT = 0;
             
             kpiDataForReport = { resolvido: 0, cancelado: 0, reaberto: 0 };
+            resolvidosTotal = 0;
 
             snap.forEach(item => {
                 const c = item.val();
@@ -707,9 +699,10 @@
                     const isAdmin = logado.role === 'admin';
                     if(isAdmin || c.analista === logado.nome) {
                         if(c.status !== 'Pendente' && c.status !== 'GA') { 
-                            // KPIs individuais só somam se for o próprio analista (para não ver meta dos outros)
                             if (c.analista === logado.nome) {
                                 tR++; tT += (parseInt(c.taskQtd) || 0); 
+                                resolvidosTotal++; // Acumula global
+                                
                                 if(c.status === 'Resolvido') kpiDataForReport.resolvido++;
                                 if(c.status === 'Cancelado') kpiDataForReport.cancelado++;
                                 if(c.status === 'Reaberto') kpiDataForReport.reaberto++;
@@ -722,7 +715,12 @@
                 }
             });
             document.getElementById('kpiRitms').innerText = tR; document.getElementById('kpiTasks').innerText = tT;
-            if(pendenciaTotal > 0) document.getElementById('kpiMedia').innerText = ((tR / pendenciaTotal) * 100).toFixed(1) + "%";
+            
+            // Recalcula Eficiência sempre que banco muda
+            if(pendenciaTotal > 0 && resolvidosTotal > 0) {
+                document.getElementById('kpiMedia').innerText = ((resolvidosTotal / pendenciaTotal) * 100).toFixed(1) + "%";
+            }
+            
             atualizarGrafico(cont);
         });
     }
