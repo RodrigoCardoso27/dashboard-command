@@ -2,2497 +2,1520 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SISTEMA INTEGRADO</title>
 
-  <!-- Firebase RTDB compat (mantém portabilidade 1 arquivo) -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
-  <!-- XLSX + Chart.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 
   <style>
-/* =========================
-   THEME ZERO (premium)
-   - NÃO altera seu JS
-   - NÃO quebra IDs/classes
-   ========================= */
+    /* === O NOVO VISUAL PREMIUM (Estilo Tailwind SaaS) === */
+    :root {
+      --bg: #0b1220; --panel: #101a30; --text: #e7eefc; --muted: #94a3b8;
+      --brand: #60a5fa; --brand-glow: rgba(96,165,250,0.15);
+      --brand2: #22c55e; --danger: #ef4444; --warn: #f59e0b;
+      --border: rgba(255,255,255,0.08); --shadow: 0 12px 30px rgba(0,0,0,0.35);
+      --radius: 16px;
+    }
 
-:root{
-  --bg0:#05060a;
-  --bg1:#070812;
-  --panel:#0c0f1d;
-  --text:#eef2ff;
-  --muted:#9aa4bf;
+    /* TEMAS DINÂMICOS */
+    [data-theme="nordic"] { --bg: #06141a; --panel: #0b1f27; --text: #e9fbff; --muted: #8fb3bf; --brand: #39c6ff; --brand-glow: rgba(57,198,255,0.15); --border: rgba(233,251,255,0.10); }
+    [data-theme="midnight"] { --bg: #070816; --panel: #0d1030; --text: #eef2ff; --muted: #a5b4fc; --brand: #818cf8; --brand-glow: rgba(129,140,248,0.15); --border: rgba(238,242,255,0.10); }
+    [data-theme="distrito-dark"] { --bg: #0b0507; --panel: #16080c; --text: #ffe7ec; --muted: #ffb3c2; --brand: #ff3355; --brand-glow: rgba(255,51,85,0.15); --border: rgba(255,231,236,0.12); }
+    [data-theme="distrito-light"] { --bg: #fff6f8; --panel: #ffffff; --text: #1b0c12; --muted: #7a3a52; --brand: #e11d48; --brand-glow: rgba(225,29,72,0.15); --border: rgba(27,12,18,0.10); --shadow: 0 10px 24px rgba(15,23,42,0.05); }
 
-  --brand:#ff3b5c;     /* vermelho distrito */
-  --brand2:#22c55e;
-  --warn:#f59e0b;
-  --danger:#ef4444;
+    * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      overflow: hidden;
+      transition: 0.4s ease;
+      background-image:
+        radial-gradient(1200px 600px at 20% 0%, var(--brand-glow), transparent 60%),
+        radial-gradient(900px 450px at 90% 20%, rgba(34,197,94,0.05), transparent 55%);
+    }
 
-  --border:rgba(255,255,255,.08);
-  --shadow: 0 18px 40px rgba(0,0,0,.55);
-  --shadow2: 0 10px 25px rgba(0,0,0,.45);
-  --radius:18px;
+    /* TOAST E MODAIS */
+    #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 11000; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; pointer-events: none; }
+    .toast { background: var(--panel); border: 1px solid var(--border); padding: 14px 28px; border-radius: 12px; color: var(--text); font-weight: 600; font-size: 0.85rem; box-shadow: var(--shadow); animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; max-width: 380px; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-  --glow: rgba(255,59,92,.16);
-  --glow2: rgba(34,197,94,.10);
-  --grid: rgba(255,255,255,.04);
-}
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-box { background: var(--panel); border: 1px solid var(--border); padding: 35px; border-radius: 24px; width: 100%; max-width: 480px; text-align: center; box-shadow: var(--shadow); }
 
-/* ===== Temas (mantém seus nomes) ===== */
-[data-theme="nordic"] {
-  --bg0:#041014; --bg1:#051a22; --panel:#071f29; --text:#eaffff; --muted:#8fb3bf;
-  --brand:#39c6ff; --glow: rgba(57,198,255,.16); --grid: rgba(233,251,255,.05);
-}
-[data-theme="midnight"] {
-  --bg0:#04040d; --bg1:#070816; --panel:#0d1030; --text:#eef2ff; --muted:#a5b4fc;
-  --brand:#818cf8; --glow: rgba(129,140,248,.18); --grid: rgba(238,242,255,.05);
-}
-[data-theme="distrito-dark"] {
-  --bg0:#070308; --bg1:#0a050a; --panel:#120713; --text:#ffeef2; --muted:#ffb3c2;
-  --brand:#ff3355; --glow: rgba(255,51,85,.18); --grid: rgba(255,231,236,.05);
-}
-[data-theme="distrito-light"] {
-  --bg0:#fff6f8; --bg1:#fff8fb; --panel:#ffffff; --text:#1b0c12; --muted:#7a3a52;
-  --brand:#e11d48; --glow: rgba(225,29,72,.12); --grid: rgba(27,12,18,.06);
-  --border: rgba(27,12,18,.12);
-  --shadow: 0 12px 30px rgba(15,23,42,.08);
-  --shadow2: 0 8px 18px rgba(15,23,42,.06);
-}
+    /* LOGIN REDESENHADO */
+    #telaLogin { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: var(--panel); padding: 40px; border-radius: 24px; width: 100%; max-width: 420px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
 
-/* ===== Reset ===== */
-*{ margin:0; padding:0; box-sizing:border-box; outline:none; }
-html,body{ height:100%; }
-body{
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color:var(--text);
-  background:
-    radial-gradient(1200px 700px at 18% -10%, var(--glow), transparent 55%),
-    radial-gradient(900px 600px at 90% 80%, var(--glow2), transparent 55%),
-    linear-gradient(180deg, var(--bg0), var(--bg1));
-  overflow:hidden;
-  transition: .25s ease;
-}
+    .project-selector { display: flex; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 6px; margin-bottom: 30px; border: 1px solid var(--border); }
+    .proj-tab { flex: 1; padding: 12px; text-align: center; font-weight: 700; color: var(--muted); cursor: pointer; border-radius: 8px; transition: 0.2s; font-size: 0.8rem; }
+    .proj-tab.active { background: var(--brand); color: white; box-shadow: 0 4px 15px var(--brand-glow); }
 
-/* Grid discreto no fundo */
-body:before{
-  content:"";
-  position:fixed; inset:0;
-  background-image:
-    linear-gradient(to right, var(--grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-  background-size: 38px 38px;
-  opacity:.20;
-  pointer-events:none;
-}
+    /* SIDEBAR E MAIN */
+    .sidebar { width: 280px; background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent); backdrop-filter: blur(10px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 20px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; overflow-y: auto; }
+    .logo-area { display: flex; align-items: center; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .logo-icon { font-size: 1.8rem; }
+    .logo-text { font-weight: 800; font-size: 0.95rem; line-height: 1.2; }
 
-/* ===== Toast ===== */
-#toast-container{
-  position: fixed; bottom: 22px; right: 22px; z-index: 11000;
-  display:flex; flex-direction:column; gap:10px; align-items:flex-end;
-  pointer-events:none;
-}
-.toast{
-  background: color-mix(in srgb, var(--panel) 80%, transparent);
-  border: 1px solid var(--border);
-  padding: 12px 16px;
-  border-radius: 14px;
-  color: var(--text);
-  font-weight: 800;
-  font-size: .85rem;
-  box-shadow: var(--shadow2);
-  animation: toastIn .35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  max-width: 420px;
-}
-@keyframes toastIn { from{opacity:0; transform: translateY(14px);} to{opacity:1; transform: translateY(0);} }
+    .sidebar-title { padding: 20px 10px 8px 10px; font-size: 0.75rem; font-weight: 800; color: var(--brand); letter-spacing: 1px; text-transform: uppercase; }
+    .nav-item { padding: 12px 14px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 4px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 12px; font-size: 0.85rem; border: 1px solid transparent; }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .nav-item.active { background: var(--brand-glow); border-color: rgba(255,255,255,0.05); color: var(--brand); font-weight: 700; }
 
-/* ===== Modais ===== */
-.modal-overlay{
-  position: fixed; inset:0;
-  background: rgba(0,0,0,.72);
-  backdrop-filter: blur(10px);
-  z-index: 10000;
-  display:none; align-items:center; justify-content:center;
-  padding: 20px;
-}
-.modal-box{
-  width:100%; max-width: 520px;
-  border-radius: 26px;
-  background: rgba(12,15,29,.78);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,.10);
-  box-shadow: var(--shadow);
-  padding: 28px;
-  text-align:center;
-}
+    .main-content { margin-left: 280px; padding: 30px 40px; width: calc(100% - 280px); overflow-y: auto; height: 100vh; scroll-behavior: smooth; }
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: viewFade 0.3s ease; }
+    @keyframes viewFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ===== Login ===== */
-#telaLogin{
-  position:fixed; inset:0; z-index:9999;
-  display:flex; align-items:center; justify-content:center;
-  background:
-    radial-gradient(1100px 650px at 20% 0%, var(--glow), transparent 55%),
-    linear-gradient(180deg, var(--bg0), var(--bg1));
-}
-.login-card{
-  width:100%; max-width: 440px;
-  border-radius: 28px;
-  border:1px solid var(--border);
-  background: rgba(12,15,29,.72);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow);
-  padding: 34px;
-  text-align:center;
-}
-.project-selector{
-  display:flex;
-  background: rgba(0,0,0,.22);
-  border:1px solid var(--border);
-  border-radius: 14px;
-  padding: 6px;
-  gap: 6px;
-  margin-bottom: 22px;
-}
-.proj-tab{
-  flex:1;
-  padding: 12px;
-  border-radius: 10px;
-  cursor:pointer;
-  font-weight: 950;
-  font-size: .80rem;
-  color: rgba(238,242,255,.70);
-  transition: .18s ease;
-}
-.proj-tab.active{
-  background: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 60%, transparent));
-  color: #fff;
-  box-shadow: 0 12px 26px rgba(255,59,92,.16);
-}
+    /* CARDS E GRIDS */
+    .card { background: var(--panel); border-radius: 20px; border: 1px solid var(--border); padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .card-header { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
 
-/* ===== Sidebar ===== */
-.sidebar{
-  width: 300px;
-  position: fixed; left:0; top:0; bottom:0;
-  padding: 22px 18px;
-  border-right: 1px solid var(--border);
-  background:
-    radial-gradient(900px 420px at 10% 0%, rgba(255,59,92,.12), transparent 55%),
-    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-  backdrop-filter: blur(12px);
-  display:flex; flex-direction:column;
-  overflow-y:auto;
-  z-index: 100;
-}
-.sidebar::-webkit-scrollbar{ width:10px; }
-.sidebar::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.10); border-radius:999px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: 0.2s; }
+    .kpi-title { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-value { font-size: 2rem; font-weight: 800; margin-top: 8px; color: var(--text); }
+    .kpi-value.editable { cursor: pointer; }
+    .kpi-value.editable:hover { color: var(--warn); transform: scale(1.05); }
 
-.logo-area{
-  display:flex; gap: 12px; align-items:center;
-  padding: 14px;
-  border-radius: 18px;
-  border:1px solid var(--border);
-  background:
-    radial-gradient(500px 220px at 20% 0%, rgba(255,59,92,.16), transparent 55%),
-    rgba(0,0,0,.18);
-  box-shadow: var(--shadow2);
-  margin-bottom: 18px;
-}
-.logo-icon{ font-size: 1.85rem; filter: drop-shadow(0 10px 18px rgba(255,59,92,.22)); }
-.logo-text{ font-weight: 950; font-size: .95rem; line-height: 1.2; }
+    /* FORMS */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+    label { font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; display: block; }
+    input, select, textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; color: var(--text); font-family: inherit; font-size: 0.9rem; transition: 0.2s; }
+    input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
 
-.sidebar-title{
-  margin-top: 10px;
-  padding: 14px 10px 8px;
-  font-size:.72rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--brand) 92%, white);
-  font-weight: 950;
-}
+    /* BOTOES MODERNOS */
+    .btn { border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+    .btn-primary { background: var(--brand); color: #fff; border: none; width: 100%; }
+    .btn-primary:hover { background: #3b82f6; box-shadow: 0 6px 20px var(--brand-glow); }
+    .btn-success { background: var(--brand2); color: #fff; border: none; width: 100%; }
+    .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
 
-.nav-item{
-  padding: 12px 12px;
-  margin-bottom: 6px;
-  border-radius: 14px;
-  cursor:pointer;
-  font-weight: 900;
-  font-size:.88rem;
-  color: rgba(238,242,255,.78);
-  border:1px solid transparent;
-  transition: .18s ease;
-  display:flex; align-items:center; gap: 10px;
-}
-.nav-item:hover{
-  background: rgba(255,255,255,.04);
-  border-color: rgba(255,255,255,.08);
-  transform: translateY(-1px);
-}
-.nav-item.active{
-  background: linear-gradient(90deg, rgba(255,59,92,.20), rgba(255,59,92,.06));
-  border-color: rgba(255,59,92,.22);
-  box-shadow: 0 10px 20px rgba(255,59,92,.10);
-  color: #fff;
-}
+    /* TABELAS E PILLS */
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+    th { text-align: left; padding: 12px 16px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
 
-/* ===== Main ===== */
-.main-content{
-  margin-left: 300px;
-  padding: 28px 34px;
-  width: calc(100% - 300px);
-  height: 100vh;
-  overflow:auto;
-  scroll-behavior:smooth;
-}
-.main-content::-webkit-scrollbar{ width:10px; }
-.main-content::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.10); border-radius:999px; }
-.main-content::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.18); }
+    .pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; border: 1px solid transparent; letter-spacing: 0.5px; text-transform: uppercase; }
+    .pill-ok { color: var(--brand2); background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.2); }
+    .pill-bad { color: var(--danger); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
+    .pill-warn { color: var(--warn); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
+    .pill-blue { color: var(--brand); background: var(--brand-glow); border-color: rgba(96,165,250,0.2); }
 
-.view-section{ display:none; }
-.view-section.active{ display:block; animation: viewFade .22s ease; }
-@keyframes viewFade { from{opacity:0; transform: translateY(10px);} to{opacity:1; transform: translateY(0);} }
+    /* CONTROLE DE ACESSO */
+    .only-command { display: none; }
+    .only-distrito { display: none; }
+    body.proj-command div.only-command:not(.view-section) { display: block; }
+    body.proj-command div.nav-item.only-command { display: flex; }
+    body.proj-distrito22 div.only-distrito:not(.view-section) { display: block; }
+    body.proj-distrito22 div.nav-item.only-distrito { display: flex; }
 
-/* ===== Cards ===== */
-.card{
-  border-radius: 22px;
-  border: 1px solid var(--border);
-  background:
-    radial-gradient(700px 250px at 20% 0%, rgba(255,59,92,.08), transparent 55%),
-    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-  box-shadow: var(--shadow);
-  padding: 22px;
-  margin-bottom: 18px;
-  position: relative;
-}
-.card:after{
-  content:"";
-  position:absolute; left:18px; right:18px; top:12px; height:2px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 95%, white), transparent);
-  opacity:.55;
-  border-radius:999px;
-}
-.card-header{
-  font-weight: 950;
-  letter-spacing: -0.02em;
-  font-size: 1.05rem;
-  margin-bottom: 16px;
-  display:flex; align-items:center; justify-content:space-between;
-  gap: 12px;
-}
+    th.only-high-rank, td.only-high-rank { display: none; }
+    body.is-high-rank th.only-high-rank, body.is-high-rank td.only-high-rank { display: table-cell; }
+    div.only-high-rank:not(.view-section):not(.nav-item) { display: none; }
+    body.is-high-rank div.only-high-rank:not(.view-section):not(.nav-item) { display: block; }
+    div.nav-item.only-high-rank { display: none; }
+    body.is-high-rank div.nav-item.only-high-rank { display: flex; }
 
-/* ===== KPI ===== */
-.kpi-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
-}
-.kpi-card{
-  border-radius: 20px;
-  border:1px solid var(--border);
-  background: rgba(0,0,0,.16);
-  box-shadow: var(--shadow2);
-  padding: 18px 16px;
-  text-align:center;
-  position: relative;
-  overflow:hidden;
-}
-.kpi-card:before{
-  content:"";
-  position:absolute; inset:-2px;
-  background: radial-gradient(380px 120px at 20% 0%, rgba(255,59,92,.12), transparent 55%);
-  opacity:.85;
-  pointer-events:none;
-}
-.kpi-title{
-  font-size: .70rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: rgba(154,164,191,.95);
-  font-weight: 950;
-  position: relative;
-}
-.kpi-value{
-  position: relative;
-  font-size: 2.05rem;
-  font-weight: 950;
-  margin-top: 8px;
-  letter-spacing:-0.03em;
-}
-.kpi-value.editable{ cursor:pointer; }
-.kpi-value.editable:hover{ color: var(--warn); transform: scale(1.03); }
+    .only-admin { display: none; }
+    body.is-admin div.only-admin:not(.view-section):not(.nav-item) { display: block; }
+    body.is-admin div.nav-item.only-admin { display: flex; }
 
-/* ===== Forms ===== */
-.form-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 14px;
-}
-label{
-  font-size: .78rem;
-  font-weight: 900;
-  color: rgba(154,164,191,.95);
-  margin-bottom: 6px;
-  display:block;
-}
-input, select, textarea{
-  width:100%;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.20);
-  color: var(--text);
-  padding: 13px 14px;
-  font-size: .92rem;
-  transition: .18s ease;
-}
-input:focus, select:focus, textarea:focus{
-  border-color: rgba(255,59,92,.45);
-  box-shadow: 0 0 0 4px rgba(255,59,92,.14);
-}
-
-/* ===== Buttons ===== */
-.btn{
-  border-radius: 14px;
-  font-weight: 950;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  color: var(--text);
-  padding: 12px 16px;
-  cursor:pointer;
-  transition: .18s ease;
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-}
-.btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.08); }
-
-.btn-primary{
-  border:none;
-  background: linear-gradient(90deg, rgba(255,59,92,1), rgba(255,59,92,.72));
-  box-shadow: 0 12px 26px rgba(255,59,92,.18);
-  width:100%;
-}
-.btn-primary:hover{ box-shadow: 0 16px 34px rgba(255,59,92,.24); }
-
-.btn-success{
-  border:none;
-  background: linear-gradient(90deg, rgba(34,197,94,1), rgba(34,197,94,.72));
-  box-shadow: 0 12px 26px rgba(34,197,94,.18);
-  width:100%;
-}
-
-.btn-danger{
-  border:1px solid rgba(239,68,68,.26);
-  background: rgba(239,68,68,.10);
-  color: #ffced6;
-}
-.btn-danger:hover{ background: rgba(239,68,68,.18); }
-
-/* ===== Tables ===== */
-table{
-  width:100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 16px;
-  overflow:hidden;
-  font-size: .90rem;
-}
-thead th{
-  text-align:left;
-  font-size:.72rem;
-  text-transform: uppercase;
-  letter-spacing:.14em;
-  color: rgba(154,164,191,.95);
-  background: rgba(0,0,0,.18);
-  border-bottom:1px solid rgba(255,255,255,.08);
-  padding: 14px 16px;
-}
-tbody td{
-  padding: 14px 16px;
-  border-bottom:1px solid rgba(255,255,255,.04);
-  vertical-align: middle;
-}
-tbody tr{ transition: .12s ease; }
-tbody tr:hover{ background: rgba(255,255,255,.03); }
-
-/* ===== Pills ===== */
-.pill{
-  display:inline-flex; align-items:center;
-  border-radius: 999px;
-  padding: 5px 10px;
-  font-size: .70rem;
-  font-weight: 950;
-  border:1px solid transparent;
-  letter-spacing:.08em;
-  text-transform: uppercase;
-}
-.pill-ok{ background: rgba(34,197,94,.12); color:#9bffbf; border-color: rgba(34,197,94,.24); }
-.pill-bad{ background: rgba(239,68,68,.12); color:#ffc0cb; border-color: rgba(239,68,68,.24); }
-.pill-warn{ background: rgba(245,158,11,.12); color:#ffe0a6; border-color: rgba(245,158,11,.24); }
-.pill-blue{ background: rgba(59,130,246,.12); color:#cfe3ff; border-color: rgba(59,130,246,.22); }
-
-/* ===== Controle de acesso (mantém seu sistema) ===== */
-.only-command, .only-distrito, .only-admin{ display:none; }
-body.proj-command div.only-command:not(.view-section){ display:block; }
-body.proj-command div.nav-item.only-command{ display:flex; }
-body.proj-distrito22 div.only-distrito:not(.view-section){ display:block; }
-body.proj-distrito22 div.nav-item.only-distrito{ display:flex; }
-
-th.only-high-rank, td.only-high-rank{ display:none; }
-body.is-high-rank th.only-high-rank, body.is-high-rank td.only-high-rank{ display:table-cell; }
-div.only-high-rank:not(.view-section):not(.nav-item){ display:none; }
-body.is-high-rank div.only-high-rank:not(.view-section):not(.nav-item){ display:block; }
-div.nav-item.only-high-rank{ display:none; }
-body.is-high-rank div.nav-item.only-high-rank{ display:flex; }
-
-body.is-admin div.only-admin:not(.view-section):not(.nav-item){ display:block; }
-body.is-admin div.nav-item.only-admin{ display:flex; }
-
-/* ===== Lavanderia cards ===== */
-.machine-card{
-  background: rgba(0,0,0,.20);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow: var(--shadow2);
-}
-.machine-timer{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 1.35rem;
-  font-weight: 950;
-  color: var(--warn);
-}
-
-/* ===== Mobile (pra não quebrar em tela pequena) ===== */
-@media (max-width: 980px){
-  .sidebar{ width: 260px; }
-  .main-content{ margin-left:260px; width: calc(100% - 260px); padding: 22px; }
-}
-@media (max-width: 820px){
-  body{ overflow:auto; }
-  .sidebar{ position: relative; width: 100%; height:auto; }
-  .main-content{ margin-left:0; width:100%; height:auto; }
-}
+    /* LAVANDERIA CARDS */
+    .machine-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .machine-timer { font-family: monospace; font-size: 1.5rem; font-weight: 800; color: var(--warn); }
   </style>
 </head>
+
 <body>
+  <div id="toast-container"></div>
 
-<div id="toast-container"></div>
-
-<!-- Modal: Report -->
-<div id="modalReport" class="modal-overlay">
-  <div class="modal-box">
-    <div class="card-header" style="justify-content:center;">📣 Enviar Feedback</div>
-    <p class="subnote" style="margin-bottom:18px;">Encontrou um erro ou tem uma sugestão? Envie para a liderança.</p>
-    <textarea id="msgReport" rows="4" placeholder="Descreva aqui sua ideia ou problema..." style="margin-bottom:18px;"></textarea>
-    <div style="display:flex; gap:10px;">
-      <button class="btn" style="width:100%;" onclick="fecharModalReport()">Cancelar</button>
-      <button class="btn btn-success" style="width:100%;" onclick="enviarReport()">Enviar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: First Access PIN -->
-<div id="modalTrocaSenha" class="modal-overlay" style="background:rgba(0,0,0,.95); z-index:11000;">
-  <div class="modal-box" style="border-color:var(--brand);">
-    <div class="card-header" style="justify-content:center; color:var(--brand);">🔒 Segurança de Acesso</div>
-    <p class="subnote" style="margin-bottom:18px;">
-      Este é o seu primeiro acesso. Por segurança, crie um PIN numérico (mín. 6 dígitos).<br><br>
-      <span class="pill pill-bad">Regras</span><br>
-      Apenas números. Não use sequências ou repetidos.
-    </p>
-    <input type="password" id="novoPin" placeholder="Novo PIN" style="margin-bottom:10px; text-align:center; font-size:1.15rem; letter-spacing:6px;">
-    <input type="password" id="confirmaPin" placeholder="Confirme" style="margin-bottom:18px; text-align:center; font-size:1.15rem; letter-spacing:6px;">
-    <button class="btn btn-primary" onclick="salvarNovoPin()">CRIPTOGRAFAR PIN E ENTRAR</button>
-  </div>
-</div>
-
-<!-- Modal: Start Turn -->
-<div id="modalStartTurn" class="modal-overlay">
-  <div class="modal-box">
-    <div class="card-header" style="justify-content:center;">🚀 Iniciar Operação</div>
-    <p class="subnote" style="color:var(--warn); margin-bottom:14px;">Você é o primeiro a logar hoje. Defina a fila.</p>
-    <label>Não Iniciados</label>
-    <input type="number" id="startNaoIniciados" value="0" style="margin-bottom:12px;">
-    <label>Em Andamento</label>
-    <input type="number" id="startEmAndamento" value="0" style="margin-bottom:18px;">
-    <button class="btn btn-primary" onclick="confirmarInicioTurno()">ABRIR DIA</button>
-  </div>
-</div>
-
-<!-- Modal: End Turn Report -->
-<div id="modalEndTurn" class="modal-overlay">
-  <div class="modal-box" style="max-width:760px; text-align:left;">
-    <div class="card-header" style="margin-bottom:10px;">
-      <div>📌 Relatório do Turno</div>
-      <button class="btn btn-ghost" onclick="fecharEndTurn()">✖</button>
-    </div>
-    <div class="subnote" id="endTurnSub" style="margin-bottom:18px;"></div>
-
-    <div style="display:grid; grid-template-columns: 320px 1fr; gap:18px; align-items:center;">
-      <div style="background:rgba(0,0,0,.15); border:1px solid var(--border); border-radius:16px; padding:14px;">
-        <canvas id="chartEndTurn" height="260"></canvas>
+  <!-- Feedback -->
+  <div id="modalReport" class="modal-overlay">
+    <div class="modal-box">
+      <div class="card-header" style="justify-content: center;">📣 Enviar Feedback</div>
+      <p style="color: var(--muted); margin-bottom: 20px; font-size: 0.85rem;">Encontrou um erro ou tem uma sugestão? Envie para a liderança!</p>
+      <textarea id="msgReport" rows="4" placeholder="Descreva aqui sua ideia ou problema..." style="margin-bottom: 20px;"></textarea>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn" style="width: 100%;" onclick="fecharModalReport()">Cancelar</button>
+        <button class="btn btn-success" onclick="enviarReport()">Enviar</button>
       </div>
-      <div style="background:rgba(0,0,0,.15); border:1px solid var(--border); border-radius:16px; padding:16px;">
-        <div class="kpi-grid" style="margin-bottom:0;">
-          <div class="kpi-card"><div class="kpi-title">Resolvidos</div><div class="kpi-value" id="endKpiRes">0</div></div>
-          <div class="kpi-card"><div class="kpi-title">Cancelados</div><div class="kpi-value" id="endKpiCan">0</div></div>
-          <div class="kpi-card"><div class="kpi-title">Reabertos</div><div class="kpi-value" id="endKpiRea">0</div></div>
-          <div class="kpi-card"><div class="kpi-title">Meta</div><div class="kpi-value" id="endKpiMeta">0</div></div>
-          <div class="kpi-card"><div class="kpi-title">Bateu?</div><div class="kpi-value" id="endKpiHit">—</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex; gap:10px; margin-top:18px;">
-      <button class="btn" style="width:100%;" onclick="fecharEndTurn()">Voltar</button>
-      <button class="btn btn-danger" style="width:100%;" onclick="finalizarTurnoConfirmado()">FINALIZAR E LIMPAR</button>
-    </div>
-  </div>
-</div>
-
-<!-- Login -->
-<div id="telaLogin">
-  <div class="login-card">
-    <div style="font-size:3rem; margin-bottom:10px;" id="loginEmoji">🌐</div>
-    <h2 style="margin-bottom:20px; font-weight:950;" id="loginTitle">Sistema Integrado</h2>
-
-    <div class="project-selector">
-      <div id="tabCommand" class="proj-tab active" onclick="setLoginProject('command')">Command</div>
-      <div id="tabDistrito" class="proj-tab" onclick="setLoginProject('distrito22')">Distrito 22</div>
-    </div>
-
-    <input type="text" id="lUser" placeholder="Usuário">
-    <input type="password" id="lPass" placeholder="Senha ou PIN" style="margin-top:12px;">
-    <button class="btn btn-primary" style="margin-top:22px; height:50px;" onclick="autenticar()">Acessar Painel</button>
-
-    <p id="errorMsg" style="color:var(--danger); font-size:.8rem; margin-top:12px; font-weight:800; display:none;">
-      Dados incorretos!
-    </p>
-    <p class="subnote" style="margin-top:10px;">
-      Dica: Em primeiro acesso, use a senha provisória e crie seu PIN.
-    </p>
-  </div>
-</div>
-
-<!-- Sidebar -->
-<div class="sidebar">
-  <div class="logo-area">
-    <div class="logo-icon" id="sidebarEmoji">🌐</div>
-    <div class="logo-text" id="sidebarProjectName">
-      Command<br><span style="font-size:.7rem; color:var(--muted); font-weight:600;">Center</span>
     </div>
   </div>
 
-  <div style="flex:1;">
-    <!-- Command -->
-    <div class="nav-item only-command active" onclick="switchView('dashCommand', event)" id="navCommandHome">📊 Dashboard</div>
-    <div class="nav-item only-command" onclick="switchView('consultCommand', event)">🔍 Consultas</div>
-
-    <!-- Distrito -->
-    <div class="nav-item only-distrito active" onclick="switchView('dashDistrito', event)" id="navDashRP">📊 Visão Geral</div>
-    <div class="nav-item only-distrito" onclick="switchView('caixaDistrito', event)">💰 Cofre (Dep/Saq)</div>
-    <div class="nav-item only-distrito" onclick="switchView('debitosDistrito', event)">🧾 Reembolsos</div>
-
-    <div class="sidebar-title only-distrito">📦 ESTOQUE (BAÚS)</div>
-    <div id="menuItensDinamico"></div>
-
-    <div class="sidebar-title only-distrito">⚙️ SISTEMAS</div>
-    <div class="nav-item only-distrito" onclick="switchView('lavanderiaDistrito', event)">🧼 Lavanderia</div>
-
-    <div class="sidebar-title only-high-rank">LIDERANÇA</div>
-    <div class="nav-item only-distrito only-high-rank" onclick="switchView('gestaoItens', event)">🛠️ Gerenciar Itens</div>
-    <div class="nav-item only-distrito only-admin" onclick="switchView('logsDistrito', event)">📋 Logs de Auditoria</div>
-    <div class="nav-item only-high-rank" onclick="switchView('admin', event)">👥 Gestão</div>
-
-    <div class="sidebar-title" style="margin-top:10px;">AJUSTES</div>
-    <div class="nav-item" onclick="switchView('themes', event)">🎨 Aparência</div>
-  </div>
-
-  <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
-    <button class="btn" style="width:100%; margin-bottom:12px; border-color:var(--brand); color:var(--brand);" onclick="abrirModalReport()">📣 Enviar Feedback</button>
-    <div style="background:rgba(0,0,0,.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
-      <div id="displayUser" style="font-weight:900; font-size:.9rem;">Analista</div>
-      <div id="displayRole" style="font-size:.7rem; color:var(--muted); margin-bottom:10px; text-transform:uppercase; font-weight:800;">Cargo</div>
-      <div onclick="logout()" style="color:var(--danger); font-size:.75rem; font-weight:900; cursor:pointer;">🚪 Sair da Conta</div>
-    </div>
-  </div>
-</div>
-
-<!-- Main -->
-<div class="main-content">
-
-  <!-- COMMAND -->
-  <div id="viewDashCommand" class="view-section">
-    <div class="kpi-grid">
-      <div class="kpi-card" style="border-bottom:3px solid var(--danger);">
-        <div class="kpi-title">FILA N.I</div>
-        <div class="kpi-value" id="kpiNi" onclick="corrigirKpi('ni')">0</div>
-      </div>
-      <div class="kpi-card" style="border-bottom:3px solid var(--warn);">
-        <div class="kpi-title">FILA ANDAMENTO</div>
-        <div class="kpi-value" id="kpiEa" onclick="corrigirKpi('ea')">0</div>
-      </div>
-      <div class="kpi-card" style="border-bottom:3px solid var(--brand);">
-        <div class="kpi-title">MINHA META</div>
-        <div class="kpi-value" id="kpiMeta">0</div>
-      </div>
-      <div class="kpi-card" style="border-bottom:3px solid var(--brand2);">
-        <div class="kpi-title">FECHADOS HOJE</div>
-        <div class="kpi-value" id="kpiRitms">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">EFICIÊNCIA</div>
-        <div class="kpi-value" id="kpiMedia" style="color:var(--brand2);">0%</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">TASKS</div>
-        <div class="kpi-value" id="kpiTasks">0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span>📊 Produção em tempo real</span>
-        <button class="btn btn-ghost" onclick="abrirRelatorioFimTurno()">✅ Finalizar Turno</button>
-      </div>
-      <div class="subnote" id="chartHint" style="margin-bottom:10px;"></div>
-      <div style="height:260px;"><canvas id="meuGraficoBarras"></canvas></div>
-    </div>
-
-    <div id="cardRegistro" class="card" style="position:relative;">
-      <div id="overlay">
-        <button class="btn btn-primary" style="width:250px;" onclick="abrirModalTurno()">🚀 INICIAR TURNO</button>
-      </div>
-
-      <div class="card-header">✍️ Registrar RITM</div>
-
-      <div class="form-grid">
-        <div><label>RITM*</label><input type="text" id="ritm" placeholder="RITM000"></div>
-        <div>
-          <label>Status*</label>
-          <select id="statusRitm">
-            <option value="Resolvido">Resolvido</option>
-            <option value="Cancelado">Cancelado</option>
-            <option value="Reaberto">Reaberto</option>
-            <option value="Pendente">Pendente</option>
-            <option value="GA">Aguardando GA</option>
-          </select>
-        </div>
-        <div>
-          <label>Tasks?</label>
-          <select id="temTask" onchange="toggleTaskInput()">
-            <option value="nao">Não</option>
-            <option value="sim">Sim</option>
-          </select>
-        </div>
-        <div id="divQtdTask" style="visibility:hidden;">
-          <label>Qtd</label>
-          <input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()">
-        </div>
-      </div>
-
-      <div id="containerTasksDinamicas" style="display:none; grid-template-columns:repeat(4,1fr); gap:15px; margin-top:15px;"></div>
-
-      <div class="form-grid" style="grid-template-columns:1.5fr 1fr; margin-top:15px;">
-        <input type="text" id="descResumida" placeholder="Descrição Resumida*">
-        <input type="text" id="linkRitm" placeholder="URL da RITM">
-      </div>
-
-      <button class="btn btn-success" style="margin-top:18px;" onclick="salvarCommand()">GRAVAR NO BANCO</button>
-    </div>
-
-    <div class="card">
-      <div class="card-header">📋 Meus Lançamentos de Hoje</div>
-      <table>
-        <thead>
-        <tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th>LINK</th></tr>
-        </thead>
-        <tbody id="corpoTabela"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="viewConsultCommand" class="view-section">
-    <div class="card">
-      <div class="card-header">🔍 Filtro de Histórico</div>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr 150px 190px;">
-        <div><label>Início</label><input type="date" id="dataInicio"></div>
-        <div><label>Fim</label><input type="date" id="dataFim"></div>
-        <div style="display:flex; align-items:flex-end;">
-          <button class="btn btn-primary" style="height:46px;" onclick="consultarBanco()">BUSCAR</button>
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button class="btn btn-ghost" style="height:46px; width:100%;" onclick="exportarConsultaExcel()">⬇ Exportar Excel</button>
-        </div>
-      </div>
-      <p class="subnote" style="margin-top:10px;">
-        Dica: Exporta somente o que está no resultado da consulta atual.
+  <!-- Troca PIN -->
+  <div id="modalTrocaSenha" class="modal-overlay" style="background: rgba(0,0,0,0.95); z-index: 11000;">
+    <div class="modal-box" style="border-color: var(--brand);">
+      <div class="card-header" style="justify-content: center; color: var(--brand);">🔒 Segurança de Acesso</div>
+      <p style="color: var(--muted); margin-bottom: 25px; font-size: 0.85rem;">
+        Este é o seu primeiro acesso. Por segurança, crie um PIN numérico (mín. 6 dígitos).<br><br>
+        <span class="pill pill-bad">REGRAS</span><br>
+        Apenas números. Não use sequências ou repetidos.
       </p>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span>📚 Resultado</span>
-        <span class="pill pill-blue" id="consultCount">0 itens</span>
-      </div>
-      <table>
-        <thead>
-        <tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th>LINK</th></tr>
-        </thead>
-        <tbody id="corpoConsulta"></tbody>
-      </table>
+      <input type="password" id="novoPin" placeholder="Novo PIN" style="margin-bottom: 12px; text-align: center; font-size: 1.2rem; letter-spacing: 5px;">
+      <input type="password" id="confirmaPin" placeholder="Confirme" style="margin-bottom: 25px; text-align: center; font-size: 1.2rem; letter-spacing: 5px;">
+      <button class="btn btn-primary" onclick="salvarNovoPin()">CRIPTOGRAFAR PIN E ENTRAR</button>
     </div>
   </div>
 
-  <!-- DISTRITO -->
-  <div id="viewDashDistrito" class="view-section">
-    <div class="kpi-grid" style="grid-template-columns:repeat(3, 1fr);">
-      <div class="kpi-card" style="border-bottom:3px solid var(--brand2);">
-        <div class="kpi-title">💰 COFRE DA FAMÍLIA</div>
-        <div class="kpi-value" id="dashKpiSaldo" style="color:var(--brand2);">$ 0</div>
-      </div>
-      <div class="kpi-card only-high-rank" style="border-bottom:3px solid var(--danger);">
-        <div class="kpi-title">🧾 DÍVIDAS DA FAC</div>
-        <div class="kpi-value" id="dashKpiDivida" style="color:var(--danger);">$ 0</div>
-      </div>
-      <div class="kpi-card" style="border-bottom:3px solid var(--brand);">
-        <div class="kpi-title">🧼 MÁQUINAS ATIVAS</div>
-        <div class="kpi-value" id="dashKpiLavanderia">0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">📦 Resumo Geral do Baú</div>
-      <table>
-        <thead><tr><th>ITEM</th><th>ESTOQUE ATUAL</th></tr></thead>
-        <tbody id="dashCorpoEstoque"></tbody>
-      </table>
-      <p class="subnote" style="margin-top:10px;">
-        Estoque em tempo real com trava (não permite saída maior do que o saldo).
-      </p>
+  <!-- Start turno Command -->
+  <div id="modalStartTurn" class="modal-overlay">
+    <div class="modal-box">
+      <div class="card-header" style="justify-content: center;">🚀 Iniciar Operação</div>
+      <p style="font-size: 0.8rem; color: var(--warn); margin-bottom: 20px;">Você é o primeiro a logar hoje. Defina a fila.</p>
+      <label style="text-align: left;">Não Iniciados</label><input type="number" id="startNaoIniciados" value="0" style="margin-bottom: 15px;">
+      <label style="text-align: left;">Em Andamento</label><input type="number" id="startEmAndamento" value="0" style="margin-bottom: 25px;">
+      <button class="btn btn-primary" onclick="confirmarInicioTurno()">ABRIR DIA</button>
     </div>
   </div>
 
-  <div id="viewCaixaDistrito" class="view-section">
-    <div class="kpi-grid">
-      <div class="kpi-card" style="border-bottom:3px solid var(--brand2);">
-        <div class="kpi-title">SALDO LIMPO (PROTEGIDO)</div>
-        <div class="kpi-value" id="kpiSaldoDistrito" style="color:var(--brand2);">$ 0</div>
+  <!-- Login -->
+  <div id="telaLogin">
+    <div class="login-card">
+      <div style="font-size: 3rem; margin-bottom: 10px;" id="loginEmoji">🌐</div>
+      <h2 style="margin-bottom: 25px; font-weight: 800;" id="loginTitle">Sistema Integrado</h2>
+      <div class="project-selector">
+        <div id="tabCommand" class="proj-tab active" onclick="setLoginProject('command')">Command</div>
+        <div id="tabDistrito" class="proj-tab" onclick="setLoginProject('distrito22')">Distrito 22</div>
       </div>
+      <input type="text" id="lUser" placeholder="Usuário">
+      <input type="password" id="lPass" placeholder="Senha ou PIN" style="margin-top: 12px;">
+      <button class="btn btn-primary" style="margin-top: 25px; height: 50px;" onclick="autenticar()">Acessar Painel</button>
+      <p id="errorMsg" style="color: var(--danger); font-size: 0.8rem; margin-top: 15px; font-weight: 600; display: none;">Dados incorretos!</p>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-area">
+      <div class="logo-icon" id="sidebarEmoji">🌐</div>
+      <div class="logo-text" id="sidebarProjectName">Command<br><span style="font-size: 0.7rem; color: var(--muted); font-weight: 500;">Center</span></div>
     </div>
 
-    <div class="card">
-      <div class="card-header">💸 Lançamento de Caixa</div>
-      <div class="form-grid">
-        <div>
-          <label>Operação*</label>
-          <select id="tipoOperacaoDistrito">
-            <option value="Deposito">🟩 Depósito</option>
-            <option value="Saque">🟥 Saque</option>
-          </select>
+    <div style="flex: 1;">
+      <div class="nav-item only-command active" onclick="switchView('dashCommand', event)" id="navCommandHome">📊 Dashboard</div>
+      <div class="nav-item only-command" onclick="switchView('consultCommand', event)">🔍 Consultas</div>
+
+      <div class="nav-item only-distrito active" onclick="switchView('dashDistrito', event)" id="navDashRP">📊 Visão Geral</div>
+      <div class="nav-item only-distrito" onclick="switchView('caixaDistrito', event)">💰 Cofre (Dep/Saq)</div>
+      <div class="nav-item only-distrito" onclick="switchView('debitosDistrito', event)">🧾 Reembolsos</div>
+
+      <div class="sidebar-title only-distrito">📦 ESTOQUE (BAÚS)</div>
+      <div id="menuItensDinamico"></div>
+
+      <div class="sidebar-title only-distrito">⚙️ SISTEMAS</div>
+      <div class="nav-item only-distrito" onclick="switchView('lavanderiaDistrito', event)">🧼 Lavanderia</div>
+
+      <div class="sidebar-title only-high-rank">LIDERANÇA</div>
+      <div class="nav-item only-distrito only-high-rank" onclick="switchView('gestaoItens', event)">🛠️ Gerenciar Itens</div>
+      <div class="nav-item only-distrito only-admin" onclick="switchView('logsDistrito', event)">📋 Logs de Auditoria</div>
+      <div class="nav-item only-high-rank" onclick="switchView('admin', event)">👥 Gestão de Membros</div>
+
+      <div class="sidebar-title" style="margin-top: 10px;">AJUSTES</div>
+      <div class="nav-item" onclick="switchView('themes', event)">🎨 Aparência</div>
+    </div>
+
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+      <button class="btn" style="width: 100%; margin-bottom: 15px; border-color: var(--brand); color: var(--brand);" onclick="abrirModalReport()">📣 Enviar Feedback</button>
+      <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid var(--border);">
+        <div id="displayUser" style="font-weight: 700; font-size: 0.85rem;">Analista</div>
+        <div id="displayRole" style="font-size: 0.7rem; color: var(--muted); margin-bottom: 10px; text-transform: uppercase;">Cargo</div>
+        <div onclick="logout()" style="color: var(--danger); font-size: 0.75rem; font-weight: 700; cursor: pointer;">🚪 Sair da Conta</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- COMMAND: DASH -->
+    <div id="viewDashCommand" class="view-section">
+      <div class="kpi-grid">
+        <div class="kpi-card" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">FILA GERAL</div><div class="kpi-value" id="kpiNi" onclick="corrigirKpi('ni')">0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--warn);"><div class="kpi-title">EM ANDAMENTO</div><div class="kpi-value" id="kpiEa" onclick="corrigirKpi('ea')">0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">MINHA META</div><div class="kpi-value" id="kpiMeta">0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">RESOLVIDOS</div><div class="kpi-value" id="kpiRitms">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">EFICIÊNCIA</div><div class="kpi-value" id="kpiMedia" style="color: var(--brand2);">0%</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">📊 Desempenho Real</div>
+        <div style="height: 250px;"><canvas id="meuGraficoBarras"></canvas></div>
+      </div>
+
+      <div id="cardRegistro" class="card" style="position: relative;">
+        <div id="overlay" style="position: absolute; inset:0; background: rgba(0,0,0,0.8); z-index: 10; display:flex; align-items:center; justify-content:center; border-radius:20px;">
+          <button class="btn btn-primary" style="width: 250px;" onclick="abrirModalTurno()">🚀 INICIAR TURNO</button>
         </div>
-        <div><label>Valor ($)*</label><input type="number" id="valorDistrito" placeholder="Ex: 15000" min="1"></div>
-        <div style="grid-column: span 2;"><label>Motivo*</label><input type="text" id="motivoDistrito" placeholder="Ex: Venda de Armas"></div>
-      </div>
-      <button class="btn btn-primary" style="margin-top:18px;" onclick="salvarCaixaDistrito()">REGISTRAR TRANSAÇÃO</button>
-    </div>
 
-    <div class="card">
-      <div class="card-header">📑 Extrato Geral do Cofre</div>
-      <table>
-        <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>OP</th><th>VALOR</th><th>DESCRIÇÃO</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
-        <tbody id="corpoCaixaDistrito"></tbody>
-      </table>
-    </div>
-  </div>
+        <div class="card-header">✍️ Registrar RITM</div>
 
-  <div id="viewDebitosDistrito" class="view-section">
-    <div class="kpi-grid only-high-rank">
-      <div class="kpi-card" style="border-bottom:3px solid var(--danger);">
-        <div class="kpi-title">SALDO DEVEDOR TOTAL</div>
-        <div class="kpi-value" id="kpiTotalDevedor" style="color:var(--danger);">$ 0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">🧾 Solicitar Reembolso</div>
-      <div class="form-grid">
-        <div><label>No que foi gasto?*</label><select id="itemDebito" class="dynamic-item-select"><option value="">Carregando...</option></select></div>
-        <div><label>Valor Gasto ($)*</label><input type="number" id="valorDebito" placeholder="Ex: 13500" min="1"></div>
-        <div style="grid-column: span 2;"><label>Detalhes</label><input type="text" id="detalheDebito" placeholder="Ex: Comprei para ação"></div>
-      </div>
-      <button class="btn btn-success" style="margin-top:18px;" onclick="salvarDebito()">SOLICITAR REEMBOLSO</button>
-    </div>
-
-    <div class="card">
-      <div class="card-header">📑 Lista de Reembolsos</div>
-      <table>
-        <thead><tr><th>DATA</th><th>MEMBRO</th><th>GASTO</th><th>VALOR</th><th>STATUS</th><th class="only-high-rank" style="text-align:right">AÇÃO</th></tr></thead>
-        <tbody id="corpoDebitos"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- VIEW ITEM (Dinâmico) -->
-  <div id="viewDroga" class="view-section">
-    <div class="kpi-grid">
-      <div class="kpi-card" style="border-bottom:3px solid var(--brand);">
-        <div class="kpi-title" id="lblDrogaTitle">ESTOQUE</div>
-        <div class="kpi-value" id="kpiDrogaTotal">0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">📦 Acesso ao Baú: <span id="txtDrogaNome" style="color:var(--brand); margin-left:8px;"></span></div>
-      <div class="form-grid">
-        <div>
-          <label>Ação*</label>
-          <select id="opDroga" onchange="calcularLucroVenda()">
-            <option value="Entrada">📥 Guardar (Somar)</option>
-            <option value="Saida">📤 Pegar (Subtrair)</option>
-          </select>
+        <div class="form-grid">
+          <div><label>RITM*</label><input type="text" id="ritm" placeholder="RITM000"></div>
+          <div><label>Status*</label>
+            <select id="statusRitm">
+              <option value="Resolvido">Resolvido</option>
+              <option value="Cancelado">Cancelado</option>
+              <option value="Reaberto">Reaberto</option>
+              <option value="Pendente">Pendente</option>
+              <option value="GA">Aguardando GA</option>
+            </select>
+          </div>
+          <div><label>Tasks?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+          <div id="divQtdTask" style="visibility: hidden;"><label>Qtd</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
         </div>
-        <div>
-          <label>Quantidade*</label>
-          <input type="number" id="qtdDroga" placeholder="Ex: 50" min="1" oninput="calcularLucroVenda()">
-          <div id="lucroDrogaInfo" style="font-size:.75rem; color:var(--brand2); margin-top:6px; font-weight:900; display:none;">
-            Previsão Retorno: <span id="valLucroDroga">$0</span>
+
+        <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;"></div>
+
+        <!-- REMOVIDO: LINK -->
+        <div class="form-grid" style="grid-template-columns: 1fr; margin-top: 15px;">
+          <input type="text" id="descResumida" placeholder="Descrição Resumida*">
+        </div>
+
+        <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarCommand()">GRAVAR NO BANCO</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">📋 Meus Lançamentos de Hoje</div>
+        <table>
+          <thead><tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
+          <tbody id="corpoTabela"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMMAND: CONSULTA -->
+    <div id="viewConsultCommand" class="view-section">
+      <div class="card">
+        <div class="card-header">🔍 Filtro de Histórico</div>
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr 150px;">
+          <div><label>Início</label><input type="date" id="dataInicio"></div>
+          <div><label>Fim</label><input type="date" id="dataFim"></div>
+          <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" style="height: 46px;" onclick="consultarBanco()">BUSCAR</button></div>
+        </div>
+      </div>
+      <div class="card"><table><tbody id="corpoConsulta"></tbody></table></div>
+    </div>
+
+    <!-- DISTRITO: DASH -->
+    <div id="viewDashDistrito" class="view-section active">
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">💰 COFRE DA FAMÍLIA</div><div class="kpi-value" id="dashKpiSaldo" style="color: var(--brand2);">$ 0</div></div>
+        <div class="kpi-card only-high-rank" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">🧾 DÍVIDAS DA FAC</div><div class="kpi-value" id="dashKpiDivida" style="color: var(--danger);">$ 0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">🧼 MÁQUINAS ATIVAS</div><div class="kpi-value" id="dashKpiLavanderia">0</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">📦 Resumo Geral do Baú</div>
+        <table>
+          <thead><tr><th>ITEM</th><th>ESTOQUE ATUAL</th></tr></thead>
+          <tbody id="dashCorpoEstoque"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DISTRITO: CAIXA -->
+    <div id="viewCaixaDistrito" class="view-section">
+      <div class="kpi-grid"><div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">SALDO LIMPO</div><div class="kpi-value" id="kpiSaldoDistrito" style="color: var(--brand2);">$ 0</div></div></div>
+      <div class="card">
+        <div class="card-header">💸 Lançamento de Caixa</div>
+        <div class="form-grid">
+          <div><label>Operação*</label><select id="tipoOperacaoDistrito"><option value="Deposito">🟩 Depósito</option><option value="Saque">🟥 Saque</option></select></div>
+          <div><label>Valor ($)*</label><input type="number" id="valorDistrito" placeholder="Ex: 15000" min="1"></div>
+          <div style="grid-column: span 2;"><label>Motivo*</label><input type="text" id="motivoDistrito" placeholder="Ex: Venda de Armas"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 20px;" onclick="salvarCaixaDistrito()">REGISTRAR TRANSAÇÃO</button>
+      </div>
+      <div class="card">
+        <div class="card-header">📑 Extrato Geral do Cofre</div>
+        <table>
+          <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>OPERAÇÃO</th><th>VALOR</th><th>DESCRIÇÃO</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
+          <tbody id="corpoCaixaDistrito"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DISTRITO: DEBITOS -->
+    <div id="viewDebitosDistrito" class="view-section">
+      <div class="kpi-grid only-high-rank"><div class="kpi-card" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">SALDO DEVEDOR TOTAL</div><div class="kpi-value" id="kpiTotalDevedor" style="color: var(--danger);">$ 0</div></div></div>
+      <div class="card">
+        <div class="card-header">🧾 Solicitar Reembolso</div>
+        <div class="form-grid">
+          <div><label>No que foi gasto?*</label><select id="itemDebito" class="dynamic-item-select"><option value="">Carregando...</option></select></div>
+          <div><label>Valor Gasto ($)*</label><input type="number" id="valorDebito" placeholder="Ex: 13500" min="1"></div>
+          <div style="grid-column: span 2;"><label>Detalhes</label><input type="text" id="detalheDebito" placeholder="Ex: Comprei para ação"></div>
+        </div>
+        <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarDebito()">SOLICITAR REEMBOLSO</button>
+      </div>
+      <div class="card">
+        <div class="card-header">📑 Lista de Reembolsos</div>
+        <table>
+          <thead><tr><th>DATA</th><th>MEMBRO</th><th>GASTO</th><th>VALOR</th><th>STATUS</th><th class="only-high-rank" style="text-align:right">AÇÃO</th></tr></thead>
+          <tbody id="corpoDebitos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DISTRITO: ITEM -->
+    <div id="viewDroga" class="view-section">
+      <div class="kpi-grid"><div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title" id="lblDrogaTitle">ESTOQUE</div><div class="kpi-value" id="kpiDrogaTotal">0</div></div></div>
+      <div class="card">
+        <div class="card-header">📦 Acesso ao Baú: <span id="txtDrogaNome" style="color: var(--brand); margin-left:8px;"></span></div>
+        <div class="form-grid">
+          <div>
+            <label>Ação*</label>
+            <select id="opDroga" onchange="calcularLucroVenda()">
+              <option value="Entrada">📥 Guardar (Somar)</option>
+              <option value="Saida">📤 Pegar (Subtrair)</option>
+            </select>
+          </div>
+          <div>
+            <label>Quantidade*</label>
+            <input type="number" id="qtdDroga" placeholder="Ex: 50" min="1" oninput="calcularLucroVenda()">
+            <div id="lucroDrogaInfo" style="font-size: 0.75rem; color: var(--brand2); margin-top: 6px; font-weight: 700; display: none;">Previsão Retorno: <span id="valLucroDroga">$0</span></div>
           </div>
         </div>
+        <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarEstoque()">ATUALIZAR BAÚ</button>
       </div>
-      <button class="btn btn-success" style="margin-top:18px;" onclick="salvarEstoque()">ATUALIZAR BAÚ</button>
-    </div>
-
-    <div class="card">
-      <div class="card-header">📑 Histórico de <span id="txtDrogaHist" style="margin-left:6px;">Movimentação</span></div>
-      <table>
-        <thead><tr><th>DATA</th><th>MEMBRO</th><th>AÇÃO</th><th>QTD</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
-        <tbody id="corpoDroga"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="viewGestaoItens" class="view-section">
-    <div class="card">
-      <div class="card-header">🛠️ Cadastrar Novo Item</div>
-      <div class="form-grid">
-        <div style="grid-column: span 2;"><label>Nome do Item*</label><input type="text" id="novoItemNome" placeholder="Ex: Lockpick, Colete"></div>
+      <div class="card">
+        <div class="card-header">📑 Histórico de <span id="txtDrogaHist" style="margin-left:6px;">Movimentação</span></div>
+        <table>
+          <thead><tr><th>DATA</th><th>MEMBRO</th><th>AÇÃO</th><th>QTD</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
+          <tbody id="corpoDroga"></tbody>
+        </table>
       </div>
-      <button class="btn btn-primary" style="margin-top:12px;" onclick="salvarNovoItem()">CRIAR ITEM</button>
     </div>
 
-    <div class="card">
-      <div class="card-header">Itens Ativos no Sistema</div>
-      <table>
-        <thead><tr><th>NOME DO ITEM</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
-        <tbody id="corpoListaItens"></tbody>
-      </table>
+    <!-- DISTRITO: GESTAO ITENS -->
+    <div id="viewGestaoItens" class="view-section">
+      <div class="card">
+        <div class="card-header">🛠️ Cadastrar Novo Item</div>
+        <div class="form-grid"><div style="grid-column: span 2;"><label>Nome do Item*</label><input type="text" id="novoItemNome" placeholder="Ex: Lockpick, Colete"></div></div>
+        <button class="btn btn-primary" style="margin-top: 15px;" onclick="salvarNovoItem()">CRIAR ITEM</button>
+      </div>
+      <div class="card">
+        <div class="card-header">Itens Ativos no Sistema</div>
+        <table><thead><tr><th>NOME DO ITEM</th><th style="text-align:right">DELETAR</th></tr></thead><tbody id="corpoListaItens"></tbody></table>
+      </div>
     </div>
-  </div>
 
-  <div id="viewLavanderiaDistrito" class="view-section">
-    <div class="card">
-      <div class="card-header">🧼 Máquina de Lavar</div>
-      <p class="subnote" style="margin-bottom:16px;">
-        A cada 1.000 sujo = 30s. Máx 50.000 (25 min). Retorno: 50% limpo.
-        <br>Anti-cheat: tempo é baseado no horário do servidor (Google/Firebase).
-      </p>
-      <div class="form-grid" style="align-items:end;">
-        <div><label>Dinheiro Sujo ($)*</label><input type="number" id="sujoLavar" placeholder="Max: 50000" max="50000" oninput="calcularPrevisaoLavagem()"></div>
-        <div style="background:rgba(0,0,0,.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
-          <label>Tempo</label><div id="prevTempo" style="font-weight:950; color:var(--warn); font-size:1.1rem;">0 min</div>
+    <!-- DISTRITO: LAVANDERIA -->
+    <div id="viewLavanderiaDistrito" class="view-section">
+      <div class="card">
+        <div class="card-header">🧼 Máquina de Lavar</div>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 20px;">A cada 1.000 sujo = 30s. Máx 50.000 (25 min). Retorno: 50% limpo.</p>
+        <div class="form-grid" style="align-items: end;">
+          <div><label>Dinheiro Sujo ($)*</label><input type="number" id="sujoLavar" placeholder="Max: 50000" max="50000" oninput="calcularPrevisaoLavagem()"></div>
+          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border:1px solid var(--border);"><label>Tempo</label><div id="prevTempo" style="font-weight: 800; color: var(--warn); font-size: 1.1rem;">0 min</div></div>
+          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border:1px solid var(--border);"><label>Limpo</label><div id="prevLimpo" style="font-weight: 800; color: var(--brand2); font-size: 1.1rem;">$ 0</div></div>
+          <div><button class="btn btn-success" style="height: 100%;" onclick="iniciarLavagem()">LIGAR MÁQUINA</button></div>
         </div>
-        <div style="background:rgba(0,0,0,.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
-          <label>Limpo</label><div id="prevLimpo" style="font-weight:950; color:var(--brand2); font-size:1.1rem;">$ 0</div>
+      </div>
+      <div class="card">
+        <div class="card-header">🧺 Máquinas Ativas</div>
+        <div id="listaMaquinas"></div>
+      </div>
+    </div>
+
+    <!-- DISTRITO: LOGS -->
+    <div id="viewLogsDistrito" class="view-section only-admin">
+      <div class="card" style="border-color: var(--warn);">
+        <div class="card-header">📋 Logs de Auditoria</div>
+        <table>
+          <thead><tr><th>DATA</th><th>MEMBRO</th><th>CATEGORIA</th><th>AÇÃO EXECUTADA</th></tr></thead>
+          <tbody id="corpoLogs"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- THEMES -->
+    <div id="viewThemes" class="view-section">
+      <div class="card only-distrito">
+        <div class="card-header">🎨 Temas da Facção</div>
+        <div class="form-grid">
+          <div class="btn" onclick="setTheme('distrito-dark')" style="border-color: #ef4444; color: #ef4444;">Dark Red</div>
+          <div class="btn" onclick="setTheme('distrito-light')" style="border-color: #e11d48; color: #e11d48; background: #fff;">Light Red</div>
         </div>
-        <div><button class="btn btn-success" style="height:100%;" onclick="iniciarLavagem()">LIGAR MÁQUINA</button></div>
+      </div>
+      <div class="card only-command">
+        <div class="card-header">🎨 Temas Command</div>
+        <div class="form-grid">
+          <div class="btn" onclick="setTheme('midnight')" style="border-color: #818cf8; color: #818cf8;">Midnight</div>
+          <div class="btn" onclick="setTheme('nordic')" style="border-color: #39c6ff; color: #39c6ff;">Nordic</div>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">🧺 Máquinas Ativas</div>
-      <div id="listaMaquinas"></div>
+    <!-- ADMIN -->
+    <div id="viewAdmin" class="view-section">
+      <div class="card">
+        <div class="card-header">🛠 Gestão de Membros</div>
+        <div class="form-grid">
+          <input type="text" id="nCompleto" placeholder="Nome no RP">
+          <input type="text" id="nUser" placeholder="Login">
+          <input type="password" id="nPass" placeholder="Senha Provisória">
+          <select id="nRole">
+            <optgroup label="Base"><option value="Recruta">Recruta</option><option value="Membro Distrito">Membro</option><option value="Fogueteiro">Fogueteiro</option></optgroup>
+            <optgroup label="Liderança"><option value="Gerente">Gerente</option><option value="02">02</option><option value="01">01</option><option value="admin">Admin Root</option></optgroup>
+          </select>
+          <button class="btn btn-success" id="btnSalvarAnalista" onclick="cadastrarAnalista()">CADASTRAR</button>
+        </div>
+        <table style="margin-top: 30px;">
+          <thead><tr><th>NOME</th><th>LOGIN</th><th>CARGO</th><th style="text-align:right">AÇÃO</th></tr></thead>
+          <tbody id="listaUsuarios"></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="border-color: var(--brand);">
+        <div class="card-header">📬 Caixa de Sugestões</div>
+        <table><thead><tr><th>DATA</th><th>MEMBRO</th><th>MENSAGEM</th><th style="text-align:right">AÇÃO</th></tr></thead><tbody id="listaFeedbacks"></tbody></table>
+      </div>
     </div>
+
   </div>
 
-  <div id="viewLogsDistrito" class="view-section only-admin">
-    <div class="card" style="border-color:var(--warn);">
-      <div class="card-header">📋 Logs de Auditoria</div>
-      <table>
-        <thead><tr><th>DATA</th><th>MEMBRO</th><th>CATEGORIA</th><th>AÇÃO EXECUTADA</th></tr></thead>
-        <tbody id="corpoLogs"></tbody>
-      </table>
-    </div>
-  </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
+      authDomain: "dashboard-command-1ef72.firebaseapp.com",
+      databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com",
+      projectId: "dashboard-command-1ef72",
+      storageBucket: "dashboard-command-1ef72.firebasestorage.app",
+      messagingSenderId: "38631596446",
+      appId: "1:38631596446:web:f9470a5b648173e168b68f"
+    };
 
-  <div id="viewThemes" class="view-section">
-    <div class="card only-distrito">
-      <div class="card-header">🎨 Temas da Facção</div>
-      <div class="form-grid">
-        <div class="btn" onclick="setTheme('distrito-dark')" style="border-color:#ef4444; color:#ef4444;">Dark Red</div>
-        <div class="btn" onclick="setTheme('distrito-light')" style="border-color:#e11d48; color:#e11d48; background:#fff;">Light Red</div>
-      </div>
-    </div>
-    <div class="card only-command">
-      <div class="card-header">🎨 Temas Command</div>
-      <div class="form-grid">
-        <div class="btn" onclick="setTheme('midnight')" style="border-color:#818cf8; color:#818cf8;">Midnight</div>
-        <div class="btn" onclick="setTheme('nordic')" style="border-color:#39c6ff; color:#39c6ff;">Nordic</div>
-      </div>
-    </div>
-  </div>
+    firebase.initializeApp(firebaseConfig);
+    const rootDatabase = firebase.database();
 
-  <div id="viewAdmin" class="view-section">
-    <div class="card">
-      <div class="card-header">🛠 Gestão de Membros</div>
-      <div class="subnote" style="margin-bottom:12px;">
-        Admin Root pode deletar usuários. Liderança pode cadastrar/editar.
-      </div>
-      <div class="form-grid">
-        <input type="text" id="nCompleto" placeholder="Nome completo (ou nome RP)">
-        <input type="text" id="nUser" placeholder="Login">
-        <input type="password" id="nPass" placeholder="Senha Provisória">
-        <select id="nRole">
-          <optgroup label="Base">
-            <option value="Recruta">Recruta</option>
-            <option value="Membro Distrito">Membro Distrito</option>
-            <option value="Fogueteiro">Fogueteiro</option>
-          </optgroup>
-          <optgroup label="Liderança">
-            <option value="Gerente">Gerente</option>
-            <option value="02">02</option>
-            <option value="01">01</option>
-            <option value="admin">Admin Root</option>
-          </optgroup>
-        </select>
-        <button class="btn btn-success" id="btnSalvarAnalista" onclick="cadastrarAnalista()">CADASTRAR / ATUALIZAR</button>
-      </div>
+    let logado = null;
+    let loginProject = 'command';
+    let loopLavanderia = null;
+    let currentDroga = '';
+    let estoqueGlobalCalculado = {};
+    let listaDeItensDinamicos = [];
+    let pendenciaTotal = 0;
 
-      <table style="margin-top:20px;">
-        <thead><tr><th>NOME</th><th>LOGIN</th><th>CARGO</th><th style="text-align:right">AÇÃO</th></tr></thead>
-        <tbody id="listaUsuarios"></tbody>
-      </table>
-    </div>
-
-    <div class="card" style="border-color:var(--brand);">
-      <div class="card-header">📬 Caixa de Sugestões</div>
-      <table>
-        <thead><tr><th>DATA</th><th>MEMBRO</th><th>MENSAGEM</th><th class="only-high-rank" style="text-align:right">AÇÃO</th></tr></thead>
-        <tbody id="listaFeedbacks"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<script>
-  /* ============================
-     FIREBASE CONFIG (preservado)
-  ============================ */
-  const firebaseConfig = {
-    apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
-    authDomain: "dashboard-command-1ef72.firebaseapp.com",
-    databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com",
-    projectId: "dashboard-command-1ef72",
-    storageBucket: "dashboard-command-1ef72.firebasestorage.app",
-    messagingSenderId: "38631596446",
-    appId: "1:38631596446:web:f9470a5b648173e168b68f"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const rootDatabase = firebase.database();
-
-  /* ============================
-     STATE
-  ============================ */
-  let logado = null;
-  let loginProject = 'command';
-  let loopLavanderia = null;
-  let currentDroga = '';
-  let listaDeItensDinamicos = [];
-  let cacheConsulta = []; // para export Excel
-  let pendenciaTotal = 0;
-
-  /* ============================
-     SERVER TIME OFFSET (anti-cheat)
-  ============================ */
-  let serverTimeOffset = 0;
-  rootDatabase.ref('.info/serverTimeOffset').on('value', (snap) => {
-    serverTimeOffset = snap.val() || 0;
-  });
-
-  /* ============================
-     HELPERS
-  ============================ */
-  function encodeKey(str){ return String(str || '').replace(/\./g, ','); }
-  function decodeKey(str){ return String(str || '').replace(/,/g, '.'); }
-  function getHoje(){ return new Date().toISOString().split('T')[0]; }
-  function getHora(){ return new Date().toLocaleTimeString('pt-BR'); }
-  function formatarDinheiro(num){ return "$ " + (Number(num || 0)).toLocaleString('pt-BR'); }
-  function nowServerMs(){ return Date.now() + serverTimeOffset; }
-
-  async function hashCriptografico(texto){
-    const encoder = new TextEncoder();
-    const data = encoder.encode(String(texto));
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
-  }
-
-  function showToast(msg, type='success'){
-    const c = document.getElementById('toast-container');
-    const t = document.createElement('div');
-    t.className = 'toast';
-    const icon = type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌');
-    const color = type === 'success' ? 'var(--brand2)' : (type === 'alert' ? 'var(--warn)' : 'var(--danger)');
-    t.style.borderLeft = `4px solid ${color}`;
-    t.innerHTML = `<div>${icon}</div><div>${msg}</div>`;
-    c.appendChild(t);
-    setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(), 450); }, 3200);
-  }
-
-  function isHighRank(){
-    return logado && ['admin','ADMIN','Gerente','02','01'].includes(logado.role);
-  }
-  function isAdminRole(){
-    return logado && (logado.role === 'admin' || logado.role === 'ADMIN');
-  }
-
-  function dbRef(path){
-    const p = logado ? logado.projeto : loginProject;
-    return (p === 'command')
-      ? rootDatabase.ref(path)
-      : rootDatabase.ref('projetos/' + p + '/' + path);
-  }
-
-  /* ============================
-     FAVICON + TITLE DYNAMIC
-  ============================ */
-  function atualizarIconeETitulo(){
-    const isCommand = logado ? logado.projeto === 'command' : loginProject === 'command';
-    document.title = isCommand ? "🌐 Command Center" : "🐶 Distrito 22";
-
-    let link = document.querySelector("link[rel~='icon']");
-    if(!link){
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
-    }
-    link.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${isCommand?'🌐':'🐶'}</text></svg>`;
-
-    if(!logado){
-      document.getElementById('loginEmoji').innerText = isCommand ? '🌐' : '🐶';
-      document.getElementById('loginTitle').innerText = isCommand ? 'Command Center' : 'Distrito 22';
-    }else{
-      document.getElementById('sidebarEmoji').innerText = isCommand ? '🌐' : '🐶';
-      document.getElementById('sidebarProjectName').innerHTML =
-        isCommand
-          ? 'Command<br><span style="font-size:.7rem; color:var(--muted); font-weight:600;">Center</span>'
-          : 'Distrito 22<br><span style="font-size:.7rem; color:var(--muted); font-weight:600;">Facção</span>';
-    }
-  }
-
-  /* ============================
-     NAV / VIEW
-  ============================ */
-  function switchView(v, event){
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-
-    const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
-    if(alvo) alvo.classList.add('active');
-    if(event && event.currentTarget) event.currentTarget.classList.add('active');
-
-    if(v === 'admin'){ listarUsuarios(); listarFeedbacks(); }
-  }
-
-  function setTheme(t){
-    const key = (logado && logado.projeto === 'command') ? 'command_theme' : 'distrito_theme';
-    localStorage.setItem(key, t);
-    document.body.setAttribute('data-theme', t);
-  }
-
-  function logout(){
-    localStorage.removeItem('usuarioLogado');
-    location.reload();
-  }
-
-  /* ============================
-     FEEDBACK / REPORT
-  ============================ */
-  function abrirModalReport(){ document.getElementById('modalReport').style.display = 'flex'; }
-  function fecharModalReport(){
-    document.getElementById('modalReport').style.display = 'none';
-    document.getElementById('msgReport').value = '';
-  }
-
-  function enviarReport(){
-    const msg = document.getElementById('msgReport').value.trim();
-    if(!msg) return showToast("A mensagem não pode estar vazia!", "error");
-
-    dbRef('feedbacks').push({
-      data: getHoje(), hora: getHora(), membro: logado ? logado.nome : 'ANÔNIMO', msg
-    }).then(()=>{
-      fecharModalReport();
-      showToast("Feedback enviado à liderança!", "success");
+    /* ===== ANTI-CHEAT: Server Time ===== */
+    let serverTimeOffset = 0;
+    rootDatabase.ref('.info/serverTimeOffset').on('value', function(snap) {
+      serverTimeOffset = snap.val() || 0;
     });
-  }
 
-  function listarFeedbacks(){
-    if(!isHighRank()) return;
-    dbRef('feedbacks').on('value', snap => {
-      const lista = document.getElementById('listaFeedbacks');
-      if(!lista) return;
-      lista.innerHTML = '';
-      let rows = [];
-      snap.forEach(item => rows.push({ key:item.key, ...item.val() }));
-      rows.reverse().forEach(f => {
-        const btn = `<button class="btn btn-success" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="marcarFeedbackLido('${f.key}')">LIDO ✅</button>`;
-        lista.innerHTML += `
-          <tr>
-            <td style="white-space:nowrap;">${f.data} ${f.hora}</td>
+    /* ===== SHA-256 ===== */
+    async function hashCriptografico(texto) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(texto);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function encodeKey(str) { return str.replace(/\./g, ','); }
+    function decodeKey(str) { return str.replace(/,/g, '.'); }
+    function getHoje() { return new Date().toISOString().split('T')[0]; }
+    function getHora() { return new Date().toLocaleTimeString('pt-BR'); }
+    function formatarDinheiro(num) { return "$ " + parseFloat(num).toLocaleString('pt-BR'); }
+
+    function isHighRank() { return logado && ['admin','ADMIN','Gerente','02','01'].includes(logado.role); }
+    function isAdminRole() { return logado && (logado.role === 'admin' || logado.role === 'ADMIN'); }
+
+    function dbRef(path) {
+      const p = logado ? logado.projeto : loginProject;
+      return p === 'command' ? rootDatabase.ref(path) : rootDatabase.ref('projetos/' + p + '/' + path);
+    }
+
+    /* ===== LOGS ===== */
+    function registrarLog(acao, detalhes) {
+      if(!logado) return;
+      dbRef('logs').push({ data: getHoje(), hora: getHora(), membro: logado.nome, acao: acao, detalhes: detalhes });
+    }
+
+    function escutarLogs() {
+      if(!isAdminRole()) return;
+      dbRef('logs').on('value', snap => {
+        const tbody = document.getElementById('corpoLogs');
+        if(!tbody) return;
+        tbody.innerHTML = "";
+        let logsArray = [];
+        snap.forEach(item => logsArray.push(item.val()));
+        logsArray.reverse().forEach(c => {
+          let pillClass = 'pill-blue';
+          if(c.acao === 'EXCLUSÃO') pillClass = 'pill-bad';
+          else if(c.acao === 'CAIXA') pillClass = 'pill-ok';
+          else if(c.acao === 'LAVANDERIA') pillClass = 'pill-warn';
+          tbody.innerHTML += `<tr>
+            <td style="white-space: nowrap;">${c.data} ${c.hora}</td>
+            <td><b>${c.membro}</b></td>
+            <td><span class="pill ${pillClass}">${c.acao}</span></td>
+            <td style="${c.acao==='EXCLUSÃO'?'color:var(--danger);font-weight:700':''}">${c.detalhes}</td>
+          </tr>`;
+        });
+      });
+    }
+
+    function deletarRegistro(caminho, id, logMsg) {
+      if(confirm("Tem certeza que deseja excluir? Isso será registrado no LOG.")) {
+        dbRef(caminho).child(id).remove().then(() => {
+          registrarLog('EXCLUSÃO', logMsg);
+          showToast("Registro excluído!", "success");
+        });
+      }
+    }
+
+    /* ===== Command: EXCLUIR CHAMADO ===== */
+    function deletarChamadoCommand(chave, ritm) {
+      if (!logado) return;
+
+      const ehAdmin = (logado.role === 'admin' || logado.role === 'ADMIN');
+      if (!confirm(`Excluir o registro da RITM ${ritm}?\n\n${ehAdmin ? 'Isso apaga do banco.' : 'Você só pode excluir seus registros do dia.'}`)) return;
+
+      dbRef('chamados').child(chave).once('value').then(snap => {
+        const c = snap.val();
+        if (!c) return;
+
+        const ehDono = (c.analista === logado.nome);
+        const ehHoje = (c.data === getHoje());
+
+        if (!ehAdmin && !(ehDono && ehHoje)) {
+          return alert("Você só pode excluir seus próprios registros do dia. Admin pode excluir qualquer.");
+        }
+
+        dbRef('chamados').child(chave).remove().then(() => {
+          showToast("Registro excluído!", "success");
+        });
+      });
+    }
+
+    function obterEmojiItem(nomeItem) {
+      const txt = nomeItem.toLowerCase();
+      if(txt.includes('maconha')||txt.includes('erva')) return '🌿';
+      if(txt.includes('coca')||txt.includes('pó')) return '❄️';
+      if(txt.includes('meta')) return '💎';
+      if(txt.includes('lockpick')) return '🔓';
+      if(txt.includes('c4') || txt.includes('bomba')) return '💣';
+      if(txt.includes('chip') || txt.includes('celular')) return '📱';
+      if(txt.includes('arma') || txt.includes('ak')) return '🔫';
+      if(txt.includes('muni')) return '🎒';
+      if(txt.includes('colete')) return '🦺';
+      return '📦';
+    }
+
+    /* ===== FAVICON + TITLE ===== */
+    function atualizarIconeETitulo() {
+      const isCommand = logado ? logado.projeto === 'command' : loginProject === 'command';
+      document.title = isCommand ? "🌐 Command Center" : "🐶 Distrito 22";
+
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.getElementsByTagName('head')[0].appendChild(link); }
+      link.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${isCommand ? '🌐' : '🐶'}</text></svg>`;
+
+      if(!logado) {
+        document.getElementById('loginEmoji').innerText = isCommand ? '🌐' : '🐶';
+        document.getElementById('loginTitle').innerText = isCommand ? 'Command Center' : 'Distrito 22';
+      } else {
+        document.getElementById('sidebarEmoji').innerText = isCommand ? '🌐' : '🐶';
+        document.getElementById('sidebarProjectName').innerHTML = isCommand
+          ? 'Command<br><span style="font-size: 0.7rem; color: var(--muted); font-weight: 500;">Center</span>'
+          : 'Distrito 22<br><span style="font-size: 0.7rem; color: var(--muted); font-weight: 500;">Facção</span>';
+      }
+    }
+
+    /* ===== FEEDBACK ===== */
+    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
+    function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
+    function enviarReport() {
+      const msg = document.getElementById('msgReport').value.trim();
+      if(!msg) return showToast("A mensagem não pode estar vazia!", "error");
+      dbRef('feedbacks').push({ data: getHoje(), hora: getHora(), membro: logado.nome, msg: msg }).then(() => {
+        fecharModalReport(); showToast("Feedback enviado à liderança!", "success");
+      });
+    }
+
+    function listarFeedbacks() {
+      if(!isHighRank()) return;
+      dbRef('feedbacks').on('value', snap => {
+        const lista = document.getElementById('listaFeedbacks');
+        if(!lista) return;
+        lista.innerHTML = "";
+        snap.forEach(item => {
+          const f = item.val();
+          lista.innerHTML = `<tr>
+            <td>${f.data} ${f.hora}</td>
             <td><b>${f.membro}</b></td>
-            <td>${escapeHtml(f.msg)}</td>
-            <td class="only-high-rank" style="text-align:right">${btn}</td>
-          </tr>`;
+            <td>${f.msg}</td>
+            <td style="text-align:right">
+              <button class="btn btn-success" style="padding: 6px 12px; font-size:0.7rem;" onclick="dbRef('feedbacks').child('${item.key}').remove()">LIDO ✅</button>
+            </td>
+          </tr>` + lista.innerHTML;
+        });
       });
-    });
-  }
-  function marcarFeedbackLido(key){
-    if(!isHighRank()) return;
-    dbRef('feedbacks').child(key).remove().then(()=>showToast("Marcado como lido!", "success"));
-  }
-
-  /* ============================
-     LOGS (Distrito)
-  ============================ */
-  function registrarLog(categoria, detalhes){
-    if(!logado) return;
-    dbRef('logs').push({
-      data: getHoje(), hora: getHora(),
-      membro: logado.nome, acao: categoria, detalhes
-    });
-  }
-
-  function escutarLogs(){
-    if(!isAdminRole()) return;
-    dbRef('logs').limitToLast(400).on('value', snap => {
-      const tbody = document.getElementById('corpoLogs');
-      if(!tbody) return;
-      tbody.innerHTML = '';
-
-      let arr = [];
-      snap.forEach(x => arr.push(x.val()));
-      arr.reverse().forEach(c => {
-        let pillClass = 'pill-blue';
-        if(c.acao === 'EXCLUSÃO') pillClass = 'pill-bad';
-        else if(c.acao === 'CAIXA') pillClass = 'pill-ok';
-        else if(c.acao === 'LAVANDERIA') pillClass = 'pill-warn';
-
-        const red = c.acao === 'EXCLUSÃO' ? 'color:var(--danger); font-weight:950;' : '';
-        tbody.innerHTML += `
-          <tr>
-            <td style="white-space:nowrap;">${c.data} ${c.hora}</td>
-            <td><b>${escapeHtml(c.membro)}</b></td>
-            <td><span class="pill ${pillClass}">${escapeHtml(c.acao)}</span></td>
-            <td style="${red}">${escapeHtml(c.detalhes)}</td>
-          </tr>`;
-      });
-    });
-  }
-
-  function deletarRegistro(caminho, id, logMsg){
-    if(!isHighRank()) return showToast("Sem permissão.", "error");
-
-    if(confirm("Tem certeza que deseja excluir? Isso será registrado no LOG.")){
-      dbRef(caminho).child(id).remove().then(()=>{
-        registrarLog('EXCLUSÃO', logMsg);
-        showToast("Registro excluído e auditado!", "success");
-      }).catch(()=>showToast("Falha ao excluir.", "error"));
     }
-  }
 
-  /* ============================
-     LOGIN + PIN
-  ============================ */
-  function setLoginProject(proj){
-    loginProject = proj;
-    document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
-    (proj === 'command' ? document.getElementById('tabCommand') : document.getElementById('tabDistrito')).classList.add('active');
-    atualizarIconeETitulo();
-  }
+    /* ===== LOGIN ===== */
+    function setLoginProject(proj) {
+      loginProject = proj;
+      document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
+      if(proj === 'command') document.getElementById('tabCommand').classList.add('active');
+      else document.getElementById('tabDistrito').classList.add('active');
+      atualizarIconeETitulo();
+    }
 
-  async function autenticar(){
-    document.getElementById('errorMsg').style.display = 'none';
+    async function autenticar() {
+      const u = document.getElementById('lUser').value.toUpperCase().trim();
+      const p = document.getElementById('lPass').value;
 
-    const u = document.getElementById('lUser').value.toUpperCase().trim();
-    const p = document.getElementById('lPass').value;
+      dbRef('usuarios/' + encodeKey(u)).once('value', async snap => {
+        const user = snap.val();
+        if(user) {
+          let senhaBate = false;
+          if (user.senhaAlterada) {
+            const hashDigitado = await hashCriptografico(p);
+            if (hashDigitado === user.senha) senhaBate = true;
+          } else {
+            if (p === user.senha) senhaBate = true;
+          }
 
-    if(!u || !p) return showToast("Preencha usuário e senha/PIN.", "error");
+          if (senhaBate) {
+            if (user.senhaAlterada === false) {
+              window.usuarioPendente = { nome: u, role: user.role, projeto: loginProject };
+              document.getElementById('modalTrocaSenha').style.display = 'flex';
+              return;
+            }
+            logado = { nome: u, role: user.role, projeto: loginProject };
+            localStorage.setItem('usuarioLogado', JSON.stringify(logado));
+            location.reload();
+          } else {
+            document.getElementById('errorMsg').style.display = 'block';
+          }
+        } else {
+          document.getElementById('errorMsg').style.display = 'block';
+        }
+      });
+    }
 
-    dbRef('usuarios/' + encodeKey(u)).once('value', async snap => {
-      const user = snap.val();
-      if(!user) return document.getElementById('errorMsg').style.display = 'block';
+    async function salvarNovoPin() {
+      const p1 = document.getElementById('novoPin').value;
+      const p2 = document.getElementById('confirmaPin').value;
 
-      let senhaBate = false;
-      if(user.senhaAlterada){
-        const hashDigitado = await hashCriptografico(p);
-        if(hashDigitado === user.senha) senhaBate = true;
-      }else{
-        if(p === user.senha) senhaBate = true;
-      }
+      if (p1 !== p2) return showToast("Os PINs não coincidem!", "error");
+      if (!/^\d{6,}$/.test(p1)) return showToast("Mínimo 6 NÚMEROS!", "error");
+      if (/^(\d)\1+$/.test(p1)) return showToast("Não use números repetidos.", "error");
+      const seqUp = "01234567890123456789"; const seqDown = "98765432109876543210";
+      if (seqUp.includes(p1) || seqDown.includes(p1)) return showToast("Não use sequências.", "error");
 
-      if(!senhaBate) return document.getElementById('errorMsg').style.display = 'block';
+      const hashFinal = await hashCriptografico(p1);
+      const tempUser = window.usuarioPendente;
+      const rootPath = tempUser.projeto === 'command'
+        ? rootDatabase.ref('usuarios/' + encodeKey(tempUser.nome))
+        : rootDatabase.ref('projetos/' + tempUser.projeto + '/usuarios/' + encodeKey(tempUser.nome));
 
-      if(user.senhaAlterada === false){
-        window.usuarioPendente = { nome: u, role: user.role, projeto: loginProject };
-        document.getElementById('modalTrocaSenha').style.display = 'flex';
-        return;
-      }
-
-      logado = { nome: u, role: user.role, projeto: loginProject };
-      localStorage.setItem('usuarioLogado', JSON.stringify(logado));
-      location.reload();
-    });
-  }
-
-  async function salvarNovoPin(){
-    const p1 = document.getElementById('novoPin').value;
-    const p2 = document.getElementById('confirmaPin').value;
-
-    if(p1 !== p2) return showToast("Os PINs não coincidem!", "error");
-    if(!/^\d{6,}$/.test(p1)) return showToast("Mínimo 6 NÚMEROS!", "error");
-    if(/^(\d)\1+$/.test(p1)) return showToast("Não use números repetidos.", "error");
-
-    const seqUp = "01234567890123456789";
-    const seqDown = "98765432109876543210";
-    if(seqUp.includes(p1) || seqDown.includes(p1)) return showToast("Não use sequências.", "error");
-
-    const hashFinal = await hashCriptografico(p1);
-    const tempUser = window.usuarioPendente;
-
-    const rootPath = (tempUser.projeto === 'command')
-      ? rootDatabase.ref('usuarios/' + encodeKey(tempUser.nome))
-      : rootDatabase.ref('projetos/' + tempUser.projeto + '/usuarios/' + encodeKey(tempUser.nome));
-
-    rootPath.update({ senha: hashFinal, senhaAlterada: true }).then(()=>{
-      logado = tempUser;
-      localStorage.setItem('usuarioLogado', JSON.stringify(logado));
-      location.reload();
-    }).catch(()=>showToast("Falha ao salvar PIN.", "error"));
-  }
-
-  /* ============================
-     COMMAND - SHIFT START + KPIs EDIT
-  ============================ */
-  function abrirModalTurno(){ document.getElementById('modalStartTurn').style.display = 'flex'; }
-
-  function confirmarInicioTurno(){
-    const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
-    const ea = parseInt(document.getElementById('startEmAndamento').value) || 0;
-    const hoje = getHoje();
-
-    // trava: se já existe, não sobrescreve
-    const ref = dbRef('dailyStats/' + hoje);
-    ref.transaction((cur) => {
-      if(cur) return; // aborta
-      return { ni, ea, totalInicial: ni + ea, createdBy: logado.nome, createdAt: nowServerMs() };
-    }, (err, committed) => {
-      if(err) return showToast("Erro ao abrir o dia.", "error");
-      if(!committed) return showToast("O dia já foi aberto por outra pessoa.", "alert");
-
-      dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true, data: hoje }).then(()=>{
+      rootPath.update({ senha: hashFinal, senhaAlterada: true }).then(() => {
+        logado = tempUser;
+        localStorage.setItem('usuarioLogado', JSON.stringify(logado));
         location.reload();
       });
-    });
-  }
+    }
 
-  function verificarStatusTurno(){
-    const hoje = getHoje();
+    window.onload = function() {
+      atualizarIconeETitulo();
+      const salvo = localStorage.getItem('usuarioLogado');
+      if (salvo) {
+        logado = JSON.parse(salvo);
+        document.getElementById('telaLogin').style.display = 'none';
 
-    dbRef('dailyStats/' + hoje).on('value', snap => {
-      const stats = snap.val();
-      dbRef('statusTurno/' + encodeKey(logado.nome)).once('value', userSnap => {
-        if(stats){
-          document.getElementById('kpiNi').innerText = stats.ni || 0;
-          document.getElementById('kpiEa').innerText = stats.ea || 0;
-          pendenciaTotal = Number(stats.totalInicial || (Number(stats.ni||0)+Number(stats.ea||0)));
+        atualizarIconeETitulo();
+        document.body.classList.add(`proj-${logado.projeto}`);
+        if(isHighRank()) document.body.classList.add(`is-high-rank`);
+        if(isAdminRole()) document.body.classList.add(`is-admin`);
 
-          // garante "aberto" para o usuário que entrou depois
-          if(!userSnap.val() || !userSnap.val().aberto){
-            dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto:true, data: hoje });
+        const t = localStorage.getItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme');
+        if(t) document.body.setAttribute('data-theme', t);
+        else if(logado.projeto === 'distrito22') document.body.setAttribute('data-theme', 'distrito-dark');
+
+        document.getElementById('displayUser').innerText = logado.nome;
+        document.getElementById('displayRole').innerText = logado.role;
+
+        if(logado.projeto === 'command') {
+          document.getElementById('navCommandHome').classList.add('active');
+          switchView('dashCommand');
+          verificarStatusTurno();
+          escutarBancoCommand();
+          calcularMetaPessoal();
+        } else {
+          document.getElementById('navDashRP').classList.add('active');
+          switchView('dashDistrito');
+          carregarItensDinamicos();
+          escutarCaixaDistrito();
+          escutarDebitos();
+          escutarEstoqueGlobal();
+          iniciarLoopLavanderia();
+          if(isAdminRole()) escutarLogs();
+        }
+      }
+    };
+
+    function switchView(v, event) {
+      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
+      if (alvo) alvo.classList.add('active');
+      if (event && event.currentTarget) event.currentTarget.classList.add('active');
+      if(v === 'admin') { listarUsuarios(); listarFeedbacks(); }
+    }
+
+    function setTheme(t) {
+      localStorage.setItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme', t);
+      document.body.setAttribute('data-theme', t);
+    }
+    function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
+
+    function showToast(msg, type = 'success') {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.style.borderLeft = `4px solid ${type === 'success' ? 'var(--brand2)' : (type === 'alert' ? 'var(--warn)' : 'var(--danger)')}`;
+      t.innerHTML = `<span>${type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌')}</span> ${msg}`;
+      c.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+    }
+
+    /* =================================================================================
+       DISTRITO 22 - ITENS DINÂMICOS
+    ================================================================================= */
+    function carregarItensDinamicos() {
+      dbRef('config/itens').on('value', snap => {
+        listaDeItensDinamicos = [];
+        const menuSidebar = document.getElementById('menuItensDinamico');
+        const selects = document.querySelectorAll('.dynamic-item-select');
+        const listaTabela = document.getElementById('corpoListaItens');
+
+        if(menuSidebar) menuSidebar.innerHTML = "";
+        selects.forEach(s => s.innerHTML = "<option value=''>Selecione o Item...</option>");
+        if(listaTabela) listaTabela.innerHTML = "";
+
+        let temItens = false;
+
+        snap.forEach(item => {
+          temItens = true;
+          const nomeItem = item.val().nome;
+          const icone = obterEmojiItem(nomeItem);
+          listaDeItensDinamicos.push(nomeItem);
+
+          if(menuSidebar) {
+            menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${nomeItem}', 'navItem_${item.key}')"><span style="font-size:1.1rem">${icone}</span> ${nomeItem}</div>`;
+          }
+          selects.forEach(s => s.innerHTML += `<option value="${nomeItem}">${nomeItem}</option>`);
+
+          if(listaTabela) {
+            listaTabela.innerHTML += `<tr>
+              <td><span style="font-size:1.2rem">${icone}</span> <b>${nomeItem}</b></td>
+              <td style="text-align:right">
+                <button class="btn btn-danger" onclick="deletarRegistro('config/itens', '${item.key}', 'Deletou o item ${nomeItem} do sistema')">🗑 Excluir</button>
+              </td>
+            </tr>`;
+          }
+        });
+
+        if(!temItens && isHighRank()) {
+          const defaults = ["Maconha", "Cocaina", "Metanfetamina", "Lockpick", "C4", "Chip Celular"];
+          defaults.forEach(d => dbRef('config/itens').push({ nome: d }));
+        }
+      });
+    }
+
+    function salvarNovoItem() {
+      const n = document.getElementById('novoItemNome').value.trim();
+      if(!n) return;
+      dbRef('config/itens').push({ nome: n }).then(() => {
+        document.getElementById('novoItemNome').value = "";
+        registrarLog('SISTEMA', `Cadastrou novo item no baú: ${n}`);
+        showToast("Item cadastrado!");
+      });
+    }
+
+    /* =================================================================================
+       DISTRITO 22 - DÉBITOS
+    ================================================================================= */
+    function salvarDebito() {
+      const item = document.getElementById('itemDebito').value;
+      const val = parseFloat(document.getElementById('valorDebito').value);
+      const det = document.getElementById('detalheDebito').value.trim();
+
+      if(!item || !val || val <= 0) return alert("Selecione o item e insira um valor válido!");
+      dbRef('debitos').push({ data: getHoje(), hora: getHora(), membro: logado.nome, item: item, valor: val, detalhe: det, status: 'Pendente' }).then(() => {
+        registrarLog('DÉBITO', `Solicitou reembolso de $${val} referente a ${item}`);
+        document.getElementById('valorDebito').value = ""; document.getElementById('detalheDebito').value = "";
+        showToast("Reembolso solicitado!", "success");
+      });
+    }
+
+    function escutarDebitos() {
+      dbRef('debitos').on('value', snap => {
+        const tbody = document.getElementById('corpoDebitos');
+        if(!tbody) return;
+        tbody.innerHTML = "";
+        let totalDevedor = 0;
+
+        snap.forEach(item => {
+          const c = item.val();
+          if(!isHighRank() && c.membro !== logado.nome) return;
+          if(c.status === 'Pendente') totalDevedor += c.valor;
+
+          let corPill = c.status === 'Pendente' ? 'pill-warn' : 'pill-ok';
+          let acoes = "---";
+          if(isHighRank() && c.status === 'Pendente') {
+            acoes = `<button class="btn btn-success" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="pagarDebito('${item.key}', ${c.valor}, '${c.membro}', '${c.item}')">PAGAR</button>`;
+          } else if (isHighRank() && c.status === 'Pago') {
+            acoes = `<button class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="deletarRegistro('debitos', '${item.key}', 'Excluiu débito pago de ${c.membro} ($${c.valor})')">🗑</button>`;
           }
 
-          // libera registro
-          document.getElementById('cardRegistro').style.pointerEvents = 'auto';
-          document.getElementById('overlay').style.display = 'none';
-          document.getElementById('modalStartTurn').style.display = 'none';
+          tbody.innerHTML = `<tr>
+            <td>${c.data}</td>
+            <td><b>${c.membro}</b></td>
+            <td><span style="font-size:1.1rem">${obterEmojiItem(c.item)}</span> ${c.item} <br><span style="color:var(--muted); font-size:0.75rem;">${c.detalhe || ""}</span></td>
+            <td style="font-weight:800; font-size:1rem;">$${c.valor}</td>
+            <td><span class="pill ${corPill}">${c.status}</span></td>
+            <td class="only-high-rank" style="text-align:right">${acoes}</td>
+          </tr>` + tbody.innerHTML;
+        });
 
-          // admin pode editar KPIs
-          if(isAdminRole()){
-            document.getElementById('kpiNi').classList.add('editable');
-            document.getElementById('kpiEa').classList.add('editable');
-          }
-        }
+        if(document.getElementById('kpiTotalDevedor')) document.getElementById('kpiTotalDevedor').innerText = formatarDinheiro(totalDevedor);
+        if(document.getElementById('dashKpiDivida')) document.getElementById('dashKpiDivida').innerText = formatarDinheiro(totalDevedor);
       });
-    });
-  }
+    }
 
-  function corrigirKpi(tipo){
-    if(!isAdminRole()) return;
-    const el = (tipo === 'ni') ? document.getElementById('kpiNi') : document.getElementById('kpiEa');
-    const atual = parseInt(el.innerText) || 0;
-    const novo = prompt(`Novo valor para ${tipo.toUpperCase()} (hoje):`, String(atual));
-    if(novo === null) return;
-    const v = Math.max(0, parseInt(novo) || 0);
-    const hoje = getHoje();
+    function pagarDebito(id, valor, membro, itemDesc) {
+      if(confirm(`Confirmar pagamento de $${valor} para ${membro}?\n\nIsto será DEBITADO do Cofre da Família.`)) {
+        dbRef('debitos').child(id).update({ status: 'Pago', pagoPor: logado.nome }).then(() => {
+          dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Saque', valor: valor, desc: `Reembolso de ${itemDesc} para ${membro}` });
+          registrarLog('DÉBITO', `Pagou $${valor} para ${membro}`);
+          showToast("Dívida paga e Caixa atualizado!", "success");
+        });
+      }
+    }
 
-    dbRef('dailyStats/' + hoje).transaction(cur => {
-      if(!cur) return cur;
-      cur[tipo] = v;
-      cur.totalInicial = Number(cur.ni||0) + Number(cur.ea||0);
-      cur.editedBy = logado.nome;
-      cur.editedAt = nowServerMs();
-      return cur;
-    }, (err, committed) => {
-      if(err || !committed) return showToast("Falha ao atualizar KPI.", "error");
-      showToast("KPI atualizado!", "success");
-    });
-  }
+    /* =================================================================================
+       DISTRITO 22 - CAIXA
+    ================================================================================= */
+    function salvarCaixaDistrito() {
+      const tipo = document.getElementById('tipoOperacaoDistrito').value;
+      const val = parseFloat(document.getElementById('valorDistrito').value);
+      const desc = document.getElementById('motivoDistrito').value.trim();
+      if(!val || !desc || val <= 0) return alert("Preencha valor e motivo!");
 
-  /* ============================
-     COMMAND - META INTELIGENTE
-     média de FECHADOS por dia (Resolvido/Cancelado/Reaberto)
-  ============================ */
-  function calcularMetaPessoal(){
-    dbRef('chamados').once('value', snap => {
-      const dias = new Set();
-      let fechados = 0;
+      const saldoCaixaRef = dbRef('saldos_protegidos/caixa');
+      saldoCaixaRef.transaction((saldoAtual) => {
+        let s = saldoAtual || 0;
+        if (tipo === 'Saque' && s < val) return undefined;
+        return tipo === 'Deposito' ? s + val : s - val;
+      }, (error, committed) => {
+        if (error) return showToast("Erro no servidor.", "error");
+        if (!committed) return alert("Saldo insuficiente! Transação bloqueada.");
 
-      snap.forEach(i => {
-        const c = i.val();
-        if(c && c.analista === logado.nome && ['Resolvido','Cancelado','Reaberto'].includes(c.status)){
-          if(c.data) dias.add(c.data);
-          fechados++;
-        }
+        dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: tipo, valor: val, desc: desc }).then(() => {
+          registrarLog('CAIXA', `Realizou ${tipo} de $${val} (${desc})`);
+          document.getElementById('valorDistrito').value = "";
+          document.getElementById('motivoDistrito').value = "";
+          showToast("Transação salva com segurança!", "success");
+        });
       });
-
-      const meta = dias.size > 0 ? Math.ceil(fechados / dias.size) : 0;
-      document.getElementById('kpiMeta').innerText = meta ? meta : "--";
-    });
-  }
-
-  /* ============================
-     COMMAND - TASKS UI
-  ============================ */
-  function toggleTaskInput(){
-    const t = document.getElementById('temTask').value === 'sim';
-    document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
-    document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
-    if(!t){
-      document.getElementById('taskQtd').value = '';
-      document.getElementById('containerTasksDinamicas').innerHTML = '';
-    }
-  }
-  function gerarCamposTask(){
-    const qtd = Math.max(0, parseInt(document.getElementById('taskQtd').value) || 0);
-    const c = document.getElementById('containerTasksDinamicas');
-    c.innerHTML = '';
-    for(let i=1; i<=qtd; i++){
-      const inp = document.createElement('input');
-      inp.type = 'text';
-      inp.className = 'input-task-dinamica';
-      inp.placeholder = `TASK ${i}`;
-      c.appendChild(inp);
-    }
-  }
-
-  /* ============================
-     COMMAND - REGRA REABERTO (move histórico)
-     - busca por ritm em dias antigos
-     - remove registros antigos
-     - prefixa descrição com [Ref. Data Antiga: YYYY-MM-DD]
-  ============================ */
-  async function migrarReabertoSePreciso(ritm){
-    const ref = dbRef('chamados').orderByChild('ritm').equalTo(ritm);
-    const snap = await ref.once('value');
-
-    let datasAntigas = [];
-    let keysParaRemover = [];
-
-    snap.forEach(item => {
-      const c = item.val();
-      if(c && c.data && c.data !== getHoje()){
-        datasAntigas.push(c.data);
-        keysParaRemover.push(item.key);
-      }
-    });
-
-    // remove TODOS os antigos encontrados (ritm só pode existir em um dia)
-    if(keysParaRemover.length){
-      const updates = {};
-      keysParaRemover.forEach(k => updates[k] = null);
-      await dbRef('chamados').update(updates);
     }
 
-    // retorna data mais antiga como referência (se houver)
-    if(datasAntigas.length){
-      datasAntigas.sort(); // YYYY-MM-DD ordena correto
-      return datasAntigas[0];
-    }
-    return null;
-  }
+    function escutarCaixaDistrito() {
+      dbRef('caixa').on('value', snap => {
+        const tbody = document.getElementById('corpoCaixaDistrito');
+        if(tbody) tbody.innerHTML = "";
+        let saldoTotal = 0;
 
-  async function salvarCommand(){
-    const r = document.getElementById('ritm').value.toUpperCase().trim();
-    const st = document.getElementById('statusRitm').value;
-    const d0 = document.getElementById('descResumida').value.trim();
-    const l = document.getElementById('linkRitm').value.trim() || "---";
+        snap.forEach(item => {
+          const c = item.val();
+          if(c.tipo === 'Deposito' || c.tipo === 'Lavagem') saldoTotal += c.valor;
+          if(c.tipo === 'Saque') saldoTotal -= c.valor;
 
-    if(!r || !d0) return showToast("Preencha RITM e descrição.", "error");
-
-    let tArr = [];
-    document.querySelectorAll('.input-task-dinamica').forEach(i => {
-      const v = (i.value || '').toUpperCase().trim();
-      if(v) tArr.push(v);
-    });
-
-    let descFinal = d0;
-
-    try{
-      if(st === 'Reaberto'){
-        const dataRef = await migrarReabertoSePreciso(r);
-        if(dataRef){
-          descFinal = `[Ref. Data Antiga: ${dataRef}] ` + descFinal;
-          showToast("Reaberto: histórico anterior movido para hoje.", "alert");
-        }
-      }
-
-      await dbRef('chamados').push({
-        ritm: r,
-        status: st,
-        desc: descFinal,
-        link: l,
-        data: getHoje(),
-        hora: getHora(),
-        analista: logado.nome,
-        taskQtd: tArr.length,
-        tasks: tArr.length ? tArr.join(", ") : "Não"
-      });
-
-      document.getElementById('ritm').value = '';
-      document.getElementById('descResumida').value = '';
-      document.getElementById('linkRitm').value = '';
-      document.getElementById('temTask').value = 'nao';
-      toggleTaskInput();
-
-      showToast("Salvo no banco!", "success");
-    }catch(e){
-      console.error(e);
-      showToast("Falha ao salvar.", "error");
-    }
-  }
-
-  /* ============================
-     COMMAND - LISTEN + KPIs + PRIVACY BAR CHART
-  ============================ */
-  let chartInstance = null;
-
-  function atualizarGrafico(dados){
-    const canvas = document.getElementById('meuGraficoBarras');
-    if(!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if(chartInstance) chartInstance.destroy();
-
-    chartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: Object.keys(dados),
-        datasets: [{ data: Object.values(dados), borderRadius: 8 }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display:false } },
-        scales: {
-          y: { beginAtZero:true, grid: { color:'rgba(255,255,255,0.05)'} },
-          x: { grid: { display:false } }
-        }
-      }
-    });
-  }
-
-  function escutarBancoCommand(){
-    const hoje = getHoje();
-    const hint = document.getElementById('chartHint');
-    if(hint){
-      hint.innerHTML = isAdminRole()
-        ? 'Admin: você vê a produção de <b>todos</b>.'
-        : 'Privacidade: você vê apenas a <b>sua</b> barra.';
-    }
-
-    dbRef('chamados').on('value', snap => {
-      const tb = document.getElementById('corpoTabela');
-      if(tb) tb.innerHTML = "";
-
-      let fechadosDoUsuario = 0;
-      let tasksDoUsuario = 0;
-      let fechadosEquipe = 0;
-
-      const contEquipe = {}; // analista -> fechados de HOJE
-      const statusCountUsuario = { Resolvido:0, Cancelado:0, Reaberto:0 };
-
-      snap.forEach(item => {
-        const c = item.val();
-        if(!c || c.data !== hoje) return;
-
-        const fechou = ['Resolvido','Cancelado','Reaberto'].includes(c.status);
-        if(fechou){
-          contEquipe[c.analista] = (contEquipe[c.analista] || 0) + 1;
-          fechadosEquipe++;
-        }
-
-        // tabela: usuário vê apenas seus itens; admin vê todos
-        if(isAdminRole() || c.analista === logado.nome){
-          const pill = statusToPill(c.status);
-          const linkHtml = (c.link && c.link !== '---')
-            ? `<a href="${escapeAttr(c.link)}" target="_blank" class="pill pill-blue" style="text-decoration:none;">🔗 Abrir</a>`
+          const cor = (c.tipo === 'Saque') ? 'pill-bad' : 'pill-ok';
+          const sinal = (c.tipo === 'Saque') ? '-' : '+';
+          const deleteBtn = logado.role === 'admin'
+            ? `<button class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="deletarRegistro('caixa', '${item.key}', 'Excluiu registro de caixa: ${c.tipo} de $${c.valor}')">🗑</button>`
             : '---';
 
-          if(tb){
-            tb.innerHTML = `
-              <tr>
-                <td style="white-space:nowrap;">${escapeHtml(c.hora || '')}</td>
-                <td><b>${escapeHtml(c.ritm)}</b></td>
-                <td><span class="pill ${pill}">${escapeHtml(c.status)}</span></td>
-                <td>${escapeHtml(c.tasks || 'Não')}</td>
-                <td>${escapeHtml(c.desc || '')}</td>
-                <td>${linkHtml}</td>
-              </tr>` + tb.innerHTML;
-          }
-        }
+          if(tbody) tbody.innerHTML = `<tr>
+            <td>${c.data} ${c.hora}</td>
+            <td><b>${c.membro}</b></td>
+            <td><span class="pill ${cor}">${c.tipo}</span></td>
+            <td style="font-weight:800; font-size:1rem;">${sinal} $${c.valor}</td>
+            <td>${c.desc}</td>
+            <td class="only-high-rank" style="text-align:right">${deleteBtn}</td>
+          </tr>` + tbody.innerHTML;
+        });
 
-        // KPIs do usuário
-        if(c.analista === logado.nome){
-          if(fechou){
-            fechadosDoUsuario++;
-            tasksDoUsuario += Number(c.taskQtd || 0);
-            if(statusCountUsuario[c.status] !== undefined) statusCountUsuario[c.status]++;
-          }
-        }
+        dbRef('saldos_protegidos/caixa').set(saldoTotal);
+
+        if(document.getElementById('kpiSaldoDistrito')) document.getElementById('kpiSaldoDistrito').innerText = formatarDinheiro(saldoTotal);
+        if(document.getElementById('dashKpiSaldo')) document.getElementById('dashKpiSaldo').innerText = formatarDinheiro(saldoTotal);
       });
-
-      document.getElementById('kpiRitms').innerText = fechadosDoUsuario;
-      document.getElementById('kpiTasks').innerText = tasksDoUsuario;
-
-      if(pendenciaTotal > 0){
-        const eff = (fechadosEquipe / pendenciaTotal) * 100;
-        document.getElementById('kpiMedia').innerText = eff.toFixed(1) + "%";
-      }else{
-        document.getElementById('kpiMedia').innerText = "0%";
-      }
-
-      // PRIVACIDADE: analista normal só vê a própria barra
-      let dadosGrafico = contEquipe;
-      if(!isAdminRole()){
-        const mine = contEquipe[logado.nome] || 0;
-        dadosGrafico = { [logado.nome]: mine };
-      }
-      atualizarGrafico(dadosGrafico);
-
-      // guarda para o relatório de fim de turno
-      window.__endTurnStats = {
-        statusCountUsuario,
-        meta: parseInt(document.getElementById('kpiMeta').innerText) || 0,
-        fechadosDoUsuario
-      };
-    });
-  }
-
-  function statusToPill(st){
-    if(st === 'Resolvido') return 'pill-ok';
-    if(st === 'Cancelado') return 'pill-bad';
-    if(st === 'Reaberto') return 'pill-warn';
-    return 'pill-blue'; // Pendente/GA
-  }
-
-  /* ============================
-     COMMAND - END TURN (Doughnut + hit meta)
-  ============================ */
-  let chartEndTurnInstance = null;
-
-  function abrirRelatorioFimTurno(){
-    if(!window.__endTurnStats){
-      showToast("Carregando dados do dia...", "alert");
-      return;
     }
 
-    const { statusCountUsuario, meta, fechadosDoUsuario } = window.__endTurnStats;
-    const res = statusCountUsuario.Resolvido || 0;
-    const can = statusCountUsuario.Cancelado || 0;
-    const rea = statusCountUsuario.Reaberto || 0;
-
-    document.getElementById('endKpiRes').innerText = res;
-    document.getElementById('endKpiCan').innerText = can;
-    document.getElementById('endKpiRea').innerText = rea;
-    document.getElementById('endKpiMeta').innerText = meta || 0;
-
-    const bateu = meta > 0 ? (fechadosDoUsuario >= meta) : false;
-    document.getElementById('endKpiHit').innerText = meta > 0 ? (bateu ? "SIM ✅" : "NÃO ❌") : "—";
-    document.getElementById('endKpiHit').style.color = meta > 0 ? (bateu ? 'var(--brand2)' : 'var(--danger)') : 'var(--muted)';
-
-    document.getElementById('endTurnSub').innerHTML = `
-      <span class="pill pill-blue">Hoje: ${getHoje()}</span>
-      <span class="pill ${bateu ? 'pill-ok' : 'pill-warn'}" style="margin-left:8px;">Fechados: ${fechadosDoUsuario}</span>
-      <div class="subnote" style="margin-top:10px;">
-        Relatório do <b>${escapeHtml(logado.nome)}</b>. Ao finalizar, a tela é limpa e o turno é encerrado (sessão local).
-      </div>
-    `;
-
-    const ctx = document.getElementById('chartEndTurn').getContext('2d');
-    if(chartEndTurnInstance) chartEndTurnInstance.destroy();
-    chartEndTurnInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Resolvidos', 'Cancelados', 'Reabertos'],
-        datasets: [{ data: [res, can, rea] }]
-      },
-      options: {
-        plugins: { legend: { position:'bottom' } },
-        cutout: '65%'
+    /* =================================================================================
+       DISTRITO 22 - ESTOQUE
+    ================================================================================= */
+    function abrirDroga(nome, navId) {
+      currentDroga = nome;
+      if(document.getElementById('lblDrogaTitle')) document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL - ${nome.toUpperCase()}`;
+      if(document.getElementById('txtDrogaNome')) document.getElementById('txtDrogaNome').innerText = nome;
+      if(document.getElementById('txtDrogaHist')) document.getElementById('txtDrogaHist').innerText = nome;
+      if(document.getElementById('qtdDroga')) document.getElementById('qtdDroga').value = "";
+      calcularLucroVenda();
+      switchView('droga');
+      if(navId) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const btn = document.getElementById(navId);
+        if(btn) btn.classList.add('active');
       }
-    });
+      atualizarTelaEstoqueDinamico();
+    }
 
-    document.getElementById('modalEndTurn').style.display = 'flex';
-  }
+    function calcularLucroVenda() {
+      const opDropdown = document.getElementById('opDroga');
+      if(!opDropdown) return;
+      const op = opDropdown.value;
+      const qtd = parseInt(document.getElementById('qtdDroga').value) || 0;
+      const divInfo = document.getElementById('lucroDrogaInfo');
+      const spanValor = document.getElementById('valLucroDroga');
 
-  function fecharEndTurn(){
-    document.getElementById('modalEndTurn').style.display = 'none';
-  }
+      if(op === 'Saida' && qtd > 0) {
+        divInfo.style.display = 'block';
+        spanValor.innerText = formatarDinheiro(qtd * 45);
+      } else {
+        divInfo.style.display = 'none';
+      }
+    }
 
-  function finalizarTurnoConfirmado(){
-    // encerra sessão local e "limpa tela"
-    // (sem apagar dados do dia no banco — mantém histórico)
-    localStorage.removeItem('usuarioLogado');
-    showToast("Turno finalizado. Saindo...", "success");
-    setTimeout(()=>location.reload(), 650);
-  }
+    function salvarEstoque() {
+      const op = document.getElementById('opDroga').value;
+      const qtd = parseInt(document.getElementById('qtdDroga').value);
+      if(!qtd || qtd <= 0) return showToast("Quantidade inválida!", "error");
 
-  /* ============================
-     COMMAND - CONSULTAS + EXPORT EXCEL
-  ============================ */
-  function consultarBanco(){
-    const di = document.getElementById('dataInicio').value;
-    const df = document.getElementById('dataFim').value;
+      const estoqueTravaRef = dbRef(`saldos_protegidos/estoque_${currentDroga}`);
+      estoqueTravaRef.transaction((atual) => {
+        let e = atual || 0;
+        if (op === 'Saida' && e < qtd) return undefined;
+        return op === 'Entrada' ? e + qtd : e - qtd;
+      }, (error, committed) => {
+        if (error) return showToast("Erro no servidor.", "error");
+        if (!committed) return alert(`Estoque insuficiente! O baú tem menos de ${qtd} unidades.`);
 
-    if(!di || !df) return showToast("Selecione início e fim.", "error");
-    if(di > df) return showToast("Data inicial maior que final.", "error");
-
-    dbRef('chamados').once('value', snap => {
-      const tbody = document.getElementById('corpoConsulta');
-      tbody.innerHTML = '';
-      cacheConsulta = [];
-
-      snap.forEach(item => {
-        const c = item.val();
-        if(!c || !c.data) return;
-        if(c.data < di || c.data > df) return;
-
-        // Privacidade: analista normal só vê os próprios registros
-        if(!isAdminRole() && c.analista !== logado.nome) return;
-
-        cacheConsulta.push(c);
-
-        const pill = statusToPill(c.status);
-        const link = (c.link && c.link !== '---') ? c.link : '';
-        const linkCell = link ? `<a href="${escapeAttr(link)}" target="_blank" class="pill pill-blue" style="text-decoration:none;">Abrir</a>` : '---';
-
-        tbody.innerHTML += `
-          <tr>
-            <td>${escapeHtml(c.data)}</td>
-            <td>${escapeHtml(c.hora || '')}</td>
-            <td><b>${escapeHtml(c.analista || '')}</b></td>
-            <td>${escapeHtml(c.ritm || '')}</td>
-            <td><span class="pill ${pill}">${escapeHtml(c.status || '')}</span></td>
-            <td>${escapeHtml(c.tasks || 'Não')}</td>
-            <td>${escapeHtml(c.desc || '')}</td>
-            <td>${linkCell}</td>
-          </tr>`;
+        dbRef('estoque_drogas').push({ data: getHoje(), hora: getHora(), membro: logado.nome, item: currentDroga, operacao: op, qtd: qtd }).then(() => {
+          registrarLog('ESTOQUE', `Realizou ${op} de ${qtd}x ${currentDroga}`);
+          document.getElementById('qtdDroga').value = "";
+          calcularLucroVenda();
+          showToast("Baú atualizado!", "success");
+        });
       });
+    }
 
-      document.getElementById('consultCount').innerText = `${cacheConsulta.length} itens`;
-      showToast("Consulta concluída!", "success");
-    });
-  }
+    function escutarEstoqueGlobal() {
+      dbRef('estoque_drogas').on('value', snap => {
+        estoqueGlobalCalculado = {};
+        listaDeItensDinamicos.forEach(i => estoqueGlobalCalculado[i] = 0);
+        const historicoGeral = [];
 
-  function exportarConsultaExcel(){
-    if(!cacheConsulta || !cacheConsulta.length) return showToast("Nada para exportar. Faça uma consulta.", "alert");
+        snap.forEach(item => {
+          const c = item.val();
+          if(!estoqueGlobalCalculado[c.item]) estoqueGlobalCalculado[c.item] = 0;
+          if (c.operacao === 'Entrada') estoqueGlobalCalculado[c.item] += c.qtd;
+          else estoqueGlobalCalculado[c.item] -= c.qtd;
+          historicoGeral.push({ key: item.key, ...c });
+        });
 
-    // Planilha: colunas estáveis
-    const rows = cacheConsulta.map(c => ({
-      Data: c.data || '',
-      Hora: c.hora || '',
-      Analista: c.analista || '',
-      RITM: c.ritm || '',
-      Status: c.status || '',
-      TasksQtd: Number(c.taskQtd || 0),
-      Tasks: c.tasks || '',
-      Descricao: c.desc || '',
-      Link: (c.link && c.link !== '---') ? c.link : ''
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Historico");
-
-    const fname = `Command_Historico_${getHoje()}.xlsx`;
-    XLSX.writeFile(wb, fname);
-    showToast("Excel gerado!", "success");
-  }
-
-  /* ============================
-     DISTRITO - EMOJI ITEM
-  ============================ */
-  function obterEmojiItem(nomeItem){
-    const txt = String(nomeItem || '').toLowerCase();
-    if(txt.includes('maconha')||txt.includes('erva')) return '🌿';
-    if(txt.includes('coca')||txt.includes('pó')||txt.includes('po')) return '❄️';
-    if(txt.includes('meta')) return '💎';
-    if(txt.includes('lockpick')) return '🔓';
-    if(txt.includes('c4') || txt.includes('bomba')) return '💣';
-    if(txt.includes('chip') || txt.includes('celular')) return '📱';
-    if(txt.includes('arma') || txt.includes('ak') || txt.includes('pistola')) return '🔫';
-    if(txt.includes('muni')) return '🎒';
-    if(txt.includes('colete')) return '🦺';
-    return '📦';
-  }
-
-  /* ============================
-     DISTRITO - ITENS DINÂMICOS + SALDOS PROTEGIDOS
-     - cria botões na sidebar
-     - mantém saldo protegido por item em /saldos_protegidos/estoque_<nome>
-     - dashboard lê esses saldos (não recalcula e não dá set em loop)
-  ============================ */
-  function carregarItensDinamicos(){
-    dbRef('config/itens').on('value', snap => {
-      listaDeItensDinamicos = [];
-
-      const menuSidebar = document.getElementById('menuItensDinamico');
-      const selects = document.querySelectorAll('.dynamic-item-select');
-      const listaTabela = document.getElementById('corpoListaItens');
-
-      if(menuSidebar) menuSidebar.innerHTML = '';
-      selects.forEach(s => s.innerHTML = "<option value=''>Selecione o Item...</option>");
-      if(listaTabela) listaTabela.innerHTML = '';
-
-      let temItens = false;
-      snap.forEach(item => {
-        temItens = true;
-        const nomeItem = item.val().nome;
-        const icone = obterEmojiItem(nomeItem);
-        listaDeItensDinamicos.push(nomeItem);
-
-        if(menuSidebar){
-          menuSidebar.innerHTML += `
-            <div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${escapeAttr(nomeItem)}','navItem_${item.key}')">
-              <span style="font-size:1.1rem">${icone}</span> ${escapeHtml(nomeItem)}
-            </div>`;
+        for (const [nome, qtd] of Object.entries(estoqueGlobalCalculado)) {
+          dbRef(`saldos_protegidos/estoque_${nome}`).set(qtd);
         }
-        selects.forEach(s => s.innerHTML += `<option value="${escapeAttr(nomeItem)}">${escapeHtml(nomeItem)}</option>`);
 
-        if(listaTabela){
-          const del = isHighRank()
-            ? `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarRegistro('config/itens','${item.key}','Deletou o item ${nomeItem} do sistema')">🗑 Excluir</button>`
-            : `<span class="muted">---</span>`;
-
-          listaTabela.innerHTML += `
-            <tr>
-              <td><span style="font-size:1.2rem">${icone}</span> <b style="margin-left:8px;">${escapeHtml(nomeItem)}</b></td>
-              <td class="only-high-rank" style="text-align:right">${del}</td>
+        const dashTable = document.getElementById('dashCorpoEstoque');
+        if(dashTable) {
+          dashTable.innerHTML = "";
+          for (const [nome, qtd] of Object.entries(estoqueGlobalCalculado)) {
+            dashTable.innerHTML += `<tr>
+              <td><span style="font-size:1.2rem">${obterEmojiItem(nome)}</span> <b style="margin-left:8px;">${nome}</b></td>
+              <td style="font-weight:800; color:var(--brand); font-size:1.1rem;">${qtd}</td>
             </tr>`;
+          }
         }
 
-        // garante listener de saldo do item (pra dashboard e view do item)
-        escutarSaldoItem(nomeItem);
+        window.historicoEstoqueGlobal = historicoGeral.reverse();
+        atualizarTelaEstoqueDinamico();
       });
+    }
 
-      // se não tem itens e é liderança, cria defaults
-      if(!temItens && isHighRank()){
-        ["Maconha","Cocaina","Metanfetamina","Lockpick","C4","Chip Celular"].forEach(d => dbRef('config/itens').push({ nome:d }));
-      }
+    function atualizarTelaEstoqueDinamico() {
+      if(!currentDroga) return;
+      if(document.getElementById('kpiDrogaTotal')) document.getElementById('kpiDrogaTotal').innerText = estoqueGlobalCalculado[currentDroga] || 0;
 
-      // renderiza dashboard após atualizar lista
-      renderizarDashboardEstoque();
-    });
-  }
+      const tbodyDroga = document.getElementById('corpoDroga');
+      if(!tbodyDroga || !window.historicoEstoqueGlobal) return;
 
-  const saldoItensCache = {}; // nomeItem -> qtd
-  function escutarSaldoItem(nomeItem){
-    const key = `estoque_${nomeItem}`;
-    // listener protegido
-    dbRef('saldos_protegidos/' + key).on('value', snap => {
-      saldoItensCache[nomeItem] = Number(snap.val() || 0);
-      if(currentDroga === nomeItem){
-        document.getElementById('kpiDrogaTotal').innerText = saldoItensCache[nomeItem];
-      }
-      renderizarDashboardEstoque();
-    });
-  }
+      tbodyDroga.innerHTML = "";
+      window.historicoEstoqueGlobal.forEach(c => {
+        if(c.item === currentDroga) {
+          const corOp = c.operacao === 'Entrada' ? 'pill-ok' : 'pill-bad';
+          const sinal = c.operacao === 'Entrada' ? '+' : '-';
+          const deleteBtn = isHighRank()
+            ? `<button class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="deletarRegistro('estoque_drogas', '${c.key}', 'Excluiu estoque: ${c.operacao} de ${c.qtd}x ${c.item}')">🗑</button>`
+            : '---';
 
-  function renderizarDashboardEstoque(){
-    const dashTable = document.getElementById('dashCorpoEstoque');
-    if(!dashTable) return;
-    dashTable.innerHTML = '';
-
-    listaDeItensDinamicos.forEach(nome => {
-      const qtd = Number(saldoItensCache[nome] || 0);
-      dashTable.innerHTML += `
-        <tr>
-          <td><span style="font-size:1.2rem">${obterEmojiItem(nome)}</span> <b style="margin-left:8px;">${escapeHtml(nome)}</b></td>
-          <td style="font-weight:950; color:var(--brand); font-size:1.1rem;">${qtd}</td>
-        </tr>`;
-    });
-  }
-
-  function salvarNovoItem(){
-    if(!isHighRank()) return showToast("Sem permissão.", "error");
-    const n = document.getElementById('novoItemNome').value.trim();
-    if(!n) return showToast("Digite o nome do item.", "error");
-
-    dbRef('config/itens').push({ nome: n }).then(()=>{
-      document.getElementById('novoItemNome').value = '';
-      registrarLog('SISTEMA', `Cadastrou novo item no baú: ${n}`);
-      showToast("Item cadastrado!", "success");
-    });
-  }
-
-  /* ============================
-     DISTRITO - CAIXA (saldo protegido por transaction)
-     - saldo em /saldos_protegidos/caixa
-     - extrato em /caixa
-     - NÃO recalcula saldo no listener
-  ============================ */
-  function escutarSaldoCaixa(){
-    dbRef('saldos_protegidos/caixa').on('value', snap => {
-      const s = Number(snap.val() || 0);
-      const txt = formatarDinheiro(s);
-      const a = document.getElementById('kpiSaldoDistrito');
-      const b = document.getElementById('dashKpiSaldo');
-      if(a) a.innerText = txt;
-      if(b) b.innerText = txt;
-    });
-  }
-
-  function salvarCaixaDistrito(){
-    const tipo = document.getElementById('tipoOperacaoDistrito').value;
-    const val = parseFloat(document.getElementById('valorDistrito').value);
-    const desc = document.getElementById('motivoDistrito').value.trim();
-
-    if(!val || val <= 0 || !desc) return showToast("Preencha valor e motivo!", "error");
-
-    const saldoRef = dbRef('saldos_protegidos/caixa');
-
-    saldoRef.transaction((saldoAtual) => {
-      const s = Number(saldoAtual || 0);
-      if(tipo === 'Saque' && s < val) return; // abort
-      return (tipo === 'Deposito') ? (s + val) : (s - val);
-    }, (error, committed) => {
-      if(error) return showToast("Erro no servidor.", "error");
-      if(!committed) return showToast("Saldo insuficiente! Bloqueado.", "error");
-
-      dbRef('caixa').push({
-        data: getHoje(), hora: getHora(), membro: logado.nome,
-        tipo, valor: val, desc
-      }).then(()=>{
-        registrarLog('CAIXA', `Realizou ${tipo} de $${val} (${desc})`);
-        document.getElementById('valorDistrito').value = '';
-        document.getElementById('motivoDistrito').value = '';
-        showToast("Transação salva com segurança!", "success");
-      });
-    });
-  }
-
-  function escutarExtratoCaixa(){
-    dbRef('caixa').limitToLast(400).on('value', snap => {
-      const tbody = document.getElementById('corpoCaixaDistrito');
-      if(!tbody) return;
-      tbody.innerHTML = '';
-
-      let rows = [];
-      snap.forEach(item => rows.push({ key:item.key, ...item.val() }));
-      rows.reverse().forEach(c => {
-        const cor = (c.tipo === 'Saque') ? 'pill-bad' : 'pill-ok';
-        const sinal = (c.tipo === 'Saque') ? '-' : '+';
-
-        const deleteBtn = isHighRank()
-          ? `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarRegistro('caixa','${c.key}','Excluiu registro de caixa: ${c.tipo} de $${c.valor}')">🗑</button>`
-          : `<span class="muted">---</span>`;
-
-        tbody.innerHTML += `
-          <tr>
-            <td style="white-space:nowrap;">${escapeHtml(c.data || '')} ${escapeHtml(c.hora || '')}</td>
-            <td><b>${escapeHtml(c.membro || '')}</b></td>
-            <td><span class="pill ${cor}">${escapeHtml(c.tipo || '')}</span></td>
-            <td style="font-weight:950;">${sinal} $${Number(c.valor||0)}</td>
-            <td>${escapeHtml(c.desc || '')}</td>
+          tbodyDroga.innerHTML += `<tr>
+            <td>${c.data} ${c.hora}</td>
+            <td><b>${c.membro}</b></td>
+            <td><span class="pill ${corOp}">${c.operacao}</span></td>
+            <td style="font-weight:800; font-size:1rem;">${sinal} ${c.qtd}</td>
             <td class="only-high-rank" style="text-align:right">${deleteBtn}</td>
           </tr>`;
-      });
-    });
-  }
-
-  /* ============================
-     DISTRITO - DÉBITOS / REEMBOLSOS
-     - base vê só os próprios
-     - liderança vê todos e pode pagar
-     - pagar: quita débito e faz saque automático no caixa (transaction)
-  ============================ */
-  function salvarDebito(){
-    const item = document.getElementById('itemDebito').value;
-    const val = parseFloat(document.getElementById('valorDebito').value);
-    const det = document.getElementById('detalheDebito').value.trim();
-
-    if(!item || !val || val <= 0) return showToast("Selecione item e valor válido.", "error");
-
-    dbRef('debitos').push({
-      data: getHoje(), hora: getHora(),
-      membro: logado.nome, item, valor: val,
-      detalhe: det, status: 'Pendente'
-    }).then(()=>{
-      registrarLog('DÉBITO', `Solicitou reembolso de $${val} referente a ${item}`);
-      document.getElementById('valorDebito').value = '';
-      document.getElementById('detalheDebito').value = '';
-      showToast("Reembolso solicitado!", "success");
-    });
-  }
-
-  function escutarDebitos(){
-    dbRef('debitos').on('value', snap => {
-      const tbody = document.getElementById('corpoDebitos');
-      if(!tbody) return;
-      tbody.innerHTML = "";
-
-      let totalDevedor = 0;
-      let rows = [];
-      snap.forEach(item => rows.push({ key:item.key, ...item.val() }));
-      rows.reverse().forEach(c => {
-        // base só vê o próprio
-        if(!isHighRank() && c.membro !== logado.nome) return;
-
-        if(c.status === 'Pendente') totalDevedor += Number(c.valor || 0);
-
-        const corPill = c.status === 'Pendente' ? 'pill-warn' : 'pill-ok';
-        let acao = '---';
-
-        if(isHighRank() && c.status === 'Pendente'){
-          acao = `<button class="btn btn-success" style="padding:6px 10px; font-size:.72rem; width:auto;"
-                   onclick="pagarDebito('${c.key}', ${Number(c.valor||0)}, '${escapeAttr(c.membro)}', '${escapeAttr(c.item)}')">PAGAR</button>`;
-        }else if(isHighRank() && c.status === 'Pago'){
-          acao = `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;"
-                   onclick="deletarRegistro('debitos','${c.key}','Excluiu débito pago de ${c.membro} ($${c.valor})')">🗑</button>`;
         }
-
-        tbody.innerHTML += `
-          <tr>
-            <td style="white-space:nowrap;">${escapeHtml(c.data || '')}</td>
-            <td><b>${escapeHtml(c.membro || '')}</b></td>
-            <td><span style="font-size:1.1rem">${obterEmojiItem(c.item)}</span> ${escapeHtml(c.item || '')}
-                <br><span class="muted" style="font-size:.78rem;">${escapeHtml(c.detalhe || '')}</span></td>
-            <td style="font-weight:950; font-size:1rem;">$${Number(c.valor||0)}</td>
-            <td><span class="pill ${corPill}">${escapeHtml(c.status || '')}</span></td>
-            <td class="only-high-rank" style="text-align:right">${acao}</td>
-          </tr>`;
       });
-
-      const k1 = document.getElementById('kpiTotalDevedor');
-      const k2 = document.getElementById('dashKpiDivida');
-      if(k1) k1.innerText = formatarDinheiro(totalDevedor);
-      if(k2) k2.innerText = formatarDinheiro(totalDevedor);
-    });
-  }
-
-  function pagarDebito(id, valor, membro, itemDesc){
-    if(!isHighRank()) return showToast("Sem permissão.", "error");
-
-    if(!confirm(`Confirmar pagamento de $${valor} para ${membro}?\n\nIsso será debitado do cofre.`)) return;
-
-    const saldoRef = dbRef('saldos_protegidos/caixa');
-
-    // 1) trava saldo (transaction) para garantir que tem dinheiro
-    saldoRef.transaction((saldoAtual) => {
-      const s = Number(saldoAtual || 0);
-      if(s < valor) return; // abort
-      return s - valor;
-    }, (err, committed) => {
-      if(err) return showToast("Erro ao debitar cofre.", "error");
-      if(!committed) return showToast("Saldo insuficiente no cofre!", "error");
-
-      // 2) marca débito como pago + extrato
-      dbRef('debitos').child(id).update({ status:'Pago', pagoPor: logado.nome, pagoEm: nowServerMs() }).then(()=>{
-        dbRef('caixa').push({
-          data: getHoje(), hora: getHora(), membro: logado.nome,
-          tipo: 'Saque', valor: valor,
-          desc: `Reembolso de ${itemDesc} para ${membro}`
-        });
-        registrarLog('DÉBITO', `Pagou $${valor} para ${membro} (${itemDesc})`);
-        showToast("Dívida paga e cofre atualizado!", "success");
-      });
-    });
-  }
-
-  /* ============================
-     DISTRITO - ESTOQUE (trava por transaction)
-     - saldo protegido por item: /saldos_protegidos/estoque_<nome>
-     - histórico: /estoque_drogas
-     - regra: não pode sacar mais do que tem
-     - previsão retorno: Saída => qtd * 45 (verde)
-  ============================ */
-  function abrirDroga(nome, navId){
-    currentDroga = nome;
-
-    document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL - ${nome.toUpperCase()}`;
-    document.getElementById('txtDrogaNome').innerText = nome;
-    document.getElementById('txtDrogaHist').innerText = nome;
-    document.getElementById('qtdDroga').value = '';
-    calcularLucroVenda();
-
-    switchView('droga');
-
-    if(navId){
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      const btn = document.getElementById(navId);
-      if(btn) btn.classList.add('active');
     }
 
-    // atualiza KPI do item via cache protegido
-    document.getElementById('kpiDrogaTotal').innerText = Number(saldoItensCache[currentDroga] || 0);
-    renderHistoricoItem();
-  }
-
-  function calcularLucroVenda(){
-    const op = document.getElementById('opDroga').value;
-    const qtd = parseInt(document.getElementById('qtdDroga').value) || 0;
-    const divInfo = document.getElementById('lucroDrogaInfo');
-    const spanValor = document.getElementById('valLucroDroga');
-
-    if(op === 'Saida' && qtd > 0){
-      divInfo.style.display = 'block';
-      spanValor.innerText = formatarDinheiro(qtd * 45);
-    }else{
-      divInfo.style.display = 'none';
+    /* =================================================================================
+       DISTRITO 22 - LAVANDERIA (SERVER TIME)
+    ================================================================================= */
+    function calcularPrevisaoLavagem() {
+      let val = parseInt(document.getElementById('sujoLavar').value) || 0;
+      if(val > 50000) { val = 50000; document.getElementById('sujoLavar').value = 50000; }
+      const tempoMinutos = (val / 50000) * 25;
+      const limpo = val * 0.5;
+      document.getElementById('prevTempo').innerText = tempoMinutos.toFixed(1) + " min";
+      document.getElementById('prevLimpo').innerText = formatarDinheiro(limpo);
     }
-  }
 
-  function salvarEstoque(){
-    const op = document.getElementById('opDroga').value;
-    const qtd = parseInt(document.getElementById('qtdDroga').value);
+    function iniciarLavagem() {
+      const val = parseInt(document.getElementById('sujoLavar').value);
+      if(!val || val <= 0 || val > 50000) return alert("Valor inválido! Máx: 50.000");
 
-    if(!currentDroga) return showToast("Selecione um item.", "error");
-    if(!qtd || qtd <= 0) return showToast("Quantidade inválida!", "error");
+      const nowServer = Date.now() + serverTimeOffset;
+      const tempoMs = ((val / 50000) * 25) * 60 * 1000;
+      const endsAt = nowServer + tempoMs;
 
-    const saldoKey = `estoque_${currentDroga}`;
-    const saldoRef = dbRef('saldos_protegidos/' + saldoKey);
-
-    saldoRef.transaction((atual) => {
-      const e = Number(atual || 0);
-      if(op === 'Saida' && e < qtd) return; // abort
-      return (op === 'Entrada') ? (e + qtd) : (e - qtd);
-    }, (error, committed) => {
-      if(error) return showToast("Erro no servidor.", "error");
-      if(!committed) return showToast(`Estoque insuficiente no baú!`, "error");
-
-      dbRef('estoque_drogas').push({
-        data: getHoje(), hora: getHora(),
-        membro: logado.nome, item: currentDroga,
-        operacao: op, qtd
-      }).then(()=>{
-        registrarLog('ESTOQUE', `Realizou ${op} de ${qtd}x ${currentDroga}`);
-        document.getElementById('qtdDroga').value = '';
-        calcularLucroVenda();
-        showToast("Baú atualizado!", "success");
+      dbRef('lavanderia').push({ membro: logado.nome, sujo: val, limpo: val*0.5, endTime: endsAt, status: 'lavando', data: getHoje() }).then(() => {
+        registrarLog('LAVANDERIA', `Iniciou máquina com $${val} sujo`);
+        document.getElementById('sujoLavar').value = "";
+        calcularPrevisaoLavagem();
       });
-    });
-  }
-
-  // histórico por item (somente leitura)
-  function escutarHistoricoEstoque(){
-    dbRef('estoque_drogas').limitToLast(600).on('value', snap => {
-      const all = [];
-      snap.forEach(item => all.push({ key:item.key, ...item.val() }));
-      window.__histEstoque = all.reverse();
-      renderHistoricoItem();
-    });
-  }
-
-  function renderHistoricoItem(){
-    const tbody = document.getElementById('corpoDroga');
-    if(!tbody || !window.__histEstoque || !currentDroga) return;
-    tbody.innerHTML = '';
-
-    window.__histEstoque.forEach(c => {
-      if(c.item !== currentDroga) return;
-
-      const corOp = c.operacao === 'Entrada' ? 'pill-ok' : 'pill-bad';
-      const sinal = c.operacao === 'Entrada' ? '+' : '-';
-      const del = isHighRank()
-        ? `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;"
-             onclick="deletarRegistro('estoque_drogas','${c.key}','Excluiu estoque: ${c.operacao} de ${c.qtd}x ${c.item}')">🗑</button>`
-        : `<span class="muted">---</span>`;
-
-      tbody.innerHTML += `
-        <tr>
-          <td style="white-space:nowrap;">${escapeHtml(c.data || '')} ${escapeHtml(c.hora || '')}</td>
-          <td><b>${escapeHtml(c.membro || '')}</b></td>
-          <td><span class="pill ${corOp}">${escapeHtml(c.operacao || '')}</span></td>
-          <td style="font-weight:950;">${sinal} ${Number(c.qtd||0)}</td>
-          <td class="only-high-rank" style="text-align:right">${del}</td>
-        </tr>`;
-    });
-  }
-
-  /* ============================
-     DISTRITO - LAVANDERIA (serverTimeOffset + anti double collect)
-     - cria máquina com endTime (ms server)
-     - renderiza em tempo real
-     - coletar: transaction na máquina, só permite 1x e só após tempo
-     - ao coletar: credita no cofre protegido por transaction + lança no extrato
-  ============================ */
-  function calcularPrevisaoLavagem(){
-    let val = parseInt(document.getElementById('sujoLavar').value) || 0;
-    if(val > 50000){
-      val = 50000;
-      document.getElementById('sujoLavar').value = 50000;
     }
-    const tempoMinutos = (val / 50000) * 25;
-    const limpo = val * 0.5;
 
-    document.getElementById('prevTempo').innerText = tempoMinutos.toFixed(1) + " min";
-    document.getElementById('prevLimpo').innerText = formatarDinheiro(limpo);
-  }
+    function iniciarLoopLavanderia() {
+      if(loopLavanderia) clearInterval(loopLavanderia);
+      loopLavanderia = setInterval(renderizarMaquinas, 1000);
+    }
 
-  function iniciarLavagem(){
-    const val = parseInt(document.getElementById('sujoLavar').value);
-    if(!val || val <= 0 || val > 50000) return showToast("Valor inválido (máx 50.000).", "error");
+    function renderizarMaquinas() {
+      dbRef('lavanderia').once('value', snap => {
+        const containerLavanderia = document.getElementById('listaMaquinas');
+        if(containerLavanderia) containerLavanderia.innerHTML = "";
+        let maquinasAtivas = 0;
 
-    const tempoMs = ((val / 50000) * 25) * 60 * 1000;
-    const endsAt = nowServerMs() + tempoMs;
+        const nowServer = Date.now() + serverTimeOffset;
 
-    dbRef('lavanderia').push({
-      membro: logado.nome,
-      sujo: val,
-      limpo: val * 0.5,
-      endTime: endsAt,
-      status: 'lavando',
-      data: getHoje(),
-      createdAt: nowServerMs()
-    }).then(()=>{
-      registrarLog('LAVANDERIA', `Iniciou máquina com $${val} sujo`);
-      document.getElementById('sujoLavar').value = '';
-      calcularPrevisaoLavagem();
-      showToast("Lavanderia iniciada!", "success");
-    });
-  }
+        snap.forEach(item => {
+          const maq = item.val();
+          if(maq.status === 'lavando') {
+            maquinasAtivas++;
+            const restanteMs = maq.endTime - nowServer;
+            let cardHtml = "";
 
-  function iniciarLoopLavanderia(){
-    if(loopLavanderia) clearInterval(loopLavanderia);
-    loopLavanderia = setInterval(renderizarMaquinas, 1000);
-  }
-
-  function renderizarMaquinas(){
-    dbRef('lavanderia').once('value', snap => {
-      const container = document.getElementById('listaMaquinas');
-      if(container) container.innerHTML = '';
-
-      let maquinasAtivas = 0;
-      const nowS = nowServerMs();
-
-      snap.forEach(item => {
-        const maq = item.val();
-        if(!maq || maq.status !== 'lavando') return;
-
-        maquinasAtivas++;
-        const restanteMs = (Number(maq.endTime || 0)) - nowS;
-
-        if(restanteMs <= 0){
-          const cardHtml = `
-            <div class="machine-card" style="border-color:var(--brand2); background:rgba(34,197,94,.05);">
-              <div>
-                <div class="muted" style="font-weight:900; font-size:.8rem;">LAVAGEM DE ${escapeHtml(maq.membro)}</div>
-                <div style="font-weight:950; font-size:1.1rem; color:var(--brand2)">Pronto: ${formatarDinheiro(maq.limpo)}</div>
-              </div>
-              <button class="btn btn-success" style="width:auto;" onclick="coletarLavagem('${item.key}')">📥 COLETAR</button>
-            </div>`;
-          if(container) container.innerHTML += cardHtml;
-        }else{
-          const min = Math.floor(restanteMs / 60000);
-          const seg = Math.floor((restanteMs % 60000) / 1000);
-          const cardHtml = `
-            <div class="machine-card">
-              <div>
-                <div class="muted" style="font-weight:900; font-size:.8rem;">
-                  LAVAGEM DE ${escapeHtml(maq.membro)} <span style="color:var(--text)">(${formatarDinheiro(maq.sujo)} sujo)</span>
+            if(restanteMs <= 0) {
+              cardHtml = `<div class="machine-card" style="border-color: var(--brand2); background: rgba(34,197,94,0.05);">
+                <div>
+                  <div style="font-size:0.8rem; color:var(--muted); font-weight:700;">LAVAGEM DE ${maq.membro}</div>
+                  <div style="font-weight:800; font-size:1.2rem; color:var(--brand2)">Pronto: ${formatarDinheiro(maq.limpo)}</div>
                 </div>
-                <div style="font-weight:900; font-size:.92rem; color:var(--brand); margin-top:4px;">Aguardando...</div>
-              </div>
-              <div class="machine-timer">${min}m ${seg < 10 ? '0'+seg : seg}s</div>
-            </div>`;
-          if(container) container.innerHTML += cardHtml;
-        }
-      });
+                <button class="btn btn-success" style="width:auto;" onclick="coletarLavagem('${item.key}', ${maq.limpo})">📥 COLETAR</button>
+              </div>`;
+            } else {
+              const min = Math.floor(restanteMs / 60000);
+              const seg = Math.floor((restanteMs % 60000) / 1000);
+              cardHtml = `<div class="machine-card">
+                <div>
+                  <div style="font-size:0.8rem; color:var(--muted); font-weight:700;">LAVAGEM DE ${maq.membro} <span style="color:var(--text)">(${formatarDinheiro(maq.sujo)} Sujo)</span></div>
+                  <div style="font-weight:800; font-size:1rem; color:var(--brand); margin-top:4px;">Aguardando...</div>
+                </div>
+                <div class="machine-timer">${min}m ${seg < 10 ? '0'+seg : seg}s</div>
+              </div>`;
+            }
 
-      document.getElementById('dashKpiLavanderia').innerText = maquinasAtivas;
-      if(maquinasAtivas === 0 && container){
-        container.innerHTML = `<p class="subnote" style="padding:16px; border:1px dashed var(--border); border-radius:16px; text-align:center;">Nenhuma lavagem em andamento.</p>`;
-      }
-    });
-  }
-
-  function coletarLavagem(id){
-    const maqRef = dbRef('lavanderia').child(id);
-    const saldoRef = dbRef('saldos_protegidos/caixa');
-
-    const nowS = nowServerMs();
-
-    // 1) transaction na máquina: só permite coletar 1x, só após endTime
-    maqRef.transaction((cur) => {
-      if(!cur) return;
-      if(cur.status !== 'lavando') return; // já coletado ou cancelado
-      if(Number(cur.endTime || 0) > nowS) return; // ainda não
-      cur.status = 'coletado';
-      cur.collectedAt = nowS;
-      cur.collectedBy = logado.nome;
-      return cur;
-    }, (err, committed, snap) => {
-      if(err) return showToast("Erro ao coletar.", "error");
-      if(!committed) return showToast("Ainda não terminou ou já foi coletado.", "alert");
-
-      const maq = snap.val();
-      const valorLimpo = Number(maq.limpo || 0);
-
-      // 2) credita no cofre (transaction)
-      saldoRef.transaction((saldoAtual) => Number(saldoAtual || 0) + valorLimpo, (e2, ok2) => {
-        if(e2 || !ok2) return showToast("Falha ao creditar cofre.", "error");
-
-        // 3) extrato + log
-        dbRef('caixa').push({
-          data: getHoje(), hora: getHora(),
-          membro: logado.nome, tipo: 'Lavagem',
-          valor: valorLimpo,
-          desc: "Dinheiro lavado e coletado"
+            if(containerLavanderia) containerLavanderia.innerHTML += cardHtml;
+          }
         });
 
+        if(document.getElementById('dashKpiLavanderia')) document.getElementById('dashKpiLavanderia').innerText = maquinasAtivas;
+      });
+    }
+
+    function coletarLavagem(id, valorLimpo) {
+      dbRef('lavanderia').child(id).update({ status: 'coletado' }).then(() => {
+        dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Lavagem', valor: valorLimpo, desc: "Dinheiro lavado e coletado" });
         registrarLog('LAVANDERIA', `Coletou $${valorLimpo} limpo`);
         showToast("Cofre abastecido!", "success");
       });
-    });
-  }
+    }
 
-  /* ============================
-     USERS / ADMIN
-  ============================ */
-  function listarUsuarios(){
-    if(!isHighRank()) return;
-
-    dbRef('usuarios').on('value', snap => {
-      const lista = document.getElementById('listaUsuarios');
-      if(!lista) return;
-      lista.innerHTML = '';
-
-      snap.forEach(u => {
-        const val = u.val() || {};
-        const login = decodeKey(u.key);
-
-        const deleteBtn = isAdminRole()
-          ? `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;"
-               onclick="deletarRegistro('usuarios','${u.key}','Excluiu o membro ${login}')">🗑</button>`
-          : `<span class="muted">---</span>`;
-
-        lista.innerHTML += `
-          <tr>
-            <td><b>${escapeHtml(val.nomeCompleto || '')}</b></td>
-            <td class="muted">${escapeHtml(login)}</td>
-            <td><span class="pill pill-blue">${escapeHtml(val.role || '')}</span></td>
-            <td style="text-align:right;">
-              <div class="row-actions">
-                <button class="btn" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="prepararEdicao('${escapeAttr(login)}','${escapeAttr(val.nomeCompleto || '')}','${escapeAttr(val.role || '')}')">✏️ Editar</button>
-                ${deleteBtn}
-              </div>
+    /* =================================================================================
+       ADMIN - USUÁRIOS
+    ================================================================================= */
+    function listarUsuarios() {
+      dbRef('usuarios').on('value', snap => {
+        const lista = document.getElementById('listaUsuarios');
+        if(lista) lista.innerHTML = "";
+        snap.forEach(u => {
+          const val = u.val();
+          const login = decodeKey(u.key);
+          const deleteBtn = isAdminRole()
+            ? `<button onclick="deletarRegistro('usuarios', '${u.key}', 'Excluiu o membro ${login}')" class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;">🗑</button>`
+            : '';
+          if(lista) lista.innerHTML += `<tr>
+            <td><b>${val.nomeCompleto || ""}</b></td>
+            <td style="color:var(--muted)">${login}</td>
+            <td><span class="pill pill-blue">${val.role}</span></td>
+            <td style="text-align:right">
+              <button class="btn" style="padding: 6px 12px; font-size:0.7rem; width:auto; margin-right:10px;" onclick="prepararEdicao('${login}', '${val.nomeCompleto || ""}', '${val.role || ""}')">✏️ Editar</button>
+              ${deleteBtn}
             </td>
           </tr>`;
+        });
       });
-    });
-  }
+    }
 
-  function prepararEdicao(l, n, r){
-    document.getElementById('nCompleto').value = n;
-    document.getElementById('nUser').value = l;
-    document.getElementById('nRole').value = r || 'Recruta';
-    document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR DADOS";
-    document.getElementById('nUser').readOnly = true;
-  }
+    function prepararEdicao(l, n, r) {
+      document.getElementById('nCompleto').value = n;
+      document.getElementById('nUser').value = l;
+      document.getElementById('nRole').value = r || 'padrao';
+      document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR DADOS";
+      document.getElementById('nUser').readOnly = true;
+    }
 
-  function cadastrarAnalista(){
-    if(!isHighRank()) return showToast("Sem permissão.", "error");
+    function cadastrarAnalista() {
+      const nc = document.getElementById('nCompleto').value;
+      const u = document.getElementById('nUser').value.toUpperCase().trim();
+      const p = document.getElementById('nPass').value;
+      const r = document.getElementById('nRole').value;
 
-    const nc = document.getElementById('nCompleto').value.trim();
-    const u = document.getElementById('nUser').value.toUpperCase().trim();
-    const p = document.getElementById('nPass').value;
-    const r = document.getElementById('nRole').value;
+      dbRef('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: r, senhaAlterada: false }).then(() => {
+        registrarLog('SISTEMA', `Cadastrou/Atualizou o acesso do membro ${u}`);
+        location.reload();
+      });
+    }
 
-    if(!nc || !u) return showToast("Preencha nome e login.", "error");
-    if(!document.getElementById('nUser').readOnly && !p) return showToast("Defina senha provisória.", "error");
+    /* =================================================================================
+       COMMAND CENTER
+    ================================================================================= */
+    function abrirModalTurno() { document.getElementById('modalStartTurn').style.display = 'flex'; }
 
-    // se estiver editando (readOnly), mantém senha atual se campo estiver vazio
-    const userRef = dbRef('usuarios/' + encodeKey(u));
-    userRef.once('value', snap => {
-      const atual = snap.val() || {};
+    function confirmarInicioTurno() {
+      const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
+      const ea = parseInt(document.getElementById('startEmAndamento').value) || 0;
+      dbRef('dailyStats/' + getHoje()).set({ ni: ni, ea: ea, totalInicial: ni + ea, createdBy: logado.nome }).then(() => {
+        dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
+        location.reload();
+      });
+    }
+
+    function verificarStatusTurno() {
+      dbRef('dailyStats/' + getHoje()).on('value', snap => {
+        const stats = snap.val();
+        dbRef('statusTurno/' + encodeKey(logado.nome)).once('value', userSnap => {
+          if (stats) {
+            if(document.getElementById('kpiNi')) document.getElementById('kpiNi').innerText = stats.ni || 0;
+            if(document.getElementById('kpiEa')) document.getElementById('kpiEa').innerText = stats.ea || 0;
+            pendenciaTotal = stats.totalInicial || 0;
+
+            if (!userSnap.val() || !userSnap.val().aberto) dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
+
+            document.getElementById('cardRegistro').style.pointerEvents = 'auto';
+            document.getElementById('overlay').style.display = 'none';
+
+            if (logado.role === 'admin') {
+              document.getElementById('kpiNi').classList.add('editable');
+              document.getElementById('kpiEa').classList.add('editable');
+            }
+          }
+        });
+      });
+    }
+
+    function calcularMetaPessoal() {
+      dbRef('chamados').once('value', snap => {
+        let dias = new Set(); let res = 0;
+        snap.forEach(i => {
+          const c = i.val();
+          if (c.analista === logado.nome && (c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto')) {
+            dias.add(c.data); res++;
+          }
+        });
+        document.getElementById('kpiMeta').innerText = dias.size > 0 ? Math.ceil(res / dias.size) : "--";
+      });
+    }
+
+    function toggleTaskInput() {
+      const t = document.getElementById('temTask').value === 'sim';
+      document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
+      document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
+      if(!t) {
+        document.getElementById('containerTasksDinamicas').innerHTML = "";
+        document.getElementById('taskQtd').value = "";
+      }
+    }
+
+    function gerarCamposTask() {
+      const qtd = parseInt(document.getElementById('taskQtd').value) || 0;
+      const c = document.getElementById('containerTasksDinamicas');
+      c.innerHTML = "";
+      for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`;
+    }
+
+    /* ====== FIX PRINCIPAL: SUBSTITUI / MOVE RITM ======
+       - Se status=Reaberto e a RITM existir em outro dia: remove o antigo e cria hoje com tag [Ref. DATA]
+       - Se a RITM já existir HOJE: ao invés de duplicar, ele ATUALIZA o registro existente
+       - Removido: campo LINK
+    */
+    async function salvarCommand() {
+      const ritm = document.getElementById('ritm').value.toUpperCase().trim();
+      const status = document.getElementById('statusRitm').value;
+      let desc = document.getElementById('descResumida').value.trim();
+
+      if(!ritm || !status || !desc) return showToast("Preencha RITM, Status e Descrição.", "error");
+
+      let tasksArr = [];
+      document.querySelectorAll('.input-task-dinamica').forEach(i => {
+        if(i.value) tasksArr.push(i.value.toUpperCase().trim());
+      });
 
       const payload = {
-        nomeCompleto: nc,
-        role: r,
+        ritm,
+        status,
+        desc,
+        data: getHoje(),
+        hora: getHora(),
+        analista: logado.nome,
+        taskQtd: tasksArr.length,
+        tasks: tasksArr.join(", ") || "Não"
       };
 
-      if(!document.getElementById('nUser').readOnly){
-        payload.senha = p;
-        payload.senhaAlterada = false;
-      }else{
-        // se digitou nova senha provisória, reseta
-        if(p && p.trim()){
-          payload.senha = p.trim();
-          payload.senhaAlterada = false;
-        }else{
-          payload.senha = atual.senha;
-          payload.senhaAlterada = atual.senhaAlterada;
+      // Busca por RITM existente
+      const snap = await dbRef('chamados').once('value');
+
+      let keyHoje = null;   // mesma ritm no dia atual
+      let keyOutro = null;  // mesma ritm em dia antigo
+      let dataAntiga = null;
+
+      snap.forEach(child => {
+        const c = child.val();
+        if(!c) return;
+        const r = (c.ritm || "").toUpperCase().trim();
+        if(r === ritm) {
+          if(c.data === getHoje()) keyHoje = child.key;
+          else {
+            keyOutro = child.key;
+            dataAntiga = c.data;
+          }
+        }
+      });
+
+      // Se existe HOJE, atualiza (não duplica)
+      if(keyHoje) {
+        await dbRef('chamados').child(keyHoje).update(payload);
+        limparFormCommand();
+        showToast("RITM atualizada (sem duplicar) ✅", "success");
+        return;
+      }
+
+      // Se existe em OUTRO dia:
+      if(keyOutro) {
+        if(status === "Reaberto") {
+          await dbRef('chamados').child(keyOutro).remove();
+          payload.desc = payload.desc.startsWith("[Ref.") ? payload.desc : `[Ref. ${dataAntiga}] ` + payload.desc;
+          await dbRef('chamados').push(payload);
+          limparFormCommand();
+          showToast("Reaberto: movido do histórico para hoje ✅", "success");
+          return;
+        } else {
+          showToast(`Essa RITM já existe em ${dataAntiga}. Use status "Reaberto" para mover.`, "alert");
+          return;
         }
       }
 
-      userRef.set(payload).then(()=>{
-        registrarLog('SISTEMA', `Cadastrou/Atualizou membro ${u}`);
-        showToast("Usuário salvo!", "success");
-        // limpa form
-        document.getElementById('nCompleto').value = '';
-        document.getElementById('nUser').value = '';
-        document.getElementById('nPass').value = '';
-        document.getElementById('nUser').readOnly = false;
-        document.getElementById('btnSalvarAnalista').innerText = "CADASTRAR / ATUALIZAR";
+      // Não existe: grava normal
+      await dbRef('chamados').push(payload);
+      limparFormCommand();
+      showToast("Chamado registrado!", "success");
+    }
+
+    function limparFormCommand() {
+      document.getElementById('ritm').value = "";
+      document.getElementById('descResumida').value = "";
+      document.getElementById('containerTasksDinamicas').innerHTML = "";
+      document.getElementById('taskQtd').value = "";
+      document.getElementById('temTask').value = "nao";
+      toggleTaskInput();
+    }
+
+    function escutarBancoCommand() {
+      dbRef('chamados').on('value', snap => {
+        const tb = document.getElementById('corpoTabela');
+        if(tb) tb.innerHTML = "";
+
+        let resolvidosMeu = 0;
+        let tarefasMeu = 0;
+        let resolvidosTotalEquipe = 0;
+        let cont = {};
+
+        snap.forEach(item => {
+          const c = item.val();
+          if(!c) return;
+
+          if(c.data === getHoje()) {
+            // Contagem equipe para gráfico
+            if(c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto') {
+              cont[c.analista] = (cont[c.analista] || 0) + 1;
+              resolvidosTotalEquipe++;
+            }
+
+            // KPIs do usuário
+            if(c.analista === logado.nome && c.status !== 'Pendente' && c.status !== 'GA') {
+              resolvidosMeu++;
+              tarefasMeu += (parseInt(c.taskQtd) || 0);
+            }
+
+            // Privacidade da tabela: analista vê os dele; admin vê todos
+            const ehAdmin = (logado.role === 'admin' || logado.role === 'ADMIN');
+            if(!(ehAdmin || c.analista === logado.nome)) return;
+
+            let cor = 'pill-blue';
+            if(c.status === 'Resolvido') cor = 'pill-ok';
+            else if(c.status === 'Cancelado') cor = 'pill-bad';
+            else if(c.status === 'Reaberto') cor = 'pill-warn';
+            else if(c.status === 'Pendente' || c.status === 'GA') cor = 'pill-blue';
+
+            // Botão excluir: admin apaga qualquer, analista apaga apenas o próprio do dia
+            let btnExcluir = "---";
+            if (ehAdmin || c.analista === logado.nome) {
+              btnExcluir = `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarChamadoCommand('${item.key}', '${c.ritm}')">🗑</button>`;
+            }
+
+            tb.innerHTML = `<tr>
+              <td>${c.hora || ""}</td>
+              <td><b>${c.ritm || ""}</b></td>
+              <td><span class="pill ${cor}">${c.status || ""}</span></td>
+              <td>${c.tasks || "Não"}</td>
+              <td>${c.desc || ""}</td>
+              <td style="text-align:right">${btnExcluir}</td>
+            </tr>` + tb.innerHTML;
+          }
+        });
+
+        if(document.getElementById('kpiRitms')) document.getElementById('kpiRitms').innerText = resolvidosMeu;
+
+        if(typeof pendenciaTotal !== 'undefined' && pendenciaTotal > 0 && document.getElementById('kpiMedia')) {
+          document.getElementById('kpiMedia').innerText = ((resolvidosTotalEquipe / pendenciaTotal) * 100).toFixed(1) + "%";
+        }
+
+        atualizarGrafico(cont);
       });
-    });
-  }
-
-  /* ============================
-     BOOTSTRAP (onload)
-  ============================ */
-  window.onload = function(){
-    atualizarIconeETitulo();
-
-    const salvo = localStorage.getItem('usuarioLogado');
-    if(salvo){
-      logado = JSON.parse(salvo);
-      document.getElementById('telaLogin').style.display = 'none';
-
-      atualizarIconeETitulo();
-      document.body.classList.add(`proj-${logado.projeto}`);
-      if(isHighRank()) document.body.classList.add('is-high-rank');
-      if(isAdminRole()) document.body.classList.add('is-admin');
-
-      // tema
-      const t = localStorage.getItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme');
-      if(t) document.body.setAttribute('data-theme', t);
-      else if(logado.projeto === 'distrito22') document.body.setAttribute('data-theme', 'distrito-dark');
-
-      document.getElementById('displayUser').innerText = logado.nome;
-      document.getElementById('displayRole').innerText = logado.role;
-
-      if(logado.projeto === 'command'){
-        document.getElementById('navCommandHome').classList.add('active');
-        switchView('dashCommand');
-        verificarStatusTurno();
-        escutarBancoCommand();
-        calcularMetaPessoal();
-      }else{
-        document.getElementById('navDashRP').classList.add('active');
-        switchView('dashDistrito');
-
-        carregarItensDinamicos();
-        escutarSaldoCaixa();
-        escutarExtratoCaixa();
-        escutarDebitos();
-        escutarHistoricoEstoque();
-        iniciarLoopLavanderia();
-        if(isAdminRole()) escutarLogs();
-      }
     }
-  };
 
-  /* ============================
-     SECURITY HELPERS (escape)
-  ============================ */
-  function escapeHtml(str){
-    return String(str ?? '')
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'","&#039;");
-  }
-  function escapeAttr(str){
-    return escapeHtml(str).replaceAll('`','&#096;');
-  }
-
-  /* ============================
-     Melhorias extras de UX
-  ============================ */
-  // enter no login
-  document.addEventListener('keydown', (e) => {
-    if(document.getElementById('telaLogin').style.display !== 'none'){
-      if(e.key === 'Enter') autenticar();
+    let chartInstance = null;
+    function atualizarGrafico(dados) {
+      if(!document.getElementById('meuGraficoBarras')) return;
+      const ctx = document.getElementById('meuGraficoBarras').getContext('2d');
+      if(chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(dados),
+          datasets: [{ data: Object.values(dados), backgroundColor: '#60a5fa', borderRadius: 8 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
     }
-  });
-</script>
 
-<!--
-=============================================================================
-melhorias.txt (embutido no próprio arquivo pra você não baixar nada)
-=============================================================================
-1) Mantido 1 arquivo (HTML/CSS/JS), pronto para GitHub + Vercel, sem NPM/build.
-2) Multi-tenant preservado:
-   - Command no root (/)
-   - Distrito em /projetos/distrito22/
-3) Identidade dinâmica (favicon + title) por projeto (🌐 / 🐶).
-4) PIN bancário no 1º acesso:
-   - validação: mínimo 6, numérico, bloqueia repetidos e sequências
-   - criptografia SHA-256 com WebCrypto
-5) UI/UX premium:
-   - design SaaS, pills, grid KPIs, cards, toasts, modais
-   - temas corporativos e de facção via [data-theme]
-6) Command:
-   - início de turno travado com transaction (somente o primeiro abre o dia)
-   - admins podem corrigir KPIs do dia via transaction
-   - “Meta inteligente” calculada por média histórica
-   - PRIVACIDADE do gráfico: analista normal vê só a própria barra
-   - regra Reaberto: busca RITM em dias antigos, remove registro antigo, traz pra hoje com tag [Ref. Data Antiga]
-   - Fim de turno: modal com Doughnut + bateu meta + finaliza sessão local
-   - Consultas: filtro + export para Excel (XLSX)
-7) Distrito:
-   - Cofre “protegido”: saldo em /saldos_protegidos/caixa atualizado somente por transaction (sem loop/set em listener)
-   - Extrato separado (auditável) em /caixa
-   - Reembolsos: base vê só os próprios; liderança paga e debita cofre por transaction
-   - Estoque: saldo por item em /saldos_protegidos/estoque_<nome> com trava por transaction; histórico em /estoque_drogas
-   - Previsão de retorno na saída de drogas (qtd * 45) em verde
-   - Lavanderia anti-cheat: serverTimeOffset + endTime em ms do servidor
-   - Anti-double-collect: coletar usa transaction na máquina, só permite 1x e só após tempo
-   - Logs Big Brother: registra ações e exclusões (em vermelho) para Admin Root
-8) Qualidade:
-   - escapeHtml em tabelas para evitar XSS acidental
-   - listeners limitToLast para não explodir a UI
-=============================================================================
--->
+    /* ====== Command: correção KPI (placeholder) ======
+       Você tinha onclick="corrigirKpi('ni')" e "ea" no HTML.
+       Se você já tem essa função em outra versão, pode ignorar.
+    */
+    function corrigirKpi(tipo) {
+      if(logado.role !== 'admin') return;
+      const atual = (tipo === 'ni' ? document.getElementById('kpiNi').innerText : document.getElementById('kpiEa').innerText);
+      const novo = prompt("Novo valor:", atual);
+      if(novo === null) return;
+      const val = parseInt(novo);
+      if(isNaN(val) || val < 0) return showToast("Valor inválido!", "error");
+
+      dbRef('dailyStats/' + getHoje()).once('value').then(s => {
+        const stats = s.val() || { ni:0, ea:0 };
+        if(tipo === 'ni') stats.ni = val;
+        if(tipo === 'ea') stats.ea = val;
+        stats.totalInicial = (parseInt(stats.ni)||0) + (parseInt(stats.ea)||0);
+        dbRef('dailyStats/' + getHoje()).set(stats).then(() => showToast("Fila atualizada!", "success"));
+      });
+    }
+
+    /* ====== Command: Consultar (placeholder simples) ======
+       Se você já tem a consulta completa com export XLSX, pode colar por cima.
+    */
+    function consultarBanco() {
+      const di = document.getElementById('dataInicio').value;
+      const df = document.getElementById('dataFim').value;
+      if(!di || !df) return showToast("Selecione as datas.", "error");
+      if(di > df) return showToast("Data inicial maior que final.", "error");
+
+      dbRef('chamados').once('value', snap => {
+        const corpo = document.getElementById('corpoConsulta');
+        corpo.innerHTML = "";
+        let linhas = [];
+        snap.forEach(i => {
+          const c = i.val();
+          if(c.data >= di && c.data <= df) linhas.push(c);
+        });
+
+        if(!linhas.length) {
+          corpo.innerHTML = `<tr><td style="color:var(--muted); padding:20px;">Sem registros no período.</td></tr>`;
+          return;
+        }
+
+        linhas.sort((a,b) => (a.data + a.hora).localeCompare(b.data + b.hora));
+        corpo.innerHTML = `<tr><td style="padding:0;">
+          <table>
+            <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>
+            <tbody>
+              ${linhas.map(c => `
+                <tr>
+                  <td>${c.data}</td>
+                  <td>${c.hora || ""}</td>
+                  <td><b>${c.analista}</b></td>
+                  <td><b>${c.ritm}</b></td>
+                  <td>${c.status}</td>
+                  <td>${c.tasks || "Não"}</td>
+                  <td>${c.desc || ""}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </td></tr>`;
+      });
+    }
+  </script>
 </body>
 </html>
