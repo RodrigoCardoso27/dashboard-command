@@ -73,11 +73,6 @@
         td:first-child { border-left: 1px solid var(--border); border-radius: 16px 0 0 16px; }
         td:last-child { border-right: 1px solid var(--border); border-radius: 0 16px 16px 0; }
 
-        .badge { padding: 8px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-        .badge-resolvido { color: #10b981; background: rgba(16, 185, 129, 0.1); }
-        .badge-cancelado { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .badge-reaberto { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
-
         .kpi-value { font-size: 2.2rem; font-weight: 800; margin-top: 5px; transition: 0.2s; cursor: default; }
         .kpi-value.editable { cursor: pointer; }
         .kpi-value.editable:hover { color: var(--warning); transform: scale(1.1); }
@@ -90,29 +85,50 @@
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--primary-glow); }
         .btn-success { background: var(--success); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: 800; transition: 0.3s; width: 100%; }
         
-        .check-container { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
-        .check-box { width: 24px; height: 24px; accent-color: var(--success); cursor: pointer; }
-
-        /* Classes de Controle de Projeto */
+        /* ======== CLASSES DE CONTROLE (CORRIGIDO) ======== */
         .only-command { display: none; }
         .only-distrito { display: none; }
-        .only-high-rank { display: none; }
         
-        body.proj-command .only-command { display: block; }
-        body.proj-command .nav-item.only-command { display: flex; }
+        /* Exibe apenas botões laterais e itens que não são View-Sections */
+        body.proj-command div.only-command:not(.view-section) { display: block; }
+        body.proj-command div.nav-item.only-command { display: flex; }
         
-        body.proj-distrito22 .only-distrito { display: block; }
-        body.proj-distrito22 .nav-item.only-distrito { display: flex; }
+        body.proj-distrito22 div.only-distrito:not(.view-section) { display: block; }
+        body.proj-distrito22 div.nav-item.only-distrito { display: flex; }
         
-        body.is-high-rank .only-high-rank { display: block; }
-        body.is-high-rank .nav-item.only-high-rank { display: flex; }
+        /* Controle de Hierarquia para Celulas de Tabela */
+        th.only-high-rank, td.only-high-rank { display: none; }
+        body.is-high-rank th.only-high-rank, body.is-high-rank td.only-high-rank { display: table-cell; }
+        
+        /* Controle de Hierarquia para Divs normais (Oculta p/ Rank Baixo) */
+        div.only-high-rank:not(.view-section):not(.nav-item) { display: none; }
+        body.is-high-rank div.only-high-rank:not(.view-section):not(.nav-item) { display: block; }
+        
+        /* Controle de Hierarquia p/ Nav Items */
+        div.nav-item.only-high-rank { display: none; }
+        body.is-high-rank div.nav-item.only-high-rank { display: flex; }
+        /* ================================================= */
 
         .rp-kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; text-align: center; }
+        .machine-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 24px; padding: 25px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .machine-timer { font-family: monospace; font-size: 1.8rem; font-weight: 800; color: var(--warning); }
     </style>
 </head>
 <body>
 
 <div id="toast-container"></div>
+
+<div id="modalStartTurn" class="modal-overlay">
+    <div class="modal-box">
+        <h2 style="margin-bottom: 25px;">🚀 Iniciar Operação</h2>
+        <p style="font-size: 0.8rem; color: var(--warning); margin-bottom: 20px;">Você é o primeiro a logar hoje. Defina a fila da equipe.</p>
+        <label>Chamados Não Iniciados (Fila Total)</label>
+        <input type="number" id="startNaoIniciados" value="0" style="margin-bottom: 20px;">
+        <label>Chamados em Andamento (Fila Total)</label>
+        <input type="number" id="startEmAndamento" value="0" style="margin-bottom: 30px;">
+        <button class="btn-primary" onclick="confirmarInicioTurno()">ABRIR DIA PARA TODOS</button>
+    </div>
+</div>
 
 <div id="telaLogin">
     <div class="login-card">
@@ -161,11 +177,29 @@
 
 <div class="main-content">
 
-    <div id="viewDashCommand" class="view-section only-command">
-        <div class="section-card"><h2 class="section-title">Bem-vindo ao Command</h2><p>Área de RITMs (mantida oculta neste html para focar nas funções do RP, mas a lógica permanece a mesma do arquivo anterior).</p></div>
+    <div id="viewDashCommand" class="view-section">
+        <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; margin-bottom: 30px;">
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--danger);"><label style="font-size:0.6rem">FILA GERAL</label><div class="kpi-value" id="kpiNi">0</div></div>
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--warning);"><label style="font-size:0.6rem">EM ANDAMENTO</label><div class="kpi-value" id="kpiEa">0</div></div>
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--ga);"><label style="font-size:0.6rem">MINHA META</label><div class="kpi-value" id="kpiMeta">0</div></div>
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px; border-bottom: 4px solid var(--success);"><label style="font-size:0.6rem">RESOLVIDOS</label><div class="kpi-value" id="kpiRitms">0</div></div>
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;"><label style="font-size:0.6rem">EFICIÊNCIA</label><div class="kpi-value" id="kpiMedia" style="color: var(--success);">0%</div></div>
+            <div class="section-card" style="text-align: center; margin-bottom:0; padding:20px;"><label style="font-size:0.6rem">TASKS</label><div class="kpi-value" id="kpiTasks" style="color: var(--primary);">0</div></div>
+        </div>
+        <div class="section-card">
+            <h2 class="section-title">📊 Desempenho Real</h2>
+            <div style="height: 250px;"><canvas id="meuGraficoBarras"></canvas></div>
+        </div>
+        <div class="section-card">
+            <h2 class="section-title">📋 Meus Lançamentos de Hoje</h2>
+            <table>
+                <thead><tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th>AÇÃO</th></tr></thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div id="viewDashDistrito" class="view-section">
+    <div id="viewDashDistrito" class="view-section active">
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
             <div class="rp-kpi-card" style="border-bottom: 4px solid var(--success);">
                 <label style="font-size:0.7rem">💰 COFRE DA FAMÍLIA</label>
@@ -274,7 +308,7 @@
         </div>
     </div>
 
-    <div id="viewGestaoItens" class="view-section only-high-rank">
+    <div id="viewGestaoItens" class="view-section">
         <div class="section-card">
             <h2 class="section-title">🛠️ Cadastrar Novo Item no Sistema</h2>
             <p style="color: var(--text-dim); margin-bottom: 20px;">Ao cadastrar um item aqui, ele criará um novo botão na barra lateral para o Baú e também aparecerá na lista de Reembolsos.</p>
@@ -317,9 +351,16 @@
                 <div onclick="setTheme('distrito-light')" style="background:#ffffff; border:2px solid #ef4444; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#ef4444;">Light (Branco e Vermelho)</div>
             </div>
         </div>
+        <div class="section-card only-command">
+            <h2 class="section-title">🎨 Temas (Command)</h2>
+            <div class="form-grid">
+                <div onclick="setTheme('midnight')" style="background:#020617; border:2px solid #6366f1; padding:25px; border-radius:20px; cursor:pointer; text-align:center;">Midnight</div>
+                <div onclick="setTheme('nordic')" style="background:#f1f5f9; border:2px solid #1e293b; padding:25px; border-radius:20px; cursor:pointer; text-align:center; color:#1e293b;">Nordic</div>
+            </div>
+        </div>
     </div>
 
-    <div id="viewAdmin" class="view-section only-high-rank">
+    <div id="viewAdmin" class="view-section">
         <div class="section-card">
             <h2 class="section-title">🛠 Gestão de Membros</h2>
             <div class="form-grid">
@@ -390,6 +431,21 @@
         return rootDatabase.ref('projetos/' + p + '/' + path);
     }
 
+    // MAPA INTELIGENTE DE EMOJIS
+    function obterEmojiItem(nomeItem) {
+        const txt = nomeItem.toLowerCase();
+        if(txt.includes('maconha')) return '🌿';
+        if(txt.includes('coca')) return '❄️';
+        if(txt.includes('meta')) return '💎';
+        if(txt.includes('lockpick')) return '🔓';
+        if(txt.includes('c4') || txt.includes('bomba')) return '💣';
+        if(txt.includes('chip') || txt.includes('celular') || txt.includes('tablet')) return '📱';
+        if(txt.includes('arma') || txt.includes('ak') || txt.includes('glock')) return '🔫';
+        if(txt.includes('muni')) return '🎒';
+        if(txt.includes('colete')) return '🛡️';
+        return '📦'; // Default
+    }
+
     // LOGIN & INIT
     function setLoginProject(proj) {
         loginProject = proj;
@@ -430,11 +486,13 @@
             document.getElementById('displayRole').innerText = logado.role; 
             
             if(logado.projeto === 'command') {
-                // ... lógica command oculta para foco
+                document.getElementById('navCommandHome').classList.add('active');
+                switchView('dashCommand');
+                // ... scripts command aqui (escondidos pro foco ser o RP)
             } else {
                 document.getElementById('navDashRP').classList.add('active');
                 switchView('dashDistrito');
-                carregarItensDinamicos(); // Carrega lista de itens e cria menu
+                carregarItensDinamicos(); 
                 escutarCaixaDistrito();
                 escutarDebitos();
                 escutarEstoqueGlobal();
@@ -446,11 +504,14 @@
     function switchView(v, event) { 
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        
         const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
         if (alvo) alvo.classList.add('active'); 
+        
         if (event && event.currentTarget) event.currentTarget.classList.add('active');
         if(v === 'admin') listarUsuarios(); 
     }
+
     function setTheme(t) { localStorage.setItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme', t); location.reload(); }
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
     function showToast(msg, type = 'success') {
@@ -470,7 +531,7 @@
             const selects = document.querySelectorAll('.dynamic-item-select');
             const listaTabela = document.getElementById('corpoListaItens');
             
-            menuSidebar.innerHTML = "";
+            if(menuSidebar) menuSidebar.innerHTML = "";
             selects.forEach(s => s.innerHTML = "<option value=''>Selecione o Item...</option>");
             if(listaTabela) listaTabela.innerHTML = "";
 
@@ -479,17 +540,20 @@
             snap.forEach(item => {
                 temItens = true;
                 const nomeItem = item.val().nome;
+                const icone = obterEmojiItem(nomeItem); // Função que pega o emoji inteligente
                 listaDeItensDinamicos.push(nomeItem);
                 
-                // 1. Cria botão na Sidebar
-                menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${nomeItem}', 'navItem_${item.key}', event)">📦 ${nomeItem}</div>`;
+                // 1. Cria botão na Sidebar (com o emoji correto)
+                if(menuSidebar) {
+                    menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${nomeItem}', 'navItem_${item.key}', event)">${icone} ${nomeItem}</div>`;
+                }
                 
                 // 2. Preenche Selects (Aba Debito)
                 selects.forEach(s => s.innerHTML += `<option value="${nomeItem}">${nomeItem}</option>`);
 
                 // 3. Tabela de Gestão
                 if(listaTabela) {
-                    listaTabela.innerHTML += `<tr><td><b>${nomeItem}</b></td><td style="text-align:right"><button class="btn-delete-pro" onclick="dbRef('config/itens').child('${item.key}').remove()">🗑</button></td></tr>`;
+                    listaTabela.innerHTML += `<tr><td>${icone} <b>${nomeItem}</b></td><td style="text-align:right"><button class="btn-delete-pro" onclick="dbRef('config/itens').child('${item.key}').remove()">🗑</button></td></tr>`;
                 }
             });
 
@@ -529,13 +593,14 @@
 
     function escutarDebitos() {
         dbRef('debitos').on('value', snap => {
-            const tbody = document.getElementById('corpoDebitos'); tbody.innerHTML = "";
+            const tbody = document.getElementById('corpoDebitos'); 
+            if(!tbody) return;
+            tbody.innerHTML = "";
             let totalDevedor = 0;
             
             snap.forEach(item => {
                 const c = item.val();
                 
-                // Só Lideres veem os débitos dos outros. Membros normais veem só os próprios.
                 if(!isHighRank() && c.membro !== logado.nome) return;
 
                 if(c.status === 'Pendente') totalDevedor += c.valor;
@@ -552,23 +617,21 @@
                 tbody.innerHTML = `<tr>
                     <td>${c.data} ${c.hora}</td>
                     <td><b>${c.membro}</b></td>
-                    <td>${c.item} <br><small style="color:var(--text-dim)">${c.detalhe}</small></td>
+                    <td>${obterEmojiItem(c.item)} ${c.item} <br><small style="color:var(--text-dim)">${c.detalhe}</small></td>
                     <td style="font-weight:800">$${c.valor}</td>
                     <td style="color:${corStatus}; font-weight:800">${c.status}</td>
                     <td class="only-high-rank" style="text-align:right">${acoes}</td>
                 </tr>` + tbody.innerHTML;
             });
 
-            document.getElementById('kpiTotalDevedor').innerText = formatarDinheiro(totalDevedor);
-            document.getElementById('dashKpiDivida').innerText = formatarDinheiro(totalDevedor);
+            if(document.getElementById('kpiTotalDevedor')) document.getElementById('kpiTotalDevedor').innerText = formatarDinheiro(totalDevedor);
+            if(document.getElementById('dashKpiDivida')) document.getElementById('dashKpiDivida').innerText = formatarDinheiro(totalDevedor);
         });
     }
 
     function pagarDebito(id, valor, membro, itemDesc) {
         if(confirm(`Confirmar pagamento de $${valor} para ${membro}?\n\nDeseja que este valor seja DEBITADO automaticamente do Cofre da Família?`)) {
-            // Marca como pago
             dbRef('debitos').child(id).update({ status: 'Pago', pagoPor: logado.nome }).then(() => {
-                // Debita do caixa
                 dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Saque', valor: valor, desc: `Reembolso de ${itemDesc} para ${membro}` });
                 showToast("Dívida paga e Caixa atualizado!", "success");
             });
@@ -588,12 +651,13 @@
         calcularLucroVenda(); // Reseta aviso de $45
         
         switchView('droga', event);
+        
+        // Garante que a barra lateral foque no item certo
         if(navId) {
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById(navId).classList.add('active');
         }
 
-        // Renderiza tela baseada no cache global já calculado
         atualizarTelaEstoqueDinamico();
     }
 
@@ -603,10 +667,9 @@
         const divInfo = document.getElementById('lucroDrogaInfo');
         const spanValor = document.getElementById('valLucroDroga');
 
-        // Mostra a regra dos 45$ se for droga saindo
         if(op === 'Saida' && qtd > 0) {
             divInfo.style.display = 'block';
-            spanValor.innerText = formatarDinheiro(qtd * 45);
+            spanValor.innerText = formatarDinheiro(qtd * 45); // Regra dos 45 dólares
         } else {
             divInfo.style.display = 'none';
         }
@@ -631,8 +694,8 @@
 
     function escutarEstoqueGlobal() {
         dbRef('estoque_drogas').on('value', snap => {
-            estoqueGlobalCalculado = {}; // Limpa cache
-            listaDeItensDinamicos.forEach(i => estoqueGlobalCalculado[i] = 0); // Inicializa do zero
+            estoqueGlobalCalculado = {}; 
+            listaDeItensDinamicos.forEach(i => estoqueGlobalCalculado[i] = 0); 
 
             const historicoGeral = [];
 
@@ -646,18 +709,16 @@
                 historicoGeral.push({ key: item.key, ...c });
             });
 
-            // Atualiza Dashboard (Cards Dinâmicos)
+            // Atualiza Tabela Resumo do Dashboard
             const dashTable = document.getElementById('dashCorpoEstoque');
             if(dashTable) {
                 dashTable.innerHTML = "";
                 for (const [nome, qtd] of Object.entries(estoqueGlobalCalculado)) {
-                    dashTable.innerHTML += `<tr><td><b>${nome}</b></td><td style="font-weight:800; color:var(--primary)">${qtd}</td></tr>`;
+                    dashTable.innerHTML += `<tr><td>${obterEmojiItem(nome)} <b>${nome}</b></td><td style="font-weight:800; color:var(--primary)">${qtd}</td></tr>`;
                 }
             }
 
-            // Guarda histórico global na window para a tela específica acessar sem rebater banco
             window.historicoEstoqueGlobal = historicoGeral.reverse(); 
-            
             atualizarTelaEstoqueDinamico();
         });
     }
@@ -665,10 +726,8 @@
     function atualizarTelaEstoqueDinamico() {
         if(!currentDroga) return;
         
-        // 1. Atualiza o NÚMERO GRANDE
-        document.getElementById('kpiDrogaTotal').innerText = estoqueGlobalCalculado[currentDroga] || 0;
+        if(document.getElementById('kpiDrogaTotal')) document.getElementById('kpiDrogaTotal').innerText = estoqueGlobalCalculado[currentDroga] || 0;
 
-        // 2. Filtra a Tabela da aba
         const tbodyDroga = document.getElementById('corpoDroga'); 
         if(!tbodyDroga || !window.historicoEstoqueGlobal) return;
         
@@ -684,7 +743,7 @@
     }
 
     /* =================================================================================
-       DISTRITO 22 - CAIXA E LAVANDERIA (MANTIDO INTACTO)
+       DISTRITO 22 - CAIXA E LAVANDERIA
     ================================================================================= */
     function calcularPrevisaoLavagem() {
         let val = parseInt(document.getElementById('sujoLavar').value) || 0;
@@ -726,11 +785,11 @@
     }
     function coletarLavagem(id, valorLimpo) {
         dbRef('lavanderia').child(id).update({ status: 'coletado' }).then(() => {
-            dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Lavagem', valor: valorLimpo, desc: "Dinheiro lavado" }); showToast("Cofre abastecido!", "success");
+            dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Lavagem', valor: valorLimpo, desc: "Dinheiro lavado e coletado" }); showToast("Cofre abastecido!", "success");
         });
     }
 
-    // ====== GESTÃO DE USUÁRIOS (COMUM) ======
+    // ====== GESTÃO DE USUÁRIOS ======
     function listarUsuarios() { 
         dbRef('usuarios').on('value', snap => { 
             const lista = document.getElementById('listaUsuarios'); if(lista) lista.innerHTML = ""; 
