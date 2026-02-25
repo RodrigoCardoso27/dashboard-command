@@ -321,7 +321,7 @@
         </div>
 
         <div class="section-card">
-            <h2 class="section-title">📑 Histórico de Movimentação</h2>
+            <h2 class="section-title">📑 Histórico de <span id="txtDrogaHist">Movimentação</span></h2>
             <table>
                 <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>AÇÃO</th><th>QUANTIDADE</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
                 <tbody id="corpoDroga"></tbody>
@@ -429,6 +429,7 @@
     let loginProject = 'command'; 
     let loopLavanderia = null;
     
+    // Variáveis Globais RP
     let currentDroga = '';
     let estoqueGlobalCalculado = {}; 
     let listaDeItensDinamicos = [];
@@ -505,7 +506,7 @@
             if(logado.projeto === 'command') {
                 document.getElementById('navCommandHome').classList.add('active');
                 switchView('dashCommand');
-                // Inicializa Command
+                // ... scripts command
             } else {
                 document.getElementById('navDashRP').classList.add('active');
                 switchView('dashDistrito');
@@ -518,7 +519,6 @@
         }
     };
 
-    // FUNÇÃO SWITCH VIEW CORRIGIDA (Sem passar evento inline na nav lateral dinamica)
     function switchView(v, event) { 
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -561,7 +561,7 @@
                 const icone = obterEmojiItem(nomeItem); 
                 listaDeItensDinamicos.push(nomeItem);
                 
-                // CRIAÇÃO DO BOTÃO LATERAL (SEM EVENTO INLINE QUE CAUSA ERRO)
+                // Botão gerado dinamicamente para cada item do banco
                 if(menuSidebar) {
                     menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${nomeItem}', 'navItem_${item.key}')">${icone} ${nomeItem}</div>`;
                 }
@@ -596,6 +596,7 @@
         const item = document.getElementById('itemDebito').value;
         const val = parseFloat(document.getElementById('valorDebito').value);
         const det = document.getElementById('detalheDebito').value.trim();
+        
         if(!item || !val || val <= 0) return alert("Selecione o item e insira um valor válido!");
         dbRef('debitos').push({ data: getHoje(), hora: getHora(), membro: logado.nome, item: item, valor: val, detalhe: det, status: 'Pendente' }).then(() => {
             document.getElementById('valorDebito').value = ""; document.getElementById('detalheDebito').value = "";
@@ -652,15 +653,18 @@
     ================================================================================= */
     function abrirDroga(nome, navId) {
         currentDroga = nome;
-        document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL DE ${nome.toUpperCase()}`;
-        document.getElementById('txtDrogaNome').innerText = nome;
-        document.getElementById('txtDrogaHist').innerText = nome;
-        document.getElementById('qtdDroga').value = "";
+        
+        // Proteção contra Null Pointers que quebravam a tela antes
+        if(document.getElementById('lblDrogaTitle')) document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL DE ${nome.toUpperCase()}`;
+        if(document.getElementById('txtDrogaNome')) document.getElementById('txtDrogaNome').innerText = nome;
+        if(document.getElementById('txtDrogaHist')) document.getElementById('txtDrogaHist').innerText = nome;
+        if(document.getElementById('qtdDroga')) document.getElementById('qtdDroga').value = "";
+        
         calcularLucroVenda(); 
         
         switchView('droga'); 
         
-        // Ativa manualmente a aba no menu
+        // Pinta a aba ativa manualmente na lateral
         if(navId) {
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             const btn = document.getElementById(navId);
@@ -671,7 +675,9 @@
     }
 
     function calcularLucroVenda() {
-        const op = document.getElementById('opDroga').value;
+        const opDropdown = document.getElementById('opDroga');
+        if(!opDropdown) return;
+        const op = opDropdown.value;
         const qtd = parseInt(document.getElementById('qtdDroga').value) || 0;
         const divInfo = document.getElementById('lucroDrogaInfo');
         const spanValor = document.getElementById('valLucroDroga');
@@ -802,7 +808,7 @@
             const lista = document.getElementById('listaUsuarios'); if(lista) lista.innerHTML = ""; 
             snap.forEach(u => { 
                 const val = u.val(); const login = decodeKey(u.key); 
-                const isSuperAdmin = logado.nome === 'ADMIN' || logado.role === 'admin'; 
+                const isSuperAdmin = logado.nome === 'ADMIN' || logado.role === 'admin' || logado.role === '01'; 
                 const deleteBtn = isSuperAdmin ? `<button onclick="dbRef('usuarios').child('${u.key}').remove()" class="btn-action" style="color:var(--danger)">🗑</button>` : '';
                 if(lista) lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td>${val.role}</td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}', '${val.role}')" style="background:none; color:var(--warning); cursor:pointer; border:none; margin-right:10px;">✏️</button>${deleteBtn}</td></tr>`; 
             }); 
