@@ -113,6 +113,34 @@
 
 <div id="toast-container"></div>
 
+<div id="modalReport" class="modal-overlay" style="z-index: 12000;">
+    <div class="modal-box">
+        <h3 style="font-size: 1.5rem; margin-bottom: 10px;">📣 Enviar Feedback</h3>
+        <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Encontrou um erro no sistema ou tem uma sugestão de melhoria? Envie para a liderança!</p>
+        <textarea id="msgReport" rows="5" placeholder="Descreva aqui sua ideia ou problema..." style="margin-bottom: 20px; background: rgba(0,0,0,0.4);"></textarea>
+        <div style="display: flex; gap: 15px;">
+            <button class="btn-primary" style="background: #334155;" onclick="fecharModalReport()">Cancelar</button>
+            <button class="btn-success" onclick="enviarReport()">Enviar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalTrocaSenha" class="modal-overlay" style="background: rgba(0,0,0,0.95); z-index: 11000;">
+    <div class="modal-box">
+        <h2 style="margin-bottom: 15px;">🔒 Segurança de Acesso</h2>
+        <p style="color: var(--text-dim); margin-bottom: 25px; font-size: 0.9rem;">
+            Este é o seu primeiro acesso. Por segurança, crie um PIN numérico (mín. 6 dígitos).<br><br>
+            <small style="color: var(--danger); font-weight: 800;">REGRAS:</small><br>
+            <small>• Apenas números.</small><br>
+            <small>• Não use sequências (ex: 123456 ou 987654).</small><br>
+            <small>• Não use números repetidos (ex: 000000).</small>
+        </p>
+        <input type="password" id="novoPin" placeholder="Novo PIN Numérico" style="margin-bottom: 15px; text-align: center; font-size: 1.2rem; letter-spacing: 5px;">
+        <input type="password" id="confirmaPin" placeholder="Confirme o PIN" style="margin-bottom: 25px; text-align: center; font-size: 1.2rem; letter-spacing: 5px;">
+        <button class="btn-primary" onclick="salvarNovoPin()">SALVAR PIN E ENTRAR</button>
+    </div>
+</div>
+
 <div id="modalStartTurn" class="modal-overlay">
     <div class="modal-box">
         <h2 style="margin-bottom: 25px;">🚀 Iniciar Operação</h2>
@@ -164,6 +192,7 @@
     </div>
     
     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <button class="btn-primary" style="height: 44px; margin-bottom: 15px; background: rgba(99, 102, 241, 0.15); color: var(--primary); border: 1px solid var(--primary-glow); width: 100%;" onclick="abrirModalReport()">📣 Enviar Feedback</button>
         <div id="displayUser" style="font-weight: 800; color: white; margin-bottom: 2px;">Analista</div>
         <div id="displayRole" style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 15px; text-transform: uppercase;">Cargo</div>
         <div onclick="logout()" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">🚪 TROCAR CONTA/PROJETO</div>
@@ -385,9 +414,9 @@
         <div class="section-card">
             <h2 class="section-title">🛠 Gestão de Membros</h2>
             <div class="form-grid">
-                <input type="text" id="nCompleto" placeholder="Nome no RP">
+                <input type="text" id="nCompleto" placeholder="Nome no RP (ou Real)">
                 <input type="text" id="nUser" placeholder="Login">
-                <input type="password" id="nPass" placeholder="Senha">
+                <input type="password" id="nPass" placeholder="Senha Provisória">
                 <select id="nRole">
                     <optgroup label="Cargos Base">
                         <option value="Recruta">Recruta</option>
@@ -404,8 +433,16 @@
                 <button class="btn-success" id="btnSalvarAnalista" onclick="cadastrarAnalista()">CADASTRAR</button>
             </div>
             <table style="margin-top: 40px;">
-                <thead><tr><th>Nome RP</th><th>Login</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
+                <thead><tr><th>Nome / RP</th><th>Login</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
                 <tbody id="listaUsuarios"></tbody>
+            </table>
+        </div>
+        
+        <div class="section-card" style="margin-top: 30px; border-color: var(--warning);">
+            <h2 class="section-title">📬 Caixa de Sugestões e Reports</h2>
+            <table>
+                <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>MENSAGEM</th><th style="text-align:right">AÇÃO</th></tr></thead>
+                <tbody id="listaFeedbacks"></tbody>
             </table>
         </div>
     </div>
@@ -429,7 +466,6 @@
     let loginProject = 'command'; 
     let loopLavanderia = null;
     
-    // Variáveis Globais RP
     let currentDroga = '';
     let estoqueGlobalCalculado = {}; 
     let listaDeItensDinamicos = [];
@@ -466,6 +502,44 @@
         return '📦'; 
     }
 
+    // ====== DINAMISMO DO NAVEGADOR ======
+    function atualizarIconeETitulo() {
+        const isCommand = logado.projeto === 'command';
+        document.title = isCommand ? "🌐 Command Center" : "🐶 Distrito 22";
+        
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.getElementsByTagName('head')[0].appendChild(link); }
+        const emoji = isCommand ? '🌐' : '🐶';
+        link.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${emoji}</text></svg>`;
+    }
+
+    // ====== FEEDBACKS E REPORTS ======
+    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
+    function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
+    
+    function enviarReport() {
+        const msg = document.getElementById('msgReport').value.trim();
+        if(!msg) return showToast("A mensagem não pode estar vazia!", "error");
+        dbRef('feedbacks').push({ data: getHoje(), hora: getHora(), membro: logado.nome, msg: msg }).then(() => {
+            fecharModalReport();
+            showToast("Feedback enviado à liderança!", "success");
+        });
+    }
+
+    function listarFeedbacks() {
+        if(!isHighRank()) return;
+        dbRef('feedbacks').on('value', snap => {
+            const lista = document.getElementById('listaFeedbacks');
+            if(!lista) return;
+            lista.innerHTML = "";
+            snap.forEach(item => {
+                const f = item.val();
+                lista.innerHTML = `<tr><td>${f.data} ${f.hora}</td><td><b>${f.membro}</b></td><td>${f.msg}</td><td style="text-align:right"><button class="btn-success" style="padding: 5px 10px; font-size:0.7rem;" onclick="dbRef('feedbacks').child('${item.key}').remove()">✅ LIDO</button></td></tr>` + lista.innerHTML;
+            });
+        });
+    }
+
+    // ====== LOGIN & SEGURANÇA ======
     function setLoginProject(proj) {
         loginProject = proj;
         document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
@@ -476,9 +550,15 @@
     function autenticar() { 
         const u = document.getElementById('lUser').value.toUpperCase().trim(); 
         const p = document.getElementById('lPass').value; 
+        
         dbRef('usuarios/' + encodeKey(u)).once('value', snap => { 
             const user = snap.val(); 
             if(user && user.senha === p) { 
+                if (user.senhaAlterada === false) {
+                    window.usuarioPendente = { nome: u, role: user.role, projeto: loginProject };
+                    document.getElementById('modalTrocaSenha').style.display = 'flex';
+                    return; 
+                }
                 logado = { nome: u, role: user.role, projeto: loginProject }; 
                 localStorage.setItem('usuarioLogado', JSON.stringify(logado)); 
                 location.reload(); 
@@ -486,11 +566,32 @@
         }); 
     }
 
+    function salvarNovoPin() {
+        const p1 = document.getElementById('novoPin').value;
+        const p2 = document.getElementById('confirmaPin').value;
+        
+        if (p1 !== p2) return showToast("Os PINs não coincidem!", "error");
+        if (!/^\d{6,}$/.test(p1)) return showToast("O PIN deve conter no mínimo 6 NÚMEROS!", "error");
+        if (/^(\d)\1+$/.test(p1)) return showToast("Muito fraco! Não use números repetidos.", "error");
+        
+        const seqUp = "01234567890123456789"; const seqDown = "98765432109876543210";
+        if (seqUp.includes(p1) || seqDown.includes(p1)) return showToast("Muito fraco! Não use sequências.", "error");
+        
+        const tempUser = window.usuarioPendente;
+        const rootPath = tempUser.projeto === 'command' ? rootDatabase.ref('usuarios/' + encodeKey(tempUser.nome)) : rootDatabase.ref('projetos/' + tempUser.projeto + '/usuarios/' + encodeKey(tempUser.nome));
+
+        rootPath.update({ senha: p1, senhaAlterada: true }).then(() => {
+            logado = tempUser; localStorage.setItem('usuarioLogado', JSON.stringify(logado)); location.reload();
+        });
+    }
+
     window.onload = function() {
         const salvo = localStorage.getItem('usuarioLogado');
         if (salvo) { 
             logado = JSON.parse(salvo); 
             document.getElementById('telaLogin').style.display = 'none'; 
+            
+            atualizarIconeETitulo(); 
             
             document.body.classList.add(`proj-${logado.projeto}`); 
             if(isHighRank()) document.body.classList.add(`is-high-rank`); 
@@ -506,7 +607,7 @@
             if(logado.projeto === 'command') {
                 document.getElementById('navCommandHome').classList.add('active');
                 switchView('dashCommand');
-                // ... scripts command
+                // Inicializa Command
             } else {
                 document.getElementById('navDashRP').classList.add('active');
                 switchView('dashDistrito');
@@ -522,12 +623,10 @@
     function switchView(v, event) { 
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        
         const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
         if (alvo) alvo.classList.add('active'); 
-        
         if (event && event.currentTarget) event.currentTarget.classList.add('active');
-        if(v === 'admin') listarUsuarios(); 
+        if(v === 'admin') { listarUsuarios(); listarFeedbacks(); }
     }
 
     function setTheme(t) { localStorage.setItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme', t); location.reload(); }
@@ -561,7 +660,6 @@
                 const icone = obterEmojiItem(nomeItem); 
                 listaDeItensDinamicos.push(nomeItem);
                 
-                // Botão gerado dinamicamente para cada item do banco
                 if(menuSidebar) {
                     menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${nomeItem}', 'navItem_${item.key}')">${icone} ${nomeItem}</div>`;
                 }
@@ -654,17 +752,14 @@
     function abrirDroga(nome, navId) {
         currentDroga = nome;
         
-        // Proteção contra Null Pointers que quebravam a tela antes
         if(document.getElementById('lblDrogaTitle')) document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL DE ${nome.toUpperCase()}`;
         if(document.getElementById('txtDrogaNome')) document.getElementById('txtDrogaNome').innerText = nome;
         if(document.getElementById('txtDrogaHist')) document.getElementById('txtDrogaHist').innerText = nome;
         if(document.getElementById('qtdDroga')) document.getElementById('qtdDroga').value = "";
         
         calcularLucroVenda(); 
-        
         switchView('droga'); 
         
-        // Pinta a aba ativa manualmente na lateral
         if(navId) {
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             const btn = document.getElementById(navId);
@@ -802,7 +897,7 @@
         });
     }
 
-    // ====== GESTÃO DE USUÁRIOS ======
+    // ====== GESTÃO DE USUÁRIOS E CADASTRO ======
     function listarUsuarios() { 
         dbRef('usuarios').on('value', snap => { 
             const lista = document.getElementById('listaUsuarios'); if(lista) lista.innerHTML = ""; 
@@ -815,9 +910,20 @@
         }); 
     }
     function prepararEdicao(l, n, r) { document.getElementById('nCompleto').value = n; document.getElementById('nUser').value = l; document.getElementById('nRole').value = r || 'padrao'; document.getElementById('btnSalvarAnalista').innerText = "ATUALIZAR"; document.getElementById('nUser').readOnly = true; }
+    
     function cadastrarAnalista() {
-        const nc = document.getElementById('nCompleto').value; const u = document.getElementById('nUser').value.toUpperCase().trim(); const p = document.getElementById('nPass').value; const r = document.getElementById('nRole').value;
-        dbRef('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: r }).then(() => location.reload());
+        const nc = document.getElementById('nCompleto').value; 
+        const u = document.getElementById('nUser').value.toUpperCase().trim(); 
+        const p = document.getElementById('nPass').value; 
+        const r = document.getElementById('nRole').value;
+        
+        // Regra de Troca de Senha ativada se for conta nova/mudança de senha
+        dbRef('usuarios/' + encodeKey(u)).set({ 
+            nomeCompleto: nc, 
+            senha: p, 
+            role: r,
+            senhaAlterada: false 
+        }).then(() => location.reload());
     }
 </script>
 </body>
