@@ -101,13 +101,16 @@
         .resumo-val { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
         .chart-resumo-container { height: 200px; width: 100%; display: flex; justify-content: center; margin-bottom: 25px; }
 
-        /* Oculta elementos baseados no projeto logado */
+        /* ====== CORREÇÃO DO ERRO VISUAL AQUI ====== */
         .only-command { display: none; }
         .only-distrito { display: none; }
+        
         body.proj-command .only-command { display: block; }
         body.proj-command .nav-item.only-command { display: flex; }
-        body.proj-distrito .only-distrito { display: block; }
-        body.proj-distrito .nav-item.only-distrito { display: flex; }
+        
+        body.proj-distrito22 .only-distrito { display: block; }
+        body.proj-distrito22 .nav-item.only-distrito { display: flex; }
+        /* ========================================== */
 
         .machine-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 24px; padding: 25px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .machine-timer { font-family: monospace; font-size: 1.8rem; font-weight: 800; color: var(--warning); }
@@ -441,13 +444,6 @@
                 <tbody id="listaUsuarios"></tbody>
             </table>
         </div>
-        <div class="section-card" style="border-color: var(--primary);">
-            <h2 class="section-title">💬 Feedback da Equipe</h2>
-            <table>
-                <thead><tr><th>Data</th><th>Analista</th><th>Mensagem</th><th style="text-align:right">Ação</th></tr></thead>
-                <tbody id="listaReports"></tbody>
-            </table>
-        </div>
     </div>
 </div>
 
@@ -521,7 +517,7 @@
             
             // Controle de Tema por Projeto
             const t = localStorage.getItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme');
-            document.body.className = `proj-${logado.projeto}`;
+            document.body.classList.add(`proj-${logado.projeto}`); // AQUI ESTÁ A CORREÇÃO (Adicionado classList.add para não matar outras classes)
             if(t) document.body.classList.add(`theme-${t}`);
             else if(logado.projeto === 'distrito22') document.body.classList.add('theme-distrito-dark'); // Tema padrão RP
             
@@ -544,7 +540,11 @@
     function switchView(v) { 
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1)).classList.add('active'); 
+        
+        // Verifica se a div existe para não dar erro
+        const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
+        if (alvo) alvo.classList.add('active'); 
+        
         if(v === 'admin') listarUsuarios(); 
     }
 
@@ -592,64 +592,12 @@
         });
     }
 
-    // ESTOQUE GLOBAL E DROGAS ESPECÍFICAS
-    function escutarEstoqueGlobal() {
-        dbRef('estoque_drogas').on('value', snap => {
-            totalMaconha = 0; totalCocaina = 0; totalMeta = 0;
-            const tbodyDroga = document.getElementById('corpoDroga'); 
-            if(tbodyDroga) tbodyDroga.innerHTML = ""; // Limpa a tabela da droga ativa
-
-            snap.forEach(item => {
-                const c = item.val();
-                // Soma global
-                if (c.item === 'Maconha') { c.operacao === 'Entrada' ? totalMaconha += c.qtd : totalMaconha -= c.qtd; }
-                if (c.item === 'Cocaina') { c.operacao === 'Entrada' ? totalCocaina += c.qtd : totalCocaina -= c.qtd; }
-                if (c.item === 'Metanfetamina') { c.operacao === 'Entrada' ? totalMeta += c.qtd : totalMeta -= c.qtd; }
-
-                // Se a tabela ativa for da mesma droga, popula
-                if (c.item === currentDroga && tbodyDroga) {
-                    const corOp = c.operacao === 'Entrada' ? 'var(--success)' : 'var(--danger)';
-                    const sinal = c.operacao === 'Entrada' ? '+' : '-';
-                    const deleteBtn = logado.role === 'admin' ? `<button class="btn-delete-pro" onclick="dbRef('estoque_drogas').child('${item.key}').remove()">🗑</button>` : '---';
-                    tbodyDroga.innerHTML = `<tr><td>${c.data} ${c.hora}</td><td><b>${c.membro}</b></td><td style="color:${corOp}; font-weight:800">${c.operacao}</td><td style="font-weight:800">${sinal} ${c.qtd}</td><td style="text-align:right">${deleteBtn}</td></tr>` + tbodyDroga.innerHTML;
-                }
-            });
-
-            // Atualiza Dashboard RP
-            document.getElementById('dashKpiMaconha').innerText = totalMaconha;
-            document.getElementById('dashKpiCocaina').innerText = totalCocaina;
-            document.getElementById('dashKpiMetaDroga').innerText = totalMeta;
-            
-            // Atualiza KPI da Tela da Droga ativa
-            atualizarKpiDrogaView();
-        });
-    }
-
-    function abrirDroga(nome) {
-        currentDroga = nome;
-        document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL - ${nome.toUpperCase()}`;
-        document.getElementById('txtDrogaNome').innerText = nome;
-        document.getElementById('txtDrogaHist').innerText = nome;
-        
-        atualizarKpiDrogaView();
-        escutarEstoqueGlobal(); // Força re-render da tabela
-        switchView('droga');
-    }
-
-    function atualizarKpiDrogaView() {
-        let val = 0;
-        if(currentDroga === 'Maconha') val = totalMaconha;
-        if(currentDroga === 'Cocaina') val = totalCocaina;
-        if(currentDroga === 'Metanfetamina') val = totalMeta;
-        document.getElementById('kpiDrogaTotal').innerText = val;
-    }
-
-    function salvarDroga() {
+    // ESTOQUE (DROGAS)
+    function salvarEstoqueDistrito() {
         const op = document.getElementById('opDroga').value;
         const qtd = parseInt(document.getElementById('qtdDroga').value);
         if(!qtd || qtd <= 0) return showToast("Quantidade inválida!", "error");
 
-        // Validação: Não pode sacar mais do que tem no baú
         let estoqueAtual = 0;
         if(currentDroga === 'Maconha') estoqueAtual = totalMaconha;
         if(currentDroga === 'Cocaina') estoqueAtual = totalCocaina;
@@ -667,6 +615,55 @@
             document.getElementById('qtdDroga').value = "";
             showToast("Baú atualizado!", "success");
         });
+    }
+
+    function escutarEstoqueGlobal() {
+        dbRef('estoque_drogas').on('value', snap => {
+            totalMaconha = 0; totalCocaina = 0; totalMeta = 0;
+            const tbodyDroga = document.getElementById('corpoDroga'); 
+            if(tbodyDroga) tbodyDroga.innerHTML = "";
+
+            snap.forEach(item => {
+                const c = item.val();
+                if (c.item === 'Maconha') { c.operacao === 'Entrada' ? totalMaconha += c.qtd : totalMaconha -= c.qtd; }
+                if (c.item === 'Cocaina') { c.operacao === 'Entrada' ? totalCocaina += c.qtd : totalCocaina -= c.qtd; }
+                if (c.item === 'Metanfetamina') { c.operacao === 'Entrada' ? totalMeta += c.qtd : totalMeta -= c.qtd; }
+
+                if (c.item === currentDroga && tbodyDroga) {
+                    const corOp = c.operacao === 'Entrada' ? 'var(--success)' : 'var(--danger)';
+                    const sinal = c.operacao === 'Entrada' ? '+' : '-';
+                    const deleteBtn = logado.role === 'admin' ? `<button class="btn-delete-pro" onclick="dbRef('estoque_drogas').child('${item.key}').remove()">🗑</button>` : '---';
+                    tbodyDroga.innerHTML = `<tr><td>${c.data} ${c.hora}</td><td><b>${c.membro}</b></td><td style="color:${corOp}; font-weight:800">${c.operacao}</td><td style="font-weight:800">${sinal} ${c.qtd}</td><td style="text-align:right">${deleteBtn}</td></tr>` + tbodyDroga.innerHTML;
+                }
+            });
+
+            document.getElementById('dashKpiMaconha').innerText = totalMaconha;
+            document.getElementById('dashKpiCocaina').innerText = totalCocaina;
+            document.getElementById('dashKpiMetaDroga').innerText = totalMeta;
+            atualizarKpiDrogaView();
+        });
+    }
+
+    function abrirDroga(nome) {
+        currentDroga = nome;
+        document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL - ${nome.toUpperCase()}`;
+        document.getElementById('txtDrogaNome').innerText = nome;
+        document.getElementById('txtDrogaHist').innerText = nome;
+        
+        atualizarKpiDrogaView();
+        escutarEstoqueGlobal(); 
+        
+        // Remove active dos outros nav-items e põe no menu de drogas que foi clicado (manualmente pq switchView pode não pegar o exato nav-item clicado se não passar ID)
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
+        document.getElementById('viewDroga').classList.add('active');
+    }
+
+    function atualizarKpiDrogaView() {
+        let val = 0;
+        if(currentDroga === 'Maconha') val = totalMaconha;
+        if(currentDroga === 'Cocaina') val = totalCocaina;
+        if(currentDroga === 'Metanfetamina') val = totalMeta;
+        if(document.getElementById('kpiDrogaTotal')) document.getElementById('kpiDrogaTotal').innerText = val;
     }
 
     // LAVANDERIA
@@ -751,7 +748,7 @@
 
 
     /* =================================================================================
-       LÓGICA - COMMAND CENTER E GERAL (MANTIDA)
+       LÓGICA - COMMAND CENTER E GERAL
     ================================================================================= */
     
     function abrirModalTurno() { document.getElementById('modalStartTurn').style.display = 'flex'; }
@@ -937,7 +934,7 @@
     }
 
     function monitorar() {
-        if (!logado || logado.projeto !== 'command') return; // Só Command tem monitor sonoro no momento
+        if (!logado || logado.projeto !== 'command') return; 
         if (localStorage.getItem('command_notifications_enabled') === 'false') return;
         dbRef('chamados').once('value', snap => {
             const agora = new Date().getTime();
