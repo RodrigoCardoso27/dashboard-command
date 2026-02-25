@@ -95,14 +95,18 @@
         body.proj-distrito22 div.only-distrito:not(.view-section) { display: block; }
         body.proj-distrito22 div.nav-item.only-distrito { display: flex; }
         
+        /* Liderança (Gerente, 01, 02, Admin) */
         th.only-high-rank, td.only-high-rank { display: none; }
         body.is-high-rank th.only-high-rank, body.is-high-rank td.only-high-rank { display: table-cell; }
-        
         div.only-high-rank:not(.view-section):not(.nav-item) { display: none; }
         body.is-high-rank div.only-high-rank:not(.view-section):not(.nav-item) { display: block; }
-        
         div.nav-item.only-high-rank { display: none; }
         body.is-high-rank div.nav-item.only-high-rank { display: flex; }
+
+        /* Apenas Admin Root */
+        .only-admin { display: none; }
+        body.is-admin div.only-admin:not(.view-section):not(.nav-item) { display: block; }
+        body.is-admin div.nav-item.only-admin { display: flex; }
 
         .rp-kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; text-align: center; }
         .machine-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 24px; padding: 25px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
@@ -184,7 +188,10 @@
 
         <div class="sidebar-title only-distrito">⚙️ SISTEMAS</div>
         <div class="nav-item only-distrito" onclick="switchView('lavanderiaDistrito', event)">⏱️ Lavanderia (Tempo)</div>
+        
         <div class="nav-item only-distrito only-high-rank" onclick="switchView('gestaoItens', event)">🛠️ Gerenciar Itens</div>
+        
+        <div class="nav-item only-distrito only-admin" onclick="switchView('logsDistrito', event)">📋 Logs do Sistema</div>
 
         <div class="sidebar-title" style="margin-top: 20px;">AJUSTES</div>
         <div class="nav-item" onclick="switchView('themes', event)">🎨 Aparência</div>
@@ -292,7 +299,7 @@
         <div class="section-card">
             <h2 class="section-title">📑 Extrato Geral do Cofre</h2>
             <table>
-                <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>OPERAÇÃO</th><th>VALOR</th><th>DESCRIÇÃO</th></tr></thead>
+                <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>OPERAÇÃO</th><th>VALOR</th><th>DESCRIÇÃO</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
                 <tbody id="corpoCaixaDistrito"></tbody>
             </table>
         </div>
@@ -392,6 +399,17 @@
             <div id="listaMaquinas"></div>
         </div>
     </div>
+    
+    <div id="viewLogsDistrito" class="view-section only-admin">
+        <div class="section-card" style="border-color: var(--warning);">
+            <h2 class="section-title">📋 Logs de Auditoria do Sistema</h2>
+            <p style="color: var(--text-dim); margin-bottom: 20px;">Monitoramento invisível. Todas as ações e exclusões de qualquer membro ficam registradas aqui.</p>
+            <table>
+                <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>CATEGORIA</th><th>AÇÃO EXECUTADA</th></tr></thead>
+                <tbody id="corpoLogs"></tbody>
+            </table>
+        </div>
+    </div>
 
     <div id="viewThemes" class="view-section">
         <div class="section-card only-distrito">
@@ -433,12 +451,12 @@
                 <button class="btn-success" id="btnSalvarAnalista" onclick="cadastrarAnalista()">CADASTRAR</button>
             </div>
             <table style="margin-top: 40px;">
-                <thead><tr><th>Nome / RP</th><th>Login</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
+                <thead><tr><th>Nome RP</th><th>Login</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
                 <tbody id="listaUsuarios"></tbody>
             </table>
         </div>
         
-        <div class="section-card" style="margin-top: 30px; border-color: var(--warning);">
+        <div class="section-card" style="margin-top: 30px; border-color: var(--primary);">
             <h2 class="section-title">📬 Caixa de Sugestões e Reports</h2>
             <table>
                 <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>MENSAGEM</th><th style="text-align:right">AÇÃO</th></tr></thead>
@@ -482,10 +500,57 @@
         return hRanks.includes(logado.role);
     }
 
+    // NOVA FUNÇÃO: APENAS ADMIN PODE VER O LOG
+    function isAdminRole() {
+        if(!logado) return false;
+        return logado.role === 'admin' || logado.role === 'ADMIN';
+    }
+
     function dbRef(path) {
         const p = logado ? logado.projeto : loginProject;
         if (p === 'command') return rootDatabase.ref(path);
         return rootDatabase.ref('projetos/' + p + '/' + path);
+    }
+
+    // ====== SISTEMA DE LOGS (AUDITORIA) ======
+    function registrarLog(acao, detalhes) {
+        if(!logado) return;
+        dbRef('logs').push({ data: getHoje(), hora: getHora(), membro: logado.nome, acao: acao, detalhes: detalhes });
+    }
+
+    function escutarLogs() {
+        if(!isAdminRole()) return; // SOMENTE ADMIN VÊ ISSO AGORA
+        dbRef('logs').on('value', snap => {
+            const tbody = document.getElementById('corpoLogs');
+            if(!tbody) return;
+            tbody.innerHTML = "";
+            let logsArray = [];
+            snap.forEach(item => logsArray.push(item.val()));
+            
+            logsArray.reverse().forEach(c => {
+                let corAcao = 'var(--text-main)';
+                if(c.acao === 'EXCLUSÃO') corAcao = 'var(--danger)';
+                else if(c.acao === 'CAIXA') corAcao = 'var(--success)';
+                else if(c.acao === 'ESTOQUE') corAcao = 'var(--primary)';
+                else if(c.acao === 'LAVANDERIA') corAcao = 'var(--warning)';
+
+                tbody.innerHTML += `<tr>
+                    <td style="white-space: nowrap;">${c.data} ${c.hora}</td>
+                    <td><b>${c.membro}</b></td>
+                    <td style="color:${corAcao}; font-weight:800">${c.acao}</td>
+                    <td>${c.detalhes}</td>
+                </tr>`;
+            });
+        });
+    }
+
+    function deletarRegistro(caminho, id, logMsg) {
+        if(confirm("Tem certeza que deseja excluir este registro permanentemente?")) {
+            dbRef(caminho).child(id).remove().then(() => {
+                registrarLog('EXCLUSÃO', logMsg);
+                showToast("Registro excluído!", "success");
+            });
+        }
     }
 
     function obterEmojiItem(nomeItem) {
@@ -502,7 +567,6 @@
         return '📦'; 
     }
 
-    // ====== DINAMISMO DO NAVEGADOR ======
     function atualizarIconeETitulo() {
         const isCommand = logado.projeto === 'command';
         document.title = isCommand ? "🌐 Command Center" : "🐶 Distrito 22";
@@ -513,7 +577,6 @@
         link.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${emoji}</text></svg>`;
     }
 
-    // ====== FEEDBACKS E REPORTS ======
     function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
     function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
     
@@ -521,8 +584,7 @@
         const msg = document.getElementById('msgReport').value.trim();
         if(!msg) return showToast("A mensagem não pode estar vazia!", "error");
         dbRef('feedbacks').push({ data: getHoje(), hora: getHora(), membro: logado.nome, msg: msg }).then(() => {
-            fecharModalReport();
-            showToast("Feedback enviado à liderança!", "success");
+            fecharModalReport(); showToast("Feedback enviado à liderança!", "success");
         });
     }
 
@@ -539,7 +601,6 @@
         });
     }
 
-    // ====== LOGIN & SEGURANÇA ======
     function setLoginProject(proj) {
         loginProject = proj;
         document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
@@ -595,6 +656,9 @@
             
             document.body.classList.add(`proj-${logado.projeto}`); 
             if(isHighRank()) document.body.classList.add(`is-high-rank`); 
+            
+            // TRAVA ADICIONAL PARA O ADMIN
+            if(isAdminRole()) document.body.classList.add(`is-admin`); 
 
             const t = localStorage.getItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme');
             if(t) document.body.classList.add(`theme-${t}`);
@@ -607,7 +671,6 @@
             if(logado.projeto === 'command') {
                 document.getElementById('navCommandHome').classList.add('active');
                 switchView('dashCommand');
-                // Inicializa Command
             } else {
                 document.getElementById('navDashRP').classList.add('active');
                 switchView('dashDistrito');
@@ -616,6 +679,7 @@
                 escutarDebitos();
                 escutarEstoqueGlobal();
                 iniciarLoopLavanderia();
+                if(isAdminRole()) escutarLogs();
             }
         }
     };
@@ -638,9 +702,6 @@
         c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
     }
 
-    /* =================================================================================
-       DISTRITO 22 - GESTÃO DE ITENS DINÂMICOS
-    ================================================================================= */
     function carregarItensDinamicos() {
         dbRef('config/itens').on('value', snap => {
             listaDeItensDinamicos = [];
@@ -663,11 +724,10 @@
                 if(menuSidebar) {
                     menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${nomeItem}', 'navItem_${item.key}')">${icone} ${nomeItem}</div>`;
                 }
-                
                 selects.forEach(s => s.innerHTML += `<option value="${nomeItem}">${nomeItem}</option>`);
 
                 if(listaTabela) {
-                    listaTabela.innerHTML += `<tr><td>${icone} <b>${nomeItem}</b></td><td style="text-align:right"><button class="btn-delete-pro" onclick="dbRef('config/itens').child('${item.key}').remove()">🗑</button></td></tr>`;
+                    listaTabela.innerHTML += `<tr><td>${icone} <b>${nomeItem}</b></td><td style="text-align:right"><button class="btn-delete-pro" onclick="deletarRegistro('config/itens', '${item.key}', 'Deletou o item ${nomeItem} do sistema')">🗑</button></td></tr>`;
                 }
             });
 
@@ -683,13 +743,11 @@
         if(!n) return;
         dbRef('config/itens').push({ nome: n }).then(() => {
             document.getElementById('novoItemNome').value = "";
+            registrarLog('SISTEMA', `Cadastrou novo item no baú: ${n}`);
             showToast("Item cadastrado!");
         });
     }
 
-    /* =================================================================================
-       DISTRITO 22 - DÉBITOS / REEMBOLSOS
-    ================================================================================= */
     function salvarDebito() {
         const item = document.getElementById('itemDebito').value;
         const val = parseFloat(document.getElementById('valorDebito').value);
@@ -697,6 +755,7 @@
         
         if(!item || !val || val <= 0) return alert("Selecione o item e insira um valor válido!");
         dbRef('debitos').push({ data: getHoje(), hora: getHora(), membro: logado.nome, item: item, valor: val, detalhe: det, status: 'Pendente' }).then(() => {
+            registrarLog('DÉBITO', `Solicitou reembolso de $${val} referente a ${item}`);
             document.getElementById('valorDebito').value = ""; document.getElementById('detalheDebito').value = "";
             showToast("Reembolso solicitado!", "success");
         });
@@ -719,7 +778,7 @@
                 if(isHighRank() && c.status === 'Pendente') {
                     acoes = `<button class="btn-success" style="padding: 5px 10px; font-size:0.7rem;" onclick="pagarDebito('${item.key}', ${c.valor}, '${c.membro}', '${c.item}')">PAGAR</button>`;
                 } else if (isHighRank() && c.status === 'Pago') {
-                    acoes = `<button class="btn-delete-pro" style="padding: 5px 10px; font-size:0.7rem;" onclick="dbRef('debitos').child('${item.key}').remove()">🗑 Excluir</button>`;
+                    acoes = `<button class="btn-delete-pro" style="padding: 5px 10px; font-size:0.7rem;" onclick="deletarRegistro('debitos', '${item.key}', 'Excluiu histórico de débito pago de ${c.membro} no valor de $${c.valor}')">🗑 Excluir</button>`;
                 }
 
                 tbody.innerHTML = `<tr>
@@ -741,31 +800,57 @@
         if(confirm(`Confirmar pagamento de $${valor} para ${membro}?\n\nDeseja que este valor seja DEBITADO automaticamente do Cofre da Família?`)) {
             dbRef('debitos').child(id).update({ status: 'Pago', pagoPor: logado.nome }).then(() => {
                 dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Saque', valor: valor, desc: `Reembolso de ${itemDesc} para ${membro}` });
+                registrarLog('DÉBITO', `Aprovou o pagamento de $${valor} para ${membro}`);
                 showToast("Dívida paga e Caixa atualizado!", "success");
             });
         }
     }
 
-    /* =================================================================================
-       DISTRITO 22 - ESTOQUE (MÚLTIPLOS ITENS)
-    ================================================================================= */
+    function salvarCaixaDistrito() {
+        const tipo = document.getElementById('tipoOperacaoDistrito').value;
+        const val = parseFloat(document.getElementById('valorDistrito').value);
+        const desc = document.getElementById('motivoDistrito').value.trim();
+        if(!val || !desc || val <= 0) return alert("Preencha valor e motivo!");
+        dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: tipo, valor: val, desc: desc }).then(() => {
+            registrarLog('CAIXA', `Realizou ${tipo} de $${val} (${desc})`);
+            document.getElementById('valorDistrito').value = ""; document.getElementById('motivoDistrito').value = "";
+            showToast("Transação salva!", "success");
+        });
+    }
+
+    function escutarCaixaDistrito() {
+        dbRef('caixa').on('value', snap => {
+            const tbody = document.getElementById('corpoCaixaDistrito'); 
+            if(tbody) tbody.innerHTML = "";
+            let saldoTotal = 0; 
+            snap.forEach(item => {
+                const c = item.val();
+                if(c.tipo === 'Deposito' || c.tipo === 'Lavagem') saldoTotal += c.valor;
+                if(c.tipo === 'Saque') saldoTotal -= c.valor;
+                
+                const cor = (c.tipo === 'Saque') ? 'var(--danger)' : 'var(--success)';
+                const sinal = (c.tipo === 'Saque') ? '-' : '+';
+                const deleteBtn = logado.role === 'admin' ? `<button class="btn-delete-pro" onclick="deletarRegistro('caixa', '${item.key}', 'Excluiu registro de caixa: ${c.tipo} de $${c.valor}')">🗑</button>` : '---';
+                if(tbody) tbody.innerHTML = `<tr><td>${c.data} ${c.hora}</td><td><b>${c.membro}</b></td><td>${c.tipo}</td><td style="color:${cor}; font-weight:800">${sinal} $${c.valor}</td><td>${c.desc}</td><td class="only-high-rank" style="text-align:right">${deleteBtn}</td></tr>` + tbody.innerHTML;
+            });
+            if(document.getElementById('kpiSaldoDistrito')) document.getElementById('kpiSaldoDistrito').innerText = formatarDinheiro(saldoTotal);
+            if(document.getElementById('dashKpiSaldo')) document.getElementById('dashKpiSaldo').innerText = formatarDinheiro(saldoTotal);
+        });
+    }
+
     function abrirDroga(nome, navId) {
         currentDroga = nome;
-        
         if(document.getElementById('lblDrogaTitle')) document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL DE ${nome.toUpperCase()}`;
         if(document.getElementById('txtDrogaNome')) document.getElementById('txtDrogaNome').innerText = nome;
         if(document.getElementById('txtDrogaHist')) document.getElementById('txtDrogaHist').innerText = nome;
         if(document.getElementById('qtdDroga')) document.getElementById('qtdDroga').value = "";
-        
         calcularLucroVenda(); 
         switchView('droga'); 
-        
         if(navId) {
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             const btn = document.getElementById(navId);
             if(btn) btn.classList.add('active');
         }
-
         atualizarTelaEstoqueDinamico();
     }
 
@@ -778,11 +863,8 @@
         const spanValor = document.getElementById('valLucroDroga');
 
         if(op === 'Saida' && qtd > 0) {
-            divInfo.style.display = 'block';
-            spanValor.innerText = formatarDinheiro(qtd * 45); 
-        } else {
-            divInfo.style.display = 'none';
-        }
+            divInfo.style.display = 'block'; spanValor.innerText = formatarDinheiro(qtd * 45); 
+        } else { divInfo.style.display = 'none'; }
     }
 
     function salvarEstoque() {
@@ -796,9 +878,8 @@
         dbRef('estoque_drogas').push({
             data: getHoje(), hora: getHora(), membro: logado.nome, item: currentDroga, operacao: op, qtd: qtd
         }).then(() => {
-            document.getElementById('qtdDroga').value = "";
-            calcularLucroVenda();
-            showToast("Baú atualizado!", "success");
+            registrarLog('ESTOQUE', `Realizou ${op} de ${qtd}x ${currentDroga}`);
+            document.getElementById('qtdDroga').value = ""; calcularLucroVenda(); showToast("Baú atualizado!", "success");
         });
     }
 
@@ -844,15 +925,12 @@
             if(c.item === currentDroga) {
                 const corOp = c.operacao === 'Entrada' ? 'var(--success)' : 'var(--danger)';
                 const sinal = c.operacao === 'Entrada' ? '+' : '-';
-                const deleteBtn = isHighRank() ? `<button class="btn-delete-pro" onclick="dbRef('estoque_drogas').child('${c.key}').remove()">🗑</button>` : '---';
+                const deleteBtn = isHighRank() ? `<button class="btn-delete-pro" onclick="deletarRegistro('estoque_drogas', '${c.key}', 'Excluiu registro de estoque: ${c.operacao} de ${c.qtd}x ${c.item}')">🗑</button>` : '---';
                 tbodyDroga.innerHTML += `<tr><td>${c.data} ${c.hora}</td><td><b>${c.membro}</b></td><td style="color:${corOp}; font-weight:800">${c.operacao}</td><td style="font-weight:800">${sinal} ${c.qtd}</td><td class="only-high-rank" style="text-align:right">${deleteBtn}</td></tr>`;
             }
         });
     }
 
-    /* =================================================================================
-       DISTRITO 22 - CAIXA E LAVANDERIA
-    ================================================================================= */
     function calcularPrevisaoLavagem() {
         let val = parseInt(document.getElementById('sujoLavar').value) || 0;
         if(val > 50000) { val = 50000; document.getElementById('sujoLavar').value = 50000; }
@@ -865,6 +943,7 @@
         if(!val || val <= 0 || val > 50000) return alert("Valor inválido! Máx: 50.000");
         const tempoMs = ((val / 50000) * 25) * 60 * 1000; 
         dbRef('lavanderia').push({ membro: logado.nome, sujo: val, limpo: val*0.5, endTime: Date.now() + tempoMs, status: 'lavando', data: getHoje() }).then(() => {
+            registrarLog('LAVANDERIA', `Iniciou máquina com $${val} sujo`);
             document.getElementById('sujoLavar').value = ""; calcularPrevisaoLavagem();
         });
     }
@@ -893,18 +972,20 @@
     }
     function coletarLavagem(id, valorLimpo) {
         dbRef('lavanderia').child(id).update({ status: 'coletado' }).then(() => {
-            dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Lavagem', valor: valorLimpo, desc: "Dinheiro lavado e coletado" }); showToast("Cofre abastecido!", "success");
+            dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Lavagem', valor: valorLimpo, desc: "Dinheiro lavado e coletado" }); 
+            registrarLog('LAVANDERIA', `Coletou $${valorLimpo} limpo da máquina`);
+            showToast("Cofre abastecido!", "success");
         });
     }
 
-    // ====== GESTÃO DE USUÁRIOS E CADASTRO ======
+    // ====== GESTÃO DE USUÁRIOS ======
     function listarUsuarios() { 
         dbRef('usuarios').on('value', snap => { 
             const lista = document.getElementById('listaUsuarios'); if(lista) lista.innerHTML = ""; 
             snap.forEach(u => { 
                 const val = u.val(); const login = decodeKey(u.key); 
                 const isSuperAdmin = logado.nome === 'ADMIN' || logado.role === 'admin' || logado.role === '01'; 
-                const deleteBtn = isSuperAdmin ? `<button onclick="dbRef('usuarios').child('${u.key}').remove()" class="btn-action" style="color:var(--danger)">🗑</button>` : '';
+                const deleteBtn = isSuperAdmin ? `<button onclick="deletarRegistro('usuarios', '${u.key}', 'Excluiu o acesso do membro ${login}')" class="btn-action" style="color:var(--danger)">🗑</button>` : '';
                 if(lista) lista.innerHTML += `<tr><td>${val.nomeCompleto}</td><td><b>${login}</b></td><td>${val.role}</td><td style="text-align:right"><button onclick="prepararEdicao('${login}', '${val.nomeCompleto}', '${val.role}')" style="background:none; color:var(--warning); cursor:pointer; border:none; margin-right:10px;">✏️</button>${deleteBtn}</td></tr>`; 
             }); 
         }); 
@@ -917,13 +998,15 @@
         const p = document.getElementById('nPass').value; 
         const r = document.getElementById('nRole').value;
         
-        // Regra de Troca de Senha ativada se for conta nova/mudança de senha
         dbRef('usuarios/' + encodeKey(u)).set({ 
             nomeCompleto: nc, 
             senha: p, 
             role: r,
             senhaAlterada: false 
-        }).then(() => location.reload());
+        }).then(() => {
+            registrarLog('SISTEMA', `Cadastrou/Atualizou o acesso do membro ${u}`);
+            location.reload();
+        });
     }
 </script>
 </body>
