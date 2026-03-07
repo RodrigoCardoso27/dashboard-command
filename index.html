@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SISTEMA INTEGRADO</title>
 
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* === O NOVO VISUAL PREMIUM (Estilo Tailwind SaaS) === */
     :root {
       --bg: #0b1220; --panel: #101a30; --text: #e7eefc; --muted: #94a3b8;
       --brand: #60a5fa; --brand-glow: rgba(96,165,250,0.15);
@@ -19,6 +20,8 @@
       --border: rgba(255,255,255,0.08); --shadow: 0 12px 30px rgba(0,0,0,0.35);
       --radius: 16px;
     }
+
+    /* TEMAS DINÂMICOS */
     [data-theme="nordic"] { --bg: #06141a; --panel: #0b1f27; --text: #e9fbff; --muted: #8fb3bf; --brand: #39c6ff; --brand-glow: rgba(57,198,255,0.15); --border: rgba(233,251,255,0.10); }
     [data-theme="midnight"] { --bg: #070816; --panel: #0d1030; --text: #eef2ff; --muted: #a5b4fc; --brand: #818cf8; --brand-glow: rgba(129,140,248,0.15); --border: rgba(238,242,255,0.10); }
     [data-theme="distrito-dark"] { --bg: #0b0507; --panel: #16080c; --text: #ffe7ec; --muted: #ffb3c2; --brand: #ff3355; --brand-glow: rgba(255,51,85,0.15); --border: rgba(255,231,236,0.12); }
@@ -26,81 +29,83 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
     body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      min-height: 100vh;
-      overflow: hidden;
-      transition: 0.35s ease;
+      font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+      display: flex; min-height: 100vh; overflow: hidden; transition: 0.4s ease;
       background-image:
         radial-gradient(1200px 600px at 20% 0%, var(--brand-glow), transparent 60%),
         radial-gradient(900px 450px at 90% 20%, rgba(34,197,94,0.05), transparent 55%);
     }
 
+    /* TOAST E MODAIS */
     #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 11000; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; pointer-events: none; }
-    .toast { background: var(--panel); border: 1px solid var(--border); padding: 14px 18px; border-radius: 12px; color: var(--text); font-weight: 700; font-size: 0.85rem; box-shadow: var(--shadow); animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; max-width: 420px; display:flex; gap:10px; }
+    .toast { background: var(--panel); border: 1px solid var(--border); padding: 14px 28px; border-radius: 12px; color: var(--text); font-weight: 600; font-size: 0.85rem; box-shadow: var(--shadow); animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; max-width: 380px; }
     @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; }
-    .modal-box { background: var(--panel); border: 1px solid var(--border); padding: 28px; border-radius: 24px; width: 100%; max-width: 520px; text-align: center; box-shadow: var(--shadow); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-box { background: var(--panel); border: 1px solid var(--border); padding: 35px; border-radius: 24px; width: 100%; max-width: 520px; text-align: center; box-shadow: var(--shadow); }
 
+    /* LOGIN */
     #telaLogin { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-    .login-card { background: var(--panel); padding: 36px; border-radius: 24px; width: 100%; max-width: 420px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
-    .project-selector { display: flex; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 6px; margin-bottom: 24px; border: 1px solid var(--border); }
-    .proj-tab { flex: 1; padding: 12px; text-align: center; font-weight: 800; color: var(--muted); cursor: pointer; border-radius: 8px; transition: 0.2s; font-size: 0.8rem; }
+    .login-card { background: var(--panel); padding: 40px; border-radius: 24px; width: 100%; max-width: 420px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+    .project-selector { display: flex; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 6px; margin-bottom: 30px; border: 1px solid var(--border); }
+    .proj-tab { flex: 1; padding: 12px; text-align: center; font-weight: 700; color: var(--muted); cursor: pointer; border-radius: 8px; transition: 0.2s; font-size: 0.8rem; }
     .proj-tab.active { background: var(--brand); color: white; box-shadow: 0 4px 15px var(--brand-glow); }
 
-    .sidebar { width: 280px; background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent); backdrop-filter: blur(10px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 22px 18px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; overflow-y: auto; }
-    .logo-area { display: flex; align-items: center; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    /* SIDEBAR E MAIN */
+    .sidebar { width: 280px; background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent); backdrop-filter: blur(10px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 20px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; overflow-y: auto; }
+    .logo-area { display: flex; align-items: center; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
     .logo-icon { font-size: 1.8rem; }
-    .logo-text { font-weight: 900; font-size: 0.95rem; line-height: 1.2; }
-    .sidebar-title { padding: 16px 10px 8px 10px; font-size: 0.75rem; font-weight: 900; color: var(--brand); letter-spacing: 1px; text-transform: uppercase; }
+    .logo-text { font-weight: 800; font-size: 0.95rem; line-height: 1.2; }
 
-    .nav-item { padding: 12px 14px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 4px; font-weight: 800; color: var(--muted); display: flex; align-items: center; gap: 10px; font-size: 0.85rem; border: 1px solid transparent; }
+    .sidebar-title { padding: 20px 10px 8px 10px; font-size: 0.75rem; font-weight: 800; color: var(--brand); letter-spacing: 1px; text-transform: uppercase; }
+    .nav-item { padding: 12px 14px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 4px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 12px; font-size: 0.85rem; border: 1px solid transparent; }
     .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-    .nav-item.active { background: var(--brand-glow); border-color: rgba(255,255,255,0.05); color: var(--brand); }
+    .nav-item.active { background: var(--brand-glow); border-color: rgba(255,255,255,0.05); color: var(--brand); font-weight: 700; }
 
-    .main-content { margin-left: 280px; padding: 28px 34px; width: calc(100% - 280px); overflow-y: auto; height: 100vh; scroll-behavior: smooth; }
+    .main-content { margin-left: 280px; padding: 30px 40px; width: calc(100% - 280px); overflow-y: auto; height: 100vh; scroll-behavior: smooth; }
     .view-section { display: none; }
-    .view-section.active { display: block; animation: viewFade 0.25s ease; }
+    .view-section.active { display: block; animation: viewFade 0.3s ease; }
     @keyframes viewFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .card { background: var(--panel); border-radius: 20px; border: 1px solid var(--border); padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow); }
-    .card-header { font-size: 1.05rem; font-weight: 900; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .subnote { color: var(--muted); font-size: 0.85rem; line-height: 1.45; }
+    /* CARDS E GRIDS */
+    .card { background: var(--panel); border-radius: 20px; border: 1px solid var(--border); padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .card-header { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
 
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 18px; }
-    .kpi-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 16px; padding: 18px; text-align: center; transition: 0.2s; }
-    .kpi-title { font-size: 0.65rem; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-    .kpi-value { font-size: 2rem; font-weight: 950; margin-top: 8px; color: var(--text); }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: 0.2s; }
+    .kpi-title { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-value { font-size: 2rem; font-weight: 800; margin-top: 8px; color: var(--text); }
     .kpi-value.editable { cursor: pointer; }
-    .kpi-value.editable:hover { color: var(--warn); transform: scale(1.03); }
+    .kpi-value.editable:hover { color: var(--warn); transform: scale(1.05); }
 
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-    label { font-size: 0.75rem; font-weight: 900; color: var(--muted); margin-bottom: 6px; display: block; }
-    input, select, textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 14px; color: var(--text); font-family: inherit; font-size: 0.9rem; transition: 0.2s; }
-    input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    /* FORMS */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+    label { font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; display: block; }
+    input, select, textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; color: var(--text); font-family: inherit; font-size: 0.9rem; transition: 0.2s; }
+    input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
 
-    .btn { border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: 900; font-size: 0.85rem; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    /* BOTOES */
+    .btn { border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
     .btn-primary { background: var(--brand); color: #fff; border: none; width: 100%; }
+    .btn-primary:hover { background: #3b82f6; box-shadow: 0 6px 20px var(--brand-glow); }
     .btn-success { background: var(--brand2); color: #fff; border: none; width: 100%; }
     .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
     .btn-danger:hover { background: var(--danger); color: #fff; }
-    .btn-ghost { width:auto; border-color: rgba(255,255,255,0.12); }
 
+    /* TABELAS E PILLS */
     table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
-    th { text-align: left; padding: 12px 14px; color: var(--muted); font-weight: 900; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; font-size: 0.72rem; }
-    td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
-    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    th { text-align: left; padding: 12px 16px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
 
-    .pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 900; border: 1px solid transparent; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
+    .pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; border: 1px solid transparent; letter-spacing: 0.5px; text-transform: uppercase; }
     .pill-ok { color: var(--brand2); background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.2); }
     .pill-bad { color: var(--danger); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
     .pill-warn { color: var(--warn); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
     .pill-blue { color: var(--brand); background: var(--brand-glow); border-color: rgba(96,165,250,0.2); }
 
+    /* CONTROLE DE ACESSO */
     .only-command { display: none; }
     .only-distrito { display: none; }
     body.proj-command div.only-command:not(.view-section) { display: block; }
@@ -119,78 +124,78 @@
     body.is-admin div.only-admin:not(.view-section):not(.nav-item) { display: block; }
     body.is-admin div.nav-item.only-admin { display: flex; }
 
-    .machine-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .machine-timer { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 1.2rem; font-weight: 950; color: var(--warn); }
-
-    .mini { font-size: 0.75rem; color: var(--muted); font-weight: 800; }
+    /* LAVANDERIA CARDS */
+    .machine-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .machine-timer { font-family: monospace; font-size: 1.5rem; font-weight: 800; color: var(--warn); }
   </style>
 </head>
-
 <body>
+
   <div id="toast-container"></div>
 
-  <!-- Report -->
+  <!-- MODAL REPORT -->
   <div id="modalReport" class="modal-overlay">
     <div class="modal-box">
-      <div class="card-header" style="justify-content:center;">📣 Enviar Feedback</div>
-      <p class="subnote" style="margin-bottom: 16px;">Encontrou um erro ou tem uma sugestão? Envie para a liderança!</p>
-      <textarea id="msgReport" rows="4" placeholder="Descreva aqui sua ideia ou problema..." style="margin-bottom: 16px;"></textarea>
-      <div style="display:flex; gap:10px;">
-        <button class="btn" style="width:100%;" onclick="fecharModalReport()">Cancelar</button>
-        <button class="btn btn-success" style="width:100%;" onclick="enviarReport()">Enviar</button>
+      <div class="card-header" style="justify-content: center;">📣 Enviar Feedback</div>
+      <p style="color: var(--muted); margin-bottom: 20px; font-size: 0.85rem;">Encontrou um erro ou tem uma sugestão? Envie para a liderança!</p>
+      <textarea id="msgReport" rows="4" placeholder="Descreva aqui sua ideia ou problema..." style="margin-bottom: 20px;"></textarea>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn" style="width: 100%;" onclick="fecharModalReport()">Cancelar</button>
+        <button class="btn btn-success" onclick="enviarReport()" style="width:auto;">Enviar</button>
       </div>
     </div>
   </div>
 
-  <!-- PIN -->
+  <!-- MODAL PIN -->
   <div id="modalTrocaSenha" class="modal-overlay" style="background: rgba(0,0,0,0.95); z-index: 11000;">
     <div class="modal-box" style="border-color: var(--brand);">
-      <div class="card-header" style="justify-content:center; color: var(--brand);">🔒 Segurança de Acesso</div>
-      <p class="subnote" style="margin-bottom: 18px;">
-        Primeiro acesso: crie um PIN numérico (mín. 6 dígitos).<br>
-        <span class="pill pill-bad" style="margin-top:10px;">Sem sequência / repetido</span>
+      <div class="card-header" style="justify-content: center; color: var(--brand);">🔒 Segurança de Acesso</div>
+      <p style="color: var(--muted); margin-bottom: 25px; font-size: 0.85rem;">
+        Este é o seu primeiro acesso. Por segurança, crie um PIN numérico (mín. 6 dígitos).<br><br>
+        <span class="pill pill-bad">REGRAS</span><br>
+        Apenas números. Não use sequências ou repetidos.
       </p>
-      <input type="password" id="novoPin" placeholder="Novo PIN" style="margin-bottom: 10px; text-align:center; font-size:1.15rem; letter-spacing:6px;">
-      <input type="password" id="confirmaPin" placeholder="Confirme" style="margin-bottom: 16px; text-align:center; font-size:1.15rem; letter-spacing:6px;">
+      <input type="password" id="novoPin" placeholder="Novo PIN" style="margin-bottom: 12px; text-align: center; font-size: 1.2rem; letter-spacing: 5px;">
+      <input type="password" id="confirmaPin" placeholder="Confirme" style="margin-bottom: 25px; text-align: center; font-size: 1.2rem; letter-spacing: 5px;">
       <button class="btn btn-primary" onclick="salvarNovoPin()">CRIPTOGRAFAR PIN E ENTRAR</button>
     </div>
   </div>
 
-  <!-- Start Turn -->
+  <!-- MODAL START TURN -->
   <div id="modalStartTurn" class="modal-overlay">
     <div class="modal-box">
-      <div class="card-header" style="justify-content:center;">🚀 Iniciar Operação</div>
-      <p class="subnote" style="color: var(--warn); margin-bottom: 14px;">Você é o primeiro a logar hoje. Defina a fila.</p>
-      <label>Não Iniciados</label><input type="number" id="startNaoIniciados" value="0" style="margin-bottom: 12px;">
-      <label>Em Andamento</label><input type="number" id="startEmAndamento" value="0" style="margin-bottom: 16px;">
+      <div class="card-header" style="justify-content: center;">🚀 Iniciar Operação</div>
+      <p style="font-size: 0.8rem; color: var(--warn); margin-bottom: 20px;">Você é o primeiro a logar hoje. Defina a fila.</p>
+      <label style="text-align: left;">Não Iniciados</label><input type="number" id="startNaoIniciados" value="0" style="margin-bottom: 15px;">
+      <label style="text-align: left;">Em Andamento</label><input type="number" id="startEmAndamento" value="0" style="margin-bottom: 25px;">
       <button class="btn btn-primary" onclick="confirmarInicioTurno()">ABRIR DIA</button>
     </div>
   </div>
 
-  <!-- Login -->
+  <!-- LOGIN -->
   <div id="telaLogin">
     <div class="login-card">
       <div style="font-size: 3rem; margin-bottom: 10px;" id="loginEmoji">🌐</div>
-      <h2 style="margin-bottom: 18px; font-weight: 950;" id="loginTitle">Sistema Integrado</h2>
+      <h2 style="margin-bottom: 25px; font-weight: 800;" id="loginTitle">Sistema Integrado</h2>
       <div class="project-selector">
         <div id="tabCommand" class="proj-tab active" onclick="setLoginProject('command')">Command</div>
         <div id="tabDistrito" class="proj-tab" onclick="setLoginProject('distrito22')">Distrito 22</div>
       </div>
       <input type="text" id="lUser" placeholder="Usuário">
-      <input type="password" id="lPass" placeholder="Senha ou PIN" style="margin-top: 10px;">
-      <button class="btn btn-primary" style="margin-top: 18px; height: 50px;" onclick="autenticar()">Acessar Painel</button>
-      <p id="errorMsg" style="color: var(--danger); font-size: 0.8rem; margin-top: 12px; font-weight: 800; display: none;">Dados incorretos!</p>
+      <input type="password" id="lPass" placeholder="Senha ou PIN" style="margin-top: 12px;">
+      <button class="btn btn-primary" style="margin-top: 25px; height: 50px;" onclick="autenticar()">Acessar Painel</button>
+      <p id="errorMsg" style="color: var(--danger); font-size: 0.8rem; margin-top: 15px; font-weight: 600; display: none;">Dados incorretos!</p>
     </div>
   </div>
 
-  <!-- Sidebar -->
+  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="logo-area">
       <div class="logo-icon" id="sidebarEmoji">🌐</div>
-      <div class="logo-text" id="sidebarProjectName">Command<br><span class="mini">Center</span></div>
+      <div class="logo-text" id="sidebarProjectName">Command<br><span style="font-size: 0.7rem; color: var(--muted); font-weight: 500;">Center</span></div>
     </div>
 
-    <div style="flex:1;">
+    <div style="flex: 1;">
       <div class="nav-item only-command active" onclick="switchView('dashCommand', event)" id="navCommandHome">📊 Dashboard</div>
       <div class="nav-item only-command" onclick="switchView('consultCommand', event)">🔍 Consultas</div>
 
@@ -207,60 +212,49 @@
       <div class="sidebar-title only-high-rank">LIDERANÇA</div>
       <div class="nav-item only-distrito only-high-rank" onclick="switchView('gestaoItens', event)">🛠️ Gerenciar Itens</div>
       <div class="nav-item only-distrito only-admin" onclick="switchView('logsDistrito', event)">📋 Logs de Auditoria</div>
-      <div class="nav-item only-high-rank" onclick="switchView('admin', event)">👥 Gestão</div>
+      <div class="nav-item only-high-rank" onclick="switchView('admin', event)">👥 Gestão de Membros</div>
 
-      <div class="sidebar-title">AJUSTES</div>
+      <div class="sidebar-title" style="margin-top: 10px;">AJUSTES</div>
       <div class="nav-item" onclick="switchView('themes', event)">🎨 Aparência</div>
     </div>
 
-    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
-      <button class="btn" style="width:100%; margin-bottom: 12px; border-color: var(--brand); color: var(--brand);" onclick="abrirModalReport()">📣 Enviar Feedback</button>
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+      <button class="btn" style="width: 100%; margin-bottom: 15px; border-color: var(--brand); color: var(--brand);" onclick="abrirModalReport()">📣 Enviar Feedback</button>
       <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid var(--border);">
-        <div id="displayUser" style="font-weight: 950; font-size: 0.9rem;">Analista</div>
-        <div id="displayRole" class="mini" style="margin-bottom: 10px; text-transform: uppercase;">Cargo</div>
-        <div onclick="logout()" style="color: var(--danger); font-size: 0.78rem; font-weight: 950; cursor: pointer;">🚪 Sair</div>
+        <div id="displayUser" style="font-weight: 700; font-size: 0.85rem;">Analista</div>
+        <div id="displayRole" style="font-size: 0.7rem; color: var(--muted); margin-bottom: 10px; text-transform: uppercase;">Cargo</div>
+        <div onclick="logout()" style="color: var(--danger); font-size: 0.75rem; font-weight: 700; cursor: pointer;">🚪 Sair da Conta</div>
       </div>
     </div>
   </div>
 
-  <!-- Main -->
+  <!-- MAIN -->
   <div class="main-content">
 
-    <!-- COMMAND -->
+    <!-- COMMAND DASH -->
     <div id="viewDashCommand" class="view-section">
       <div class="kpi-grid">
-        <div class="kpi-card" style="border-bottom: 3px solid var(--danger);">
-          <div class="kpi-title">FILA N.I</div><div class="kpi-value" id="kpiNi" onclick="corrigirKpi('ni')">0</div>
-        </div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--warn);">
-          <div class="kpi-title">FILA ANDAMENTO</div><div class="kpi-value" id="kpiEa" onclick="corrigirKpi('ea')">0</div>
-        </div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);">
-          <div class="kpi-title">MINHA META</div><div class="kpi-value" id="kpiMeta">0</div>
-        </div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);">
-          <div class="kpi-title">FECHADOS</div><div class="kpi-value" id="kpiRitms">0</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title">EFICIÊNCIA</div><div class="kpi-value" id="kpiMedia" style="color: var(--brand2);">0%</div>
-        </div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">FILA GERAL</div><div class="kpi-value" id="kpiNi" onclick="corrigirKpi('ni')">0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--warn);"><div class="kpi-title">EM ANDAMENTO</div><div class="kpi-value" id="kpiEa" onclick="corrigirKpi('ea')">0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">MINHA META</div><div class="kpi-value" id="kpiMeta">0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">RESOLVIDOS</div><div class="kpi-value" id="kpiRitms">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">EFICIÊNCIA</div><div class="kpi-value" id="kpiMedia" style="color: var(--brand2);">0%</div></div>
       </div>
 
       <div class="card">
-        <div class="card-header">📊 Produção em tempo real</div>
-        <div style="height: 260px;"><canvas id="meuGraficoBarras"></canvas></div>
+        <div class="card-header">📊 Desempenho Real</div>
+        <div style="height: 250px;"><canvas id="meuGraficoBarras"></canvas></div>
       </div>
 
       <div id="cardRegistro" class="card" style="position: relative;">
         <div id="overlay" style="position: absolute; inset:0; background: rgba(0,0,0,0.8); z-index: 10; display:flex; align-items:center; justify-content:center; border-radius:20px;">
           <button class="btn btn-primary" style="width: 250px;" onclick="abrirModalTurno()">🚀 INICIAR TURNO</button>
         </div>
-        <div class="card-header">✍️ Registrar RITM</div>
 
+        <div class="card-header">✍️ Registrar RITM</div>
         <div class="form-grid">
           <div><label>RITM*</label><input type="text" id="ritm" placeholder="RITM000"></div>
-          <div>
-            <label>Status*</label>
+          <div><label>Status*</label>
             <select id="statusRitm">
               <option value="Resolvido">Resolvido</option>
               <option value="Cancelado">Cancelado</option>
@@ -270,20 +264,21 @@
             </select>
           </div>
           <div><label>Tasks?</label><select id="temTask" onchange="toggleTaskInput()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-          <div id="divQtdTask" style="visibility:hidden;"><label>Qtd</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
+          <div id="divQtdTask" style="visibility: hidden;"><label>Qtd</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
         </div>
 
-        <div id="containerTasksDinamicas" style="display:none; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px;"></div>
+        <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;"></div>
 
-        <div class="form-grid" style="grid-template-columns:1fr; margin-top: 14px;">
+        <!-- ✅ REMOVIDO: LINK -->
+        <div class="form-grid" style="grid-template-columns: 1fr; margin-top: 15px;">
           <input type="text" id="descResumida" placeholder="Descrição Resumida*">
         </div>
 
-        <button class="btn btn-success" style="margin-top: 16px;" onclick="salvarCommand()">GRAVAR</button>
+        <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarCommand()">GRAVAR NO BANCO</button>
       </div>
 
       <div class="card">
-        <div class="card-header">📋 Lançamentos de Hoje</div>
+        <div class="card-header">📋 Meus Lançamentos de Hoje</div>
         <table>
           <thead><tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
           <tbody id="corpoTabela"></tbody>
@@ -291,6 +286,7 @@
       </div>
     </div>
 
+    <!-- COMMAND CONSULTA -->
     <div id="viewConsultCommand" class="view-section">
       <div class="card">
         <div class="card-header">🔍 Filtro de Histórico</div>
@@ -303,31 +299,24 @@
       <div class="card"><table><tbody id="corpoConsulta"></tbody></table></div>
     </div>
 
-    <!-- DISTRITO -->
+    <!-- DISTRITO 22 (NÃO ALTERADO) -->
     <div id="viewDashDistrito" class="view-section active">
-      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">💰 COFRE (DINHEIRO)</div><div class="kpi-value" id="dashKpiSaldo" style="color: var(--brand2);">$ 0</div></div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">📦 ESTOQUE (VALOR)</div><div class="kpi-value" id="dashKpiEstoqueValor" style="color: var(--brand);">$ 0</div></div>
-        <div class="kpi-card only-high-rank" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">🧾 DÍVIDAS</div><div class="kpi-value" id="dashKpiDivida" style="color: var(--danger);">$ 0</div></div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--warn);"><div class="kpi-title">🧼 MÁQUINAS</div><div class="kpi-value" id="dashKpiLavanderia">0</div></div>
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">💰 COFRE DA FAMÍLIA</div><div class="kpi-value" id="dashKpiSaldo" style="color: var(--brand2);">$ 0</div></div>
+        <div class="kpi-card only-high-rank" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">🧾 DÍVIDAS DA FAC</div><div class="kpi-value" id="dashKpiDivida" style="color: var(--danger);">$ 0</div></div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">🧼 MÁQUINAS ATIVAS</div><div class="kpi-value" id="dashKpiLavanderia">0</div></div>
       </div>
-
       <div class="card">
         <div class="card-header">📦 Resumo Geral do Baú</div>
-        <p class="subnote" style="margin-bottom:10px;">Aqui mostra a quantidade de cada item (saldo físico). O valor do estoque é controlado pelos preços unitários informados nas entradas/saídas.</p>
         <table>
-          <thead><tr><th>ITEM</th><th>QTD</th><th>VALOR (aprox.)</th></tr></thead>
+          <thead><tr><th>ITEM</th><th>ESTOQUE ATUAL</th></tr></thead>
           <tbody id="dashCorpoEstoque"></tbody>
         </table>
       </div>
     </div>
 
     <div id="viewCaixaDistrito" class="view-section">
-      <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr);">
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">SALDO COFRE</div><div class="kpi-value" id="kpiSaldoDistrito" style="color: var(--brand2);">$ 0</div></div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">VALOR ESTOQUE</div><div class="kpi-value" id="kpiEstoqueValor" style="color: var(--brand);">$ 0</div></div>
-      </div>
-
+      <div class="kpi-grid"><div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">SALDO LIMPO</div><div class="kpi-value" id="kpiSaldoDistrito" style="color: var(--brand2);">$ 0</div></div></div>
       <div class="card">
         <div class="card-header">💸 Lançamento de Caixa</div>
         <div class="form-grid">
@@ -335,20 +324,19 @@
           <div><label>Valor ($)*</label><input type="number" id="valorDistrito" placeholder="Ex: 15000" min="1"></div>
           <div style="grid-column: span 2;"><label>Motivo*</label><input type="text" id="motivoDistrito" placeholder="Ex: Venda de Armas"></div>
         </div>
-        <button class="btn btn-primary" style="margin-top: 16px;" onclick="salvarCaixaDistrito()">REGISTRAR</button>
+        <button class="btn btn-primary" style="margin-top: 20px;" onclick="salvarCaixaDistrito()">REGISTRAR TRANSAÇÃO</button>
       </div>
-
       <div class="card">
-        <div class="card-header">📑 Extrato do Cofre</div>
+        <div class="card-header">📑 Extrato Geral do Cofre</div>
         <table>
-          <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>OP</th><th>VALOR</th><th>DESCRIÇÃO</th><th class="only-high-rank" style="text-align:right">DEL</th></tr></thead>
+          <thead><tr><th>DATA/HORA</th><th>MEMBRO</th><th>OPERAÇÃO</th><th>VALOR</th><th>DESCRIÇÃO</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
           <tbody id="corpoCaixaDistrito"></tbody>
         </table>
       </div>
     </div>
 
     <div id="viewDebitosDistrito" class="view-section">
-      <div class="kpi-grid only-high-rank"><div class="kpi-card" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">TOTAL DEVEDOR</div><div class="kpi-value" id="kpiTotalDevedor" style="color: var(--danger);">$ 0</div></div></div>
+      <div class="kpi-grid only-high-rank"><div class="kpi-card" style="border-bottom: 3px solid var(--danger);"><div class="kpi-title">SALDO DEVEDOR TOTAL</div><div class="kpi-value" id="kpiTotalDevedor" style="color: var(--danger);">$ 0</div></div></div>
       <div class="card">
         <div class="card-header">🧾 Solicitar Reembolso</div>
         <div class="form-grid">
@@ -356,7 +344,7 @@
           <div><label>Valor Gasto ($)*</label><input type="number" id="valorDebito" placeholder="Ex: 13500" min="1"></div>
           <div style="grid-column: span 2;"><label>Detalhes</label><input type="text" id="detalheDebito" placeholder="Ex: Comprei para ação"></div>
         </div>
-        <button class="btn btn-success" style="margin-top: 16px;" onclick="salvarDebito()">SOLICITAR</button>
+        <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarDebito()">SOLICITAR REEMBOLSO</button>
       </div>
       <div class="card">
         <div class="card-header">📑 Lista de Reembolsos</div>
@@ -367,87 +355,53 @@
       </div>
     </div>
 
-    <!-- ITEM VIEW -->
     <div id="viewDroga" class="view-section">
-      <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr);">
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title" id="lblDrogaTitle">ESTOQUE</div><div class="kpi-value" id="kpiDrogaTotal">0</div></div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);"><div class="kpi-title">VALOR ITEM</div><div class="kpi-value" id="kpiDrogaValor" style="color: var(--brand2);">$ 0</div></div>
-      </div>
-
+      <div class="kpi-grid"><div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title" id="lblDrogaTitle">ESTOQUE</div><div class="kpi-value" id="kpiDrogaTotal">0</div></div></div>
       <div class="card">
         <div class="card-header">📦 Acesso ao Baú: <span id="txtDrogaNome" style="color: var(--brand); margin-left:8px;"></span></div>
-        <p class="subnote" style="margin-bottom: 12px;">
-          Entrada soma QTD e soma VALOR (qtd × preço). Saída subtrai QTD e subtrai VALOR.
-        </p>
         <div class="form-grid">
           <div>
             <label>Ação*</label>
-            <select id="opDroga" onchange="calcularLucroVenda()">
-              <option value="Entrada">📥 Entrada (Guardar)</option>
-              <option value="Saida">📤 Saída (Retirar)</option>
-            </select>
+            <select id="opDroga" onchange="calcularLucroVenda()"><option value="Entrada">📥 Guardar (Somar)</option><option value="Saida">📤 Pegar (Subtrair)</option></select>
           </div>
           <div>
             <label>Quantidade*</label>
             <input type="number" id="qtdDroga" placeholder="Ex: 50" min="1" oninput="calcularLucroVenda()">
-            <div id="lucroDrogaInfo" style="font-size: 0.75rem; color: var(--brand2); margin-top: 6px; font-weight: 900; display: none;">
-              Previsão Retorno (venda droga): <span id="valLucroDroga">$0</span>
-            </div>
-          </div>
-          <div>
-            <label>Preço Unitário ($)*</label>
-            <input type="number" id="precoUnitDroga" placeholder="Ex: 120" min="0" step="1" oninput="calcularValorMovimento()">
-            <div class="mini" style="margin-top:6px;">Sugestão: preço padrão do item.</div>
-          </div>
-          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid var(--border);">
-            <label>Valor Total</label>
-            <div id="movValorTotal" style="font-weight: 950; font-size: 1.05rem; color: var(--brand);">$ 0</div>
+            <div id="lucroDrogaInfo" style="font-size: 0.75rem; color: var(--brand2); margin-top: 6px; font-weight: 700; display: none;">Previsão Retorno: <span id="valLucroDroga">$0</span></div>
           </div>
         </div>
-        <button class="btn btn-success" style="margin-top: 16px;" onclick="salvarEstoque()">ATUALIZAR</button>
+        <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarEstoque()">ATUALIZAR BAÚ</button>
       </div>
-
       <div class="card">
         <div class="card-header">📑 Histórico de <span id="txtDrogaHist" style="margin-left:6px;">Movimentação</span></div>
         <table>
-          <thead><tr><th>DATA</th><th>MEMBRO</th><th>AÇÃO</th><th>QTD</th><th>PREÇO</th><th>VALOR</th><th class="only-high-rank" style="text-align:right">DEL</th></tr></thead>
+          <thead><tr><th>DATA</th><th>MEMBRO</th><th>AÇÃO</th><th>QTD</th><th class="only-high-rank" style="text-align:right">DELETAR</th></tr></thead>
           <tbody id="corpoDroga"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- GESTAO ITENS -->
     <div id="viewGestaoItens" class="view-section">
       <div class="card">
-        <div class="card-header">🛠️ Cadastrar / Editar Itens</div>
-        <p class="subnote" style="margin-bottom: 12px;">Agora você escolhe o emoji e pode editar depois. O preço padrão vira sugestão no estoque.</p>
-        <div class="form-grid">
-          <div style="grid-column: span 2;"><label>Nome do Item*</label><input type="text" id="novoItemNome" placeholder="Ex: Maconha, C4, Lockpick"></div>
-          <div><label>Emoji*</label><input type="text" id="novoItemEmoji" placeholder="Ex: 🌿" maxlength="2"></div>
-          <div><label>Preço Padrão Unitário ($)</label><input type="number" id="novoItemPreco" placeholder="Ex: 120" min="0" step="1"></div>
-        </div>
-        <button class="btn btn-primary" style="margin-top: 14px;" onclick="salvarNovoItem()">CRIAR ITEM</button>
+        <div class="card-header">🛠️ Cadastrar Novo Item</div>
+        <div class="form-grid"><div style="grid-column: span 2;"><label>Nome do Item*</label><input type="text" id="novoItemNome" placeholder="Ex: Lockpick, Colete"></div></div>
+        <button class="btn btn-primary" style="margin-top: 15px;" onclick="salvarNovoItem()">CRIAR ITEM</button>
       </div>
-
       <div class="card">
-        <div class="card-header">Itens Ativos</div>
-        <table>
-          <thead><tr><th>ITEM</th><th>EMOJI</th><th>PREÇO PADRÃO</th><th class="only-high-rank" style="text-align:right">AÇÕES</th></tr></thead>
-          <tbody id="corpoListaItens"></tbody>
-        </table>
+        <div class="card-header">Itens Ativos no Sistema</div>
+        <table><thead><tr><th>NOME DO ITEM</th><th style="text-align:right">DELETAR</th></tr></thead><tbody id="corpoListaItens"></tbody></table>
       </div>
     </div>
 
-    <!-- LAVANDERIA -->
     <div id="viewLavanderiaDistrito" class="view-section">
       <div class="card">
         <div class="card-header">🧼 Máquina de Lavar</div>
-        <p class="subnote" style="margin-bottom: 14px;">A cada 1.000 sujo = 30s. Máx 50.000 (25 min). Retorno: 50% limpo.</p>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 20px;">A cada 1.000 sujo = 30s. Máx 50.000 (25 min). Retorno: 50% limpo.</p>
         <div class="form-grid" style="align-items: end;">
           <div><label>Dinheiro Sujo ($)*</label><input type="number" id="sujoLavar" placeholder="Max: 50000" max="50000" oninput="calcularPrevisaoLavagem()"></div>
-          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border:1px solid var(--border);"><label>Tempo</label><div id="prevTempo" style="font-weight: 950; color: var(--warn); font-size: 1.05rem;">0 min</div></div>
-          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border:1px solid var(--border);"><label>Limpo</label><div id="prevLimpo" style="font-weight: 950; color: var(--brand2); font-size: 1.05rem;">$ 0</div></div>
-          <div><button class="btn btn-success" style="height: 100%;" onclick="iniciarLavagem()">LIGAR</button></div>
+          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border:1px solid var(--border);"><label>Tempo</label><div id="prevTempo" style="font-weight: 800; color: var(--warn); font-size: 1.1rem;">0 min</div></div>
+          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border:1px solid var(--border);"><label>Limpo</label><div id="prevLimpo" style="font-weight: 800; color: var(--brand2); font-size: 1.1rem;">$ 0</div></div>
+          <div><button class="btn btn-success" style="height: 100%;" onclick="iniciarLavagem()">LIGAR MÁQUINA</button></div>
         </div>
       </div>
       <div class="card">
@@ -456,18 +410,16 @@
       </div>
     </div>
 
-    <!-- LOGS -->
     <div id="viewLogsDistrito" class="view-section only-admin">
       <div class="card" style="border-color: var(--warn);">
         <div class="card-header">📋 Logs de Auditoria</div>
         <table>
-          <thead><tr><th>DATA</th><th>MEMBRO</th><th>CATEGORIA</th><th>AÇÃO</th></tr></thead>
+          <thead><tr><th>DATA</th><th>MEMBRO</th><th>CATEGORIA</th><th>AÇÃO EXECUTADA</th></tr></thead>
           <tbody id="corpoLogs"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- THEMES -->
     <div id="viewThemes" class="view-section">
       <div class="card only-distrito">
         <div class="card-header">🎨 Temas da Facção</div>
@@ -485,7 +437,6 @@
       </div>
     </div>
 
-    <!-- ADMIN -->
     <div id="viewAdmin" class="view-section">
       <div class="card">
         <div class="card-header">🛠 Gestão de Membros</div>
@@ -499,12 +450,11 @@
           </select>
           <button class="btn btn-success" id="btnSalvarAnalista" onclick="cadastrarAnalista()">CADASTRAR</button>
         </div>
-        <table style="margin-top: 18px;">
+        <table style="margin-top: 30px;">
           <thead><tr><th>NOME</th><th>LOGIN</th><th>CARGO</th><th style="text-align:right">AÇÃO</th></tr></thead>
           <tbody id="listaUsuarios"></tbody>
         </table>
       </div>
-
       <div class="card" style="border-color: var(--brand);">
         <div class="card-header">📬 Caixa de Sugestões</div>
         <table><thead><tr><th>DATA</th><th>MEMBRO</th><th>MENSAGEM</th><th style="text-align:right">AÇÃO</th></tr></thead><tbody id="listaFeedbacks"></tbody></table>
@@ -513,404 +463,414 @@
 
   </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
-      authDomain: "dashboard-command-1ef72.firebaseapp.com",
-      databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com",
-      projectId: "dashboard-command-1ef72",
-      storageBucket: "dashboard-command-1ef72.firebasestorage.app",
-      messagingSenderId: "38631596446",
-      appId: "1:38631596446:web:f9470a5b648173e168b68f"
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
+    authDomain: "dashboard-command-1ef72.firebaseapp.com",
+    databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com",
+    projectId: "dashboard-command-1ef72",
+    storageBucket: "dashboard-command-1ef72.firebasestorage.app",
+    messagingSenderId: "38631596446",
+    appId: "1:38631596446:web:f9470a5b648173e168b68f"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const rootDatabase = firebase.database();
+
+  let logado = null;
+  let loginProject = 'command';
+  let loopLavanderia = null;
+  let currentDroga = '';
+  let estoqueGlobalCalculado = {};
+  let listaDeItensDinamicos = [];
+  let pendenciaTotal = 0;
+
+  // ===== ANTI-CHEAT (Distrito) =====
+  let serverTimeOffset = 0;
+  rootDatabase.ref('.info/serverTimeOffset').on('value', function(snap) {
+    serverTimeOffset = snap.val() || 0;
+  });
+
+  // ===== SHA-256 =====
+  async function hashCriptografico(texto) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(texto);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function encodeKey(str) { return str.replace(/\./g, ','); }
+  function decodeKey(str) { return str.replace(/,/g, '.'); }
+  function getHoje() { return new Date().toISOString().split('T')[0]; }
+  function getHora() { return new Date().toLocaleTimeString('pt-BR'); }
+  function formatarDinheiro(num) { return "$ " + parseFloat(num).toLocaleString('pt-BR'); }
+
+  function isHighRank() { return logado && ['admin', 'ADMIN', 'Gerente', '02', '01'].includes(logado.role); }
+  function isAdminRole() { return logado && (logado.role === 'admin' || logado.role === 'ADMIN'); }
+
+  function dbRef(path) {
+    const p = logado ? logado.projeto : loginProject;
+    return p === 'command' ? rootDatabase.ref(path) : rootDatabase.ref('projetos/' + p + '/' + path);
+  }
+
+  function showToast(msg, type = 'success') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.style.borderLeft = `4px solid ${type === 'success' ? 'var(--brand2)' : (type === 'alert' ? 'var(--warn)' : 'var(--danger)')}`;
+    t.innerHTML = `<span>${type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌')}</span> ${msg}`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+  }
+
+  // ===== LOGS (Distrito) =====
+  function registrarLog(acao, detalhes) {
+    if(!logado) return;
+    dbRef('logs').push({ data: getHoje(), hora: getHora(), membro: logado.nome, acao: acao, detalhes: detalhes });
+  }
+  function escutarLogs() {
+    if(!isAdminRole()) return;
+    dbRef('logs').on('value', snap => {
+      const tbody = document.getElementById('corpoLogs');
+      if(!tbody) return;
+      tbody.innerHTML = "";
+      let logsArray = [];
+      snap.forEach(item => logsArray.push(item.val()));
+      logsArray.reverse().forEach(c => {
+        let pillClass = 'pill-blue';
+        if(c.acao === 'EXCLUSÃO') pillClass = 'pill-bad';
+        else if(c.acao === 'CAIXA') pillClass = 'pill-ok';
+        else if(c.acao === 'LAVANDERIA') pillClass = 'pill-warn';
+        tbody.innerHTML += `<tr><td style="white-space: nowrap;">${c.data} ${c.hora}</td><td><b>${c.membro}</b></td><td><span class="pill ${pillClass}">${c.acao}</span></td><td style="${c.acao==='EXCLUSÃO'?'color:var(--danger);font-weight:700':''}">${c.detalhes}</td></tr>`;
+      });
+    });
+  }
+  function deletarRegistro(caminho, id, logMsg) {
+    if(confirm("Tem certeza que deseja excluir? Isso será registrado no LOG.")) {
+      dbRef(caminho).child(id).remove().then(() => {
+        registrarLog('EXCLUSÃO', logMsg);
+        showToast("Registro excluído!", "success");
+      });
+    }
+  }
+
+  // ===== Visual dinâmico =====
+  function atualizarIconeETitulo() {
+    const isCommand = logado ? logado.projeto === 'command' : loginProject === 'command';
+    document.title = isCommand ? "🌐 Command Center" : "🐶 Distrito 22";
+
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.getElementsByTagName('head')[0].appendChild(link); }
+    link.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${isCommand ? '🌐' : '🐶'}</text></svg>`;
+
+    if(!logado) {
+      document.getElementById('loginEmoji').innerText = isCommand ? '🌐' : '🐶';
+      document.getElementById('loginTitle').innerText = isCommand ? 'Command Center' : 'Distrito 22';
+    } else {
+      document.getElementById('sidebarEmoji').innerText = isCommand ? '🌐' : '🐶';
+      document.getElementById('sidebarProjectName').innerHTML = isCommand ? 'Command<br><span style="font-size: 0.7rem; color: var(--muted); font-weight: 500;">Center</span>' : 'Distrito 22<br><span style="font-size: 0.7rem; color: var(--muted); font-weight: 500;">Facção</span>';
+    }
+  }
+
+  // ===== Report =====
+  function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
+  function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
+  function enviarReport() {
+    const msg = document.getElementById('msgReport').value.trim();
+    if(!msg) return showToast("A mensagem não pode estar vazia!", "error");
+    dbRef('feedbacks').push({ data: getHoje(), hora: getHora(), membro: logado.nome, msg: msg }).then(() => {
+      fecharModalReport(); showToast("Feedback enviado à liderança!", "success");
+    });
+  }
+  function listarFeedbacks() {
+    if(!isHighRank()) return;
+    dbRef('feedbacks').on('value', snap => {
+      const lista = document.getElementById('listaFeedbacks');
+      if(!lista) return; lista.innerHTML = "";
+      snap.forEach(item => {
+        const f = item.val();
+        lista.innerHTML = `<tr><td>${f.data} ${f.hora}</td><td><b>${f.membro}</b></td><td>${f.msg}</td><td style="text-align:right"><button class="btn btn-success" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="dbRef('feedbacks').child('${item.key}').remove()">LIDO ✅</button></td></tr>` + lista.innerHTML;
+      });
+    });
+  }
+
+  // ===== Login/PIN =====
+  function setLoginProject(proj) {
+    loginProject = proj;
+    document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
+    if(proj === 'command') document.getElementById('tabCommand').classList.add('active');
+    else document.getElementById('tabDistrito').classList.add('active');
+    atualizarIconeETitulo();
+  }
+
+  async function autenticar() {
+    const u = document.getElementById('lUser').value.toUpperCase().trim();
+    const p = document.getElementById('lPass').value;
+
+    dbRef('usuarios/' + encodeKey(u)).once('value', async snap => {
+      const user = snap.val();
+      if(user) {
+        let senhaBate = false;
+        if (user.senhaAlterada) {
+          const hashDigitado = await hashCriptografico(p);
+          if (hashDigitado === user.senha) senhaBate = true;
+        } else {
+          if (p === user.senha) senhaBate = true;
+        }
+
+        if (senhaBate) {
+          if (user.senhaAlterada === false) {
+            window.usuarioPendente = { nome: u, role: user.role, projeto: loginProject };
+            document.getElementById('modalTrocaSenha').style.display = 'flex';
+            return;
+          }
+          logado = { nome: u, role: user.role, projeto: loginProject };
+          localStorage.setItem('usuarioLogado', JSON.stringify(logado));
+          location.reload();
+        } else {
+          document.getElementById('errorMsg').style.display = 'block';
+        }
+      } else {
+        document.getElementById('errorMsg').style.display = 'block';
+      }
+    });
+  }
+
+  async function salvarNovoPin() {
+    const p1 = document.getElementById('novoPin').value;
+    const p2 = document.getElementById('confirmaPin').value;
+
+    if (p1 !== p2) return showToast("Os PINs não coincidem!", "error");
+    if (!/^\d{6,}$/.test(p1)) return showToast("Mínimo 6 NÚMEROS!", "error");
+    if (/^(\d)\1+$/.test(p1)) return showToast("Não use números repetidos.", "error");
+    const seqUp = "01234567890123456789"; const seqDown = "98765432109876543210";
+    if (seqUp.includes(p1) || seqDown.includes(p1)) return showToast("Não use sequências.", "error");
+
+    const hashFinal = await hashCriptografico(p1);
+    const tempUser = window.usuarioPendente;
+    const rootPath = tempUser.projeto === 'command' ? rootDatabase.ref('usuarios/' + encodeKey(tempUser.nome)) : rootDatabase.ref('projetos/' + tempUser.projeto + '/usuarios/' + encodeKey(tempUser.nome));
+
+    rootPath.update({ senha: hashFinal, senhaAlterada: true }).then(() => {
+      logado = tempUser; localStorage.setItem('usuarioLogado', JSON.stringify(logado)); location.reload();
+    });
+  }
+
+  // ===== Navegação =====
+  function switchView(v, event) {
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
+    if (alvo) alvo.classList.add('active');
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    if(v === 'admin') { listarUsuarios(); listarFeedbacks(); }
+  }
+  function setTheme(t) { localStorage.setItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme', t); document.body.setAttribute('data-theme', t); }
+  function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
+
+  // ==========================
+  // ✅ COMMAND: Excluir registro
+  // ==========================
+  function deletarChamadoCommand(chave, ritm) {
+    if (!logado) return;
+
+    const ehAdmin = (logado.role === 'admin' || logado.role === 'ADMIN');
+    if (!confirm(`Excluir o registro da RITM ${ritm}?`)) return;
+
+    dbRef('chamados').child(chave).once('value').then(snap => {
+      const c = snap.val();
+      if (!c) return;
+
+      const ehDono = (c.analista === logado.nome);
+      const ehHoje = (c.data === getHoje());
+
+      if (!ehAdmin && !(ehDono && ehHoje)) {
+        return alert("Você só pode excluir seus próprios registros do dia. Admin pode excluir qualquer.");
+      }
+
+      dbRef('chamados').child(chave).remove().then(() => {
+        showToast("Registro excluído!", "success");
+      });
+    });
+  }
+
+  // ==========================
+  // ✅ COMMAND: Turno, meta, tasks
+  // ==========================
+  function abrirModalTurno() { document.getElementById('modalStartTurn').style.display = 'flex'; }
+  function confirmarInicioTurno() {
+    const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
+    const ea = parseInt(document.getElementById('startEmAndamento').value) || 0;
+    dbRef('dailyStats/' + getHoje()).set({ ni: ni, ea: ea, totalInicial: ni + ea, createdBy: logado.nome }).then(() => {
+      dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
+      location.reload();
+    });
+  }
+
+  function verificarStatusTurno() {
+    dbRef('dailyStats/' + getHoje()).on('value', snap => {
+      const stats = snap.val();
+      dbRef('statusTurno/' + encodeKey(logado.nome)).once('value', userSnap => {
+        if (stats) {
+          if(document.getElementById('kpiNi')) document.getElementById('kpiNi').innerText = stats.ni || 0;
+          if(document.getElementById('kpiEa')) document.getElementById('kpiEa').innerText = stats.ea || 0;
+          pendenciaTotal = stats.totalInicial || 0;
+
+          if (!userSnap.val() || !userSnap.val().aberto) dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
+          if(document.getElementById('overlay')) document.getElementById('overlay').style.display = 'none';
+
+          if (logado.role === 'admin') {
+            if(document.getElementById('kpiNi')) document.getElementById('kpiNi').classList.add('editable');
+            if(document.getElementById('kpiEa')) document.getElementById('kpiEa').classList.add('editable');
+          }
+        }
+      });
+    });
+  }
+
+  function corrigirKpi(tipo) {
+    if(logado.role !== 'admin') return;
+    const atual = (tipo === 'ni' ? document.getElementById('kpiNi').innerText : document.getElementById('kpiEa').innerText);
+    const novo = prompt("Novo valor:", atual);
+    if(novo === null) return;
+    const val = parseInt(novo);
+    if(isNaN(val) || val < 0) return showToast("Valor inválido!", "error");
+
+    dbRef('dailyStats/' + getHoje()).once('value').then(s => {
+      const stats = s.val() || { ni:0, ea:0 };
+      if(tipo === 'ni') stats.ni = val;
+      if(tipo === 'ea') stats.ea = val;
+      stats.totalInicial = (parseInt(stats.ni)||0) + (parseInt(stats.ea)||0);
+      dbRef('dailyStats/' + getHoje()).set(stats).then(() => showToast("Fila atualizada!", "success"));
+    });
+  }
+
+  function calcularMetaPessoal() {
+    dbRef('chamados').once('value', snap => {
+      let dias = new Set(); let res = 0;
+      snap.forEach(i => {
+        const c = i.val();
+        if (c.analista === logado.nome && (c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto')) {
+          dias.add(c.data); res++;
+        }
+      });
+      if(document.getElementById('kpiMeta')) document.getElementById('kpiMeta').innerText = dias.size > 0 ? Math.ceil(res / dias.size) : "--";
+    });
+  }
+
+  function toggleTaskInput() {
+    const t = document.getElementById('temTask').value === 'sim';
+    document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
+    document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
+    if(!t) { document.getElementById('containerTasksDinamicas').innerHTML = ""; document.getElementById('taskQtd').value = ""; }
+  }
+  function gerarCamposTask() {
+    const qtd = parseInt(document.getElementById('taskQtd').value) || 0;
+    const c = document.getElementById('containerTasksDinamicas');
+    c.innerHTML = "";
+    for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`;
+  }
+
+  // ==========================
+  // ✅ COMMAND: Salvar RITM (corrigido)
+  // - se já existe HOJE: ATUALIZA (não duplica)
+  // - se existe em dia antigo:
+  //   - se status Reaberto: remove antigo e cria hoje com [Ref. DATA]
+  //   - senão: bloqueia e avisa
+  // ==========================
+  async function salvarCommand() {
+    const ritm = document.getElementById('ritm').value.toUpperCase().trim();
+    const status = document.getElementById('statusRitm').value;
+    let desc = document.getElementById('descResumida').value.trim();
+
+    if(!ritm || !status || !desc) return showToast("Preencha RITM, Status e Descrição.", "error");
+
+    let tasksArr = [];
+    document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tasksArr.push(i.value.toUpperCase().trim()); });
+
+    const payload = {
+      ritm, status, desc,
+      data: getHoje(),
+      hora: getHora(),
+      analista: logado.nome,
+      taskQtd: tasksArr.length,
+      tasks: tasksArr.join(", ") || "Não"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const rootDatabase = firebase.database();
+    const snap = await dbRef('chamados').once('value');
 
-    let logado = null;
-    let loginProject = 'command';
-    let loopLavanderia = null;
+    let keyHoje = null;
+    let keyOutro = null;
+    let dataAntiga = null;
 
-    // Distrito
-    let currentDroga = '';
-    let listaDeItensDinamicos = [];          // lista de {key,nome,emoji,precoPadrao}
-    let itensByName = {};                   // nome -> item
-    let saldoQtdPorItem = {};               // nome -> qtd
-    let saldoValorPorItem = {};             // nome -> valor
-    let historicoEstoqueGlobal = [];         // movimentos
-    let pendenciaTotal = 0;
-
-    // Anti-cheat server time
-    let serverTimeOffset = 0;
-    rootDatabase.ref('.info/serverTimeOffset').on('value', (snap) => {
-      serverTimeOffset = snap.val() || 0;
+    snap.forEach(child => {
+      const c = child.val();
+      if(!c) return;
+      const r = (c.ritm || "").toUpperCase().trim();
+      if(r === ritm) {
+        if(c.data === getHoje()) keyHoje = child.key;
+        else { keyOutro = child.key; dataAntiga = c.data; }
+      }
     });
-    const nowServer = () => Date.now() + serverTimeOffset;
 
-    // Crypto
-    async function hashCriptografico(texto) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(texto);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    if(keyHoje) {
+      await dbRef('chamados').child(keyHoje).update(payload);
+      limparFormCommand();
+      showToast("RITM atualizada (sem duplicar) ✅", "success");
+      return;
     }
 
-    function encodeKey(str) { return String(str || '').replace(/\./g, ','); }
-    function decodeKey(str) { return String(str || '').replace(/,/g, '.'); }
-    function getHoje() { return new Date().toISOString().split('T')[0]; }
-    function getHora() { return new Date().toLocaleTimeString('pt-BR'); }
-    function formatarDinheiro(num) { return "$ " + (Number(num || 0)).toLocaleString('pt-BR'); }
-
-    function isHighRank() { return logado && ['admin','ADMIN','Gerente','02','01'].includes(logado.role); }
-    function isAdminRole() { return logado && (logado.role === 'admin' || logado.role === 'ADMIN'); }
-
-    function dbRef(path) {
-      const p = logado ? logado.projeto : loginProject;
-      return p === 'command' ? rootDatabase.ref(path) : rootDatabase.ref('projetos/' + p + '/' + path);
-    }
-
-    function showToast(msg, type = 'success') {
-      const c = document.getElementById('toast-container');
-      const t = document.createElement('div');
-      t.className = 'toast';
-      const icon = type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌');
-      const color = type === 'success' ? 'var(--brand2)' : (type === 'alert' ? 'var(--warn)' : 'var(--danger)');
-      t.style.borderLeft = `4px solid ${color}`;
-      t.innerHTML = `<div>${icon}</div><div>${msg}</div>`;
-      c.appendChild(t);
-      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 450); }, 3200);
-    }
-
-    function atualizarIconeETitulo() {
-      const isCommand = logado ? logado.projeto === 'command' : loginProject === 'command';
-      document.title = isCommand ? "🌐 Command Center" : "🐶 Distrito 22";
-
-      let link = document.querySelector("link[rel~='icon']");
-      if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
-      link.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${isCommand ? '🌐' : '🐶'}</text></svg>`;
-
-      if(!logado) {
-        document.getElementById('loginEmoji').innerText = isCommand ? '🌐' : '🐶';
-        document.getElementById('loginTitle').innerText = isCommand ? 'Command Center' : 'Distrito 22';
-      } else {
-        document.getElementById('sidebarEmoji').innerText = isCommand ? '🌐' : '🐶';
-        document.getElementById('sidebarProjectName').innerHTML = isCommand
-          ? 'Command<br><span class="mini">Center</span>'
-          : 'Distrito 22<br><span class="mini">Facção</span>';
-      }
-    }
-
-    function abrirModalReport() { document.getElementById('modalReport').style.display = 'flex'; }
-    function fecharModalReport() { document.getElementById('modalReport').style.display = 'none'; document.getElementById('msgReport').value = ""; }
-    function enviarReport() {
-      const msg = document.getElementById('msgReport').value.trim();
-      if(!msg) return showToast("A mensagem não pode estar vazia!", "error");
-      dbRef('feedbacks').push({ data: getHoje(), hora: getHora(), membro: logado.nome, msg }).then(() => {
-        fecharModalReport(); showToast("Feedback enviado!", "success");
-      });
-    }
-
-    function listarFeedbacks() {
-      if(!isHighRank()) return;
-      dbRef('feedbacks').on('value', snap => {
-        const lista = document.getElementById('listaFeedbacks');
-        if(!lista) return;
-        lista.innerHTML = "";
-        snap.forEach(item => {
-          const f = item.val();
-          lista.innerHTML = `<tr>
-            <td>${f.data} ${f.hora}</td>
-            <td><b>${f.membro}</b></td>
-            <td>${f.msg}</td>
-            <td style="text-align:right">
-              <button class="btn btn-success" style="padding:6px 10px; font-size:0.72rem; width:auto;" onclick="dbRef('feedbacks').child('${item.key}').remove()">LIDO ✅</button>
-            </td>
-          </tr>` + lista.innerHTML;
-        });
-      });
-    }
-
-    // Logs
-    function registrarLog(acao, detalhes) {
-      if(!logado) return;
-      dbRef('logs').push({ data: getHoje(), hora: getHora(), membro: logado.nome, acao, detalhes });
-    }
-    function escutarLogs() {
-      if(!isAdminRole()) return;
-      dbRef('logs').limitToLast(400).on('value', snap => {
-        const tbody = document.getElementById('corpoLogs');
-        if(!tbody) return;
-        tbody.innerHTML = "";
-        let logsArray = [];
-        snap.forEach(item => logsArray.push(item.val()));
-        logsArray.reverse().forEach(c => {
-          let pillClass = 'pill-blue';
-          if(c.acao === 'EXCLUSÃO') pillClass = 'pill-bad';
-          else if(c.acao === 'CAIXA') pillClass = 'pill-ok';
-          else if(c.acao === 'LAVANDERIA') pillClass = 'pill-warn';
-          tbody.innerHTML += `<tr>
-            <td style="white-space:nowrap;">${c.data} ${c.hora}</td>
-            <td><b>${c.membro}</b></td>
-            <td><span class="pill ${pillClass}">${c.acao}</span></td>
-            <td style="${c.acao==='EXCLUSÃO'?'color:var(--danger);font-weight:900':''}">${c.detalhes}</td>
-          </tr>`;
-        });
-      });
-    }
-
-    function deletarRegistro(caminho, id, logMsg) {
-      if(!isHighRank()) return showToast("Sem permissão.", "error");
-      if(confirm("Tem certeza que deseja excluir? Isso será registrado no LOG.")) {
-        dbRef(caminho).child(id).remove().then(() => {
-          registrarLog('EXCLUSÃO', logMsg);
-          showToast("Registro excluído!", "success");
-        });
-      }
-    }
-
-    // Login
-    function setLoginProject(proj) {
-      loginProject = proj;
-      document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
-      if(proj === 'command') document.getElementById('tabCommand').classList.add('active');
-      else document.getElementById('tabDistrito').classList.add('active');
-      atualizarIconeETitulo();
-    }
-
-    async function autenticar() {
-      document.getElementById('errorMsg').style.display = 'none';
-      const u = document.getElementById('lUser').value.toUpperCase().trim();
-      const p = document.getElementById('lPass').value;
-
-      if(!u || !p) return showToast("Preencha usuário e senha/PIN.", "error");
-
-      dbRef('usuarios/' + encodeKey(u)).once('value', async snap => {
-        const user = snap.val();
-        if(!user) return document.getElementById('errorMsg').style.display = 'block';
-
-        let senhaBate = false;
-        if(user.senhaAlterada) {
-          const hashDigitado = await hashCriptografico(p);
-          if(hashDigitado === user.senha) senhaBate = true;
-        } else {
-          if(p === user.senha) senhaBate = true;
-        }
-
-        if(!senhaBate) return document.getElementById('errorMsg').style.display = 'block';
-
-        if(user.senhaAlterada === false) {
-          window.usuarioPendente = { nome: u, role: user.role, projeto: loginProject };
-          document.getElementById('modalTrocaSenha').style.display = 'flex';
-          return;
-        }
-
-        logado = { nome: u, role: user.role, projeto: loginProject };
-        localStorage.setItem('usuarioLogado', JSON.stringify(logado));
-        location.reload();
-      });
-    }
-
-    async function salvarNovoPin() {
-      const p1 = document.getElementById('novoPin').value;
-      const p2 = document.getElementById('confirmaPin').value;
-
-      if (p1 !== p2) return showToast("Os PINs não coincidem!", "error");
-      if (!/^\d{6,}$/.test(p1)) return showToast("Mínimo 6 números.", "error");
-      if (/^(\d)\1+$/.test(p1)) return showToast("Não use repetidos.", "error");
-      const seqUp = "01234567890123456789", seqDown = "98765432109876543210";
-      if (seqUp.includes(p1) || seqDown.includes(p1)) return showToast("Não use sequência.", "error");
-
-      const hashFinal = await hashCriptografico(p1);
-      const tempUser = window.usuarioPendente;
-      const rootPath = tempUser.projeto === 'command'
-        ? rootDatabase.ref('usuarios/' + encodeKey(tempUser.nome))
-        : rootDatabase.ref('projetos/' + tempUser.projeto + '/usuarios/' + encodeKey(tempUser.nome));
-
-      rootPath.update({ senha: hashFinal, senhaAlterada: true }).then(() => {
-        logado = tempUser;
-        localStorage.setItem('usuarioLogado', JSON.stringify(logado));
-        location.reload();
-      });
-    }
-
-    function switchView(v, event) {
-      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
-      if (alvo) alvo.classList.add('active');
-      if (event && event.currentTarget) event.currentTarget.classList.add('active');
-      if(v === 'admin') { listarUsuarios(); listarFeedbacks(); }
-    }
-
-    function setTheme(t) {
-      localStorage.setItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme', t);
-      document.body.setAttribute('data-theme', t);
-    }
-    function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
-
-    // =========================
-    // COMMAND CENTER (fixes)
-    // =========================
-    function abrirModalTurno() { document.getElementById('modalStartTurn').style.display = 'flex'; }
-    function confirmarInicioTurno() {
-      const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
-      const ea = parseInt(document.getElementById('startEmAndamento').value) || 0;
-      dbRef('dailyStats/' + getHoje()).set({ ni, ea, totalInicial: ni + ea, createdBy: logado.nome }).then(() => {
-        dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
-        location.reload();
-      });
-    }
-    function verificarStatusTurno() {
-      dbRef('dailyStats/' + getHoje()).on('value', snap => {
-        const stats = snap.val();
-        dbRef('statusTurno/' + encodeKey(logado.nome)).once('value', userSnap => {
-          if (stats) {
-            document.getElementById('kpiNi').innerText = stats.ni || 0;
-            document.getElementById('kpiEa').innerText = stats.ea || 0;
-            pendenciaTotal = stats.totalInicial || 0;
-            if (!userSnap.val() || !userSnap.val().aberto) dbRef('statusTurno/' + encodeKey(logado.nome)).set({ aberto: true });
-            document.getElementById('overlay').style.display = 'none';
-            if (logado.role === 'admin') {
-              document.getElementById('kpiNi').classList.add('editable');
-              document.getElementById('kpiEa').classList.add('editable');
-            }
-          }
-        });
-      });
-    }
-    function corrigirKpi(tipo) {
-      if(logado.role !== 'admin') return;
-      const el = tipo === 'ni' ? document.getElementById('kpiNi') : document.getElementById('kpiEa');
-      const atual = parseInt(el.innerText) || 0;
-      const novo = prompt("Novo valor:", atual);
-      if(novo === null) return;
-      const val = parseInt(novo);
-      if(isNaN(val) || val < 0) return showToast("Valor inválido!", "error");
-      dbRef('dailyStats/' + getHoje()).once('value').then(s => {
-        const stats = s.val() || { ni:0, ea:0 };
-        if(tipo === 'ni') stats.ni = val;
-        if(tipo === 'ea') stats.ea = val;
-        stats.totalInicial = (parseInt(stats.ni)||0) + (parseInt(stats.ea)||0);
-        dbRef('dailyStats/' + getHoje()).set(stats).then(() => showToast("Fila atualizada!", "success"));
-      });
-    }
-    function calcularMetaPessoal() {
-      dbRef('chamados').once('value', snap => {
-        let dias = new Set(); let res = 0;
-        snap.forEach(i => {
-          const c = i.val();
-          if (c.analista === logado.nome && (c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto')) {
-            dias.add(c.data); res++;
-          }
-        });
-        document.getElementById('kpiMeta').innerText = dias.size > 0 ? Math.ceil(res / dias.size) : "--";
-      });
-    }
-
-    function toggleTaskInput() {
-      const t = document.getElementById('temTask').value === 'sim';
-      document.getElementById('divQtdTask').style.visibility = t ? 'visible' : 'hidden';
-      document.getElementById('containerTasksDinamicas').style.display = t ? 'grid' : 'none';
-      if(!t) { document.getElementById('containerTasksDinamicas').innerHTML = ""; document.getElementById('taskQtd').value = ""; }
-    }
-    function gerarCamposTask() {
-      const qtd = parseInt(document.getElementById('taskQtd').value) || 0;
-      const c = document.getElementById('containerTasksDinamicas');
-      c.innerHTML = "";
-      for(let i = 1; i <= qtd; i++) c.innerHTML += `<input type="text" class="input-task-dinamica" placeholder="TASK ${i}">`;
-    }
-
-    function deletarChamadoCommand(chave, ritm) {
-      if (!logado) return;
-      const ehAdmin = (logado.role === 'admin' || logado.role === 'ADMIN');
-      if (!confirm(`Excluir o registro da RITM ${ritm}?`)) return;
-      dbRef('chamados').child(chave).once('value').then(snap => {
-        const c = snap.val();
-        if(!c) return;
-        const ehDono = (c.analista === logado.nome);
-        const ehHoje = (c.data === getHoje());
-        if (!ehAdmin && !(ehDono && ehHoje)) return alert("Você só pode excluir seus registros do dia. Admin pode excluir qualquer.");
-        dbRef('chamados').child(chave).remove().then(() => showToast("Registro excluído!", "success"));
-      });
-    }
-
-    function limparFormCommand() {
-      document.getElementById('ritm').value = "";
-      document.getElementById('descResumida').value = "";
-      document.getElementById('containerTasksDinamicas').innerHTML = "";
-      document.getElementById('taskQtd').value = "";
-      document.getElementById('temTask').value = "nao";
-      toggleTaskInput();
-    }
-
-    async function salvarCommand() {
-      const ritm = document.getElementById('ritm').value.toUpperCase().trim();
-      const status = document.getElementById('statusRitm').value;
-      let desc = document.getElementById('descResumida').value.trim();
-      if(!ritm || !status || !desc) return showToast("Preencha RITM, Status e Descrição.", "error");
-
-      let tasksArr = [];
-      document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tasksArr.push(i.value.toUpperCase().trim()); });
-
-      const payload = { ritm, status, desc, data: getHoje(), hora: getHora(), analista: logado.nome, taskQtd: tasksArr.length, tasks: tasksArr.join(", ") || "Não" };
-
-      const snap = await dbRef('chamados').once('value');
-      let keyHoje = null, keyOutro = null, dataAntiga = null;
-      snap.forEach(child => {
-        const c = child.val(); if(!c) return;
-        const r = (c.ritm || "").toUpperCase().trim();
-        if(r === ritm) {
-          if(c.data === getHoje()) keyHoje = child.key;
-          else { keyOutro = child.key; dataAntiga = c.data; }
-        }
-      });
-
-      if(keyHoje) {
-        await dbRef('chamados').child(keyHoje).update(payload);
+    if(keyOutro) {
+      if(status === "Reaberto") {
+        await dbRef('chamados').child(keyOutro).remove();
+        payload.desc = payload.desc.startsWith("[Ref.") ? payload.desc : `[Ref. ${dataAntiga}] ` + payload.desc;
+        await dbRef('chamados').push(payload);
         limparFormCommand();
-        showToast("RITM atualizada (sem duplicar) ✅", "success");
+        showToast("Reaberto: movido do histórico para hoje ✅", "success");
+        return;
+      } else {
+        showToast(`Essa RITM já existe em ${dataAntiga}. Use status "Reaberto" para mover.`, "alert");
         return;
       }
-
-      if(keyOutro) {
-        if(status === "Reaberto") {
-          await dbRef('chamados').child(keyOutro).remove();
-          payload.desc = payload.desc.startsWith("[Ref.") ? payload.desc : `[Ref. ${dataAntiga}] ` + payload.desc;
-          await dbRef('chamados').push(payload);
-          limparFormCommand();
-          showToast("Reaberto: movido do histórico ✅", "success");
-          return;
-        } else {
-          showToast(`Essa RITM já existe em ${dataAntiga}. Use status "Reaberto" para mover.`, "alert");
-          return;
-        }
-      }
-
-      await dbRef('chamados').push(payload);
-      limparFormCommand();
-      showToast("Chamado registrado!", "success");
     }
 
-    function escutarBancoCommand() {
-      dbRef('chamados').on('value', snap => {
-        const tb = document.getElementById('corpoTabela');
-        tb.innerHTML = "";
+    await dbRef('chamados').push(payload);
+    limparFormCommand();
+    showToast("Chamado registrado!", "success");
+  }
 
-        let resolvidosMeu = 0;
-        let resolvidosTotalEquipe = 0;
-        let cont = {};
+  function limparFormCommand() {
+    document.getElementById('ritm').value = "";
+    document.getElementById('descResumida').value = "";
+    document.getElementById('containerTasksDinamicas').innerHTML = "";
+    document.getElementById('taskQtd').value = "";
+    document.getElementById('temTask').value = "nao";
+    toggleTaskInput();
+  }
 
-        snap.forEach(item => {
-          const c = item.val();
-          if(!c) return;
-          if(c.data !== getHoje()) return;
+  // ==========================
+  // ✅ COMMAND: Listener da tabela + botão excluir
+  // ==========================
+  function escutarBancoCommand() {
+    dbRef('chamados').on('value', snap => {
+      const tb = document.getElementById('corpoTabela');
+      if(tb) tb.innerHTML = "";
 
-          if(['Resolvido','Cancelado','Reaberto'].includes(c.status)) {
+      let fechadosMeu = 0;
+      let fechadosEquipe = 0;
+      let cont = {};
+
+      snap.forEach(item => {
+        const c = item.val();
+        if(!c) return;
+
+        if(c.data === getHoje()) {
+          if(c.status === 'Resolvido' || c.status === 'Cancelado' || c.status === 'Reaberto') {
             cont[c.analista] = (cont[c.analista] || 0) + 1;
-            resolvidosTotalEquipe++;
+            fechadosEquipe++;
           }
-          if(c.analista === logado.nome && !['Pendente','GA'].includes(c.status)) resolvidosMeu++;
+
+          if(c.analista === logado.nome && c.status !== 'Pendente' && c.status !== 'GA') fechadosMeu++;
 
           const ehAdmin = (logado.role === 'admin' || logado.role === 'ADMIN');
           if(!(ehAdmin || c.analista === logado.nome)) return;
@@ -919,673 +879,522 @@
           if(c.status === 'Resolvido') cor = 'pill-ok';
           else if(c.status === 'Cancelado') cor = 'pill-bad';
           else if(c.status === 'Reaberto') cor = 'pill-warn';
+          else if(c.status === 'Pendente' || c.status === 'GA') cor = 'pill-blue';
 
-          let btnExcluir = '---';
-          if(ehAdmin || c.analista === logado.nome) btnExcluir = `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarChamadoCommand('${item.key}', '${c.ritm}')">🗑</button>`;
+          let btnExcluir = "---";
+          if(ehAdmin || c.analista === logado.nome) {
+            btnExcluir = `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarChamadoCommand('${item.key}','${c.ritm}')">🗑</button>`;
+          }
 
-          tb.innerHTML = `<tr>
+          if(tb) tb.innerHTML = `<tr>
             <td>${c.hora || ""}</td>
-            <td><b>${c.ritm || ""}</b></td>
-            <td><span class="pill ${cor}">${c.status || ""}</span></td>
+            <td><b>${c.ritm}</b></td>
+            <td><span class="pill ${cor}">${c.status}</span></td>
             <td>${c.tasks || "Não"}</td>
             <td>${c.desc || ""}</td>
             <td style="text-align:right">${btnExcluir}</td>
           </tr>` + tb.innerHTML;
-        });
-
-        document.getElementById('kpiRitms').innerText = resolvidosMeu;
-        if(pendenciaTotal > 0) document.getElementById('kpiMedia').innerText = ((resolvidosTotalEquipe / pendenciaTotal) * 100).toFixed(1) + "%";
-        atualizarGrafico(cont);
-      });
-    }
-
-    let chartInstance = null;
-    function atualizarGrafico(dados) {
-      const canvas = document.getElementById('meuGraficoBarras');
-      if(!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if(chartInstance) chartInstance.destroy();
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: Object.keys(dados), datasets: [{ data: Object.values(dados), backgroundColor: '#60a5fa', borderRadius: 8 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
-      });
-    }
-
-    function consultarBanco() {
-      const di = document.getElementById('dataInicio').value;
-      const df = document.getElementById('dataFim').value;
-      if(!di || !df) return showToast("Selecione as datas.", "error");
-      if(di > df) return showToast("Data inicial maior que final.", "error");
-
-      dbRef('chamados').once('value', snap => {
-        const corpo = document.getElementById('corpoConsulta');
-        corpo.innerHTML = "";
-        let linhas = [];
-        snap.forEach(i => {
-          const c = i.val();
-          if(!c || !c.data) return;
-          if(c.data >= di && c.data <= df) linhas.push(c);
-        });
-        if(!linhas.length) return corpo.innerHTML = `<tr><td style="color:var(--muted); padding:20px;">Sem registros no período.</td></tr>`;
-
-        linhas.sort((a,b) => (a.data + (a.hora||"")).localeCompare(b.data + (b.hora||"")));
-        corpo.innerHTML = `<tr><td style="padding:0;">
-          <table>
-            <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>
-            <tbody>
-              ${linhas.map(c => `
-                <tr>
-                  <td>${c.data}</td><td>${c.hora || ""}</td><td><b>${c.analista}</b></td>
-                  <td><b>${c.ritm}</b></td><td>${c.status}</td><td>${c.tasks || "Não"}</td><td>${c.desc || ""}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </td></tr>`;
-      });
-    }
-
-    // =========================
-    // DISTRITO 22: ITENS (emoji + edit)
-    // =========================
-    function carregarItensDinamicos() {
-      dbRef('config/itens').on('value', snap => {
-        listaDeItensDinamicos = [];
-        itensByName = {};
-        const menuSidebar = document.getElementById('menuItensDinamico');
-        const selects = document.querySelectorAll('.dynamic-item-select');
-        const listaTabela = document.getElementById('corpoListaItens');
-
-        menuSidebar.innerHTML = "";
-        selects.forEach(s => s.innerHTML = "<option value=''>Selecione o Item...</option>");
-        listaTabela.innerHTML = "";
-
-        snap.forEach(item => {
-          const v = item.val() || {};
-          const it = { key: item.key, nome: v.nome || "", emoji: v.emoji || "📦", precoPadrao: Number(v.precoPadrao || 0) };
-          listaDeItensDinamicos.push(it);
-          itensByName[it.nome] = it;
-
-          // Sidebar botão
-          menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${escapeAttr(it.nome)}','navItem_${item.key}')">
-            <span style="font-size:1.1rem">${escapeHtml(it.emoji)}</span> ${escapeHtml(it.nome)}
-          </div>`;
-
-          // Selects (reembolso)
-          selects.forEach(s => s.innerHTML += `<option value="${escapeAttr(it.nome)}">${escapeHtml(it.emoji)} ${escapeHtml(it.nome)}</option>`);
-
-          // Tabela gestão (edit + delete)
-          const btns = isHighRank()
-            ? `<div style="display:flex; gap:8px; justify-content:flex-end;">
-                 <button class="btn" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="editarItem('${it.key}')">✏️</button>
-                 <button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarRegistro('config/itens','${it.key}','Deletou o item ${it.nome} do sistema')">🗑</button>
-               </div>`
-            : `<span class="mini">---</span>`;
-
-          listaTabela.innerHTML += `<tr>
-            <td><b>${escapeHtml(it.nome)}</b></td>
-            <td>${escapeHtml(it.emoji)}</td>
-            <td>${it.precoPadrao ? ('$' + it.precoPadrao) : '-'}</td>
-            <td class="only-high-rank" style="text-align:right">${btns}</td>
-          </tr>`;
-        });
-
-        // listeners de saldos protegidos
-        listaDeItensDinamicos.forEach(it => {
-          dbRef(`saldos_protegidos/estoque_${it.nome}`).on('value', s => {
-            saldoQtdPorItem[it.nome] = Number(s.val() || 0);
-            atualizarDashboardEstoque();
-            if(currentDroga === it.nome) document.getElementById('kpiDrogaTotal').innerText = saldoQtdPorItem[it.nome] || 0;
-          });
-          dbRef(`saldos_protegidos/estoque_valor_${it.nome}`).on('value', s => {
-            saldoValorPorItem[it.nome] = Number(s.val() || 0);
-            atualizarDashboardEstoque();
-            if(currentDroga === it.nome) document.getElementById('kpiDrogaValor').innerText = formatarDinheiro(saldoValorPorItem[it.nome] || 0);
-          });
-        });
-
-        // saldo global valor estoque
-        dbRef('saldos_protegidos/estoque_valor_total').on('value', s => {
-          const v = Number(s.val() || 0);
-          const a = document.getElementById('dashKpiEstoqueValor');
-          const b = document.getElementById('kpiEstoqueValor');
-          if(a) a.innerText = formatarDinheiro(v);
-          if(b) b.innerText = formatarDinheiro(v);
-        });
-
-        atualizarDashboardEstoque();
-      });
-    }
-
-    function salvarNovoItem() {
-      if(!isHighRank()) return showToast("Sem permissão.", "error");
-      const nome = document.getElementById('novoItemNome').value.trim();
-      const emoji = document.getElementById('novoItemEmoji').value.trim();
-      const preco = Number(document.getElementById('novoItemPreco').value || 0);
-
-      if(!nome) return showToast("Digite o nome do item.", "error");
-      if(!emoji) return showToast("Escolha um emoji.", "error");
-
-      dbRef('config/itens').push({ nome, emoji, precoPadrao: preco }).then(() => {
-        registrarLog('SISTEMA', `Cadastrou item: ${nome} (${emoji})`);
-        document.getElementById('novoItemNome').value = "";
-        document.getElementById('novoItemEmoji').value = "";
-        document.getElementById('novoItemPreco').value = "";
-        showToast("Item criado!", "success");
-      });
-    }
-
-    function editarItem(key) {
-      if(!isHighRank()) return showToast("Sem permissão.", "error");
-      dbRef('config/itens').child(key).once('value').then(snap => {
-        const it = snap.val();
-        if(!it) return;
-
-        const nomeNovo = prompt("Editar NOME do item:", it.nome || "");
-        if(nomeNovo === null) return;
-
-        const emojiNovo = prompt("Editar EMOJI do item:", it.emoji || "📦");
-        if(emojiNovo === null) return;
-
-        const precoNovoStr = prompt("Editar PREÇO PADRÃO unitário ($):", String(Number(it.precoPadrao || 0)));
-        if(precoNovoStr === null) return;
-        const precoNovo = Number(precoNovoStr || 0);
-
-        // Se trocar nome, precisa também mover saldos protegidos (para não perder histórico)
-        const nomeAntigo = it.nome || "";
-        const updates = { nome: nomeNovo.trim(), emoji: emojiNovo.trim(), precoPadrao: precoNovo };
-
-        // Caso o nome tenha mudado, migra saldos (qty e valor)
-        if(nomeAntigo && nomeAntigo !== nomeNovo.trim()) {
-          Promise.all([
-            dbRef(`saldos_protegidos/estoque_${nomeAntigo}`).once('value'),
-            dbRef(`saldos_protegidos/estoque_valor_${nomeAntigo}`).once('value')
-          ]).then(([qSnap, vSnap]) => {
-            const q = Number(qSnap.val() || 0);
-            const v = Number(vSnap.val() || 0);
-
-            const u = {};
-            u[`saldos_protegidos/estoque_${nomeNovo.trim()}`] = q;
-            u[`saldos_protegidos/estoque_valor_${nomeNovo.trim()}`] = v;
-            u[`saldos_protegidos/estoque_${nomeAntigo}`] = null;
-            u[`saldos_protegidos/estoque_valor_${nomeAntigo}`] = null;
-
-            dbRef('').update(u).then(() => {
-              dbRef('config/itens').child(key).update(updates).then(() => {
-                registrarLog('SISTEMA', `Editou item ${nomeAntigo} -> ${nomeNovo.trim()} (${emojiNovo.trim()})`);
-                showToast("Item editado!", "success");
-              });
-            });
-          });
-        } else {
-          dbRef('config/itens').child(key).update(updates).then(() => {
-            registrarLog('SISTEMA', `Editou item ${it.nome} (${emojiNovo.trim()})`);
-            showToast("Item editado!", "success");
-          });
         }
       });
-    }
 
-    function atualizarDashboardEstoque() {
-      const tbody = document.getElementById('dashCorpoEstoque');
-      if(!tbody) return;
-      tbody.innerHTML = "";
+      if(document.getElementById('kpiRitms')) document.getElementById('kpiRitms').innerText = fechadosMeu;
+      if(pendenciaTotal > 0 && document.getElementById('kpiMedia')) document.getElementById('kpiMedia').innerText = ((fechadosEquipe / pendenciaTotal) * 100).toFixed(1) + "%";
+      atualizarGrafico(cont);
+    });
+  }
 
-      listaDeItensDinamicos.forEach(it => {
-        const qtd = Number(saldoQtdPorItem[it.nome] || 0);
-        const val = Number(saldoValorPorItem[it.nome] || 0);
-        tbody.innerHTML += `<tr>
-          <td><span style="font-size:1.1rem">${escapeHtml(it.emoji)}</span> <b style="margin-left:8px;">${escapeHtml(it.nome)}</b></td>
-          <td style="font-weight:950;">${qtd}</td>
-          <td style="font-weight:950; color:var(--brand);">${formatarDinheiro(val)}</td>
-        </tr>`;
-      });
-    }
+  // ==========================
+  // ✅ COMMAND: CONSULTA com RESUMO (NOVO)
+  // ==========================
+  async function consultarBanco() {
+    const di = document.getElementById('dataInicio').value;
+    const df = document.getElementById('dataFim').value;
 
-    // Estoque: abrir item
-    function abrirDroga(nome, navId) {
-      currentDroga = nome;
+    if(!di || !df) return showToast("Selecione as datas.", "error");
+    if(di > df) return showToast("Data inicial maior que final.", "error");
 
-      const it = itensByName[nome] || { emoji:"📦", precoPadrao:0 };
-      document.getElementById('lblDrogaTitle').innerText = `ESTOQUE - ${nome.toUpperCase()}`;
-      document.getElementById('txtDrogaNome').innerText = `${it.emoji} ${nome}`;
-      document.getElementById('txtDrogaHist').innerText = nome;
+    const corpo = document.getElementById('corpoConsulta');
+    if(!corpo) return;
 
-      document.getElementById('kpiDrogaTotal').innerText = Number(saldoQtdPorItem[nome] || 0);
-      document.getElementById('kpiDrogaValor').innerText = formatarDinheiro(Number(saldoValorPorItem[nome] || 0));
+    corpo.innerHTML = `<tr><td style="color:var(--muted); padding:20px;">Carregando...</td></tr>`;
 
-      // Preenche preço padrão como sugestão
-      document.getElementById('precoUnitDroga').value = it.precoPadrao ? it.precoPadrao : "";
-      document.getElementById('qtdDroga').value = "";
-      document.getElementById('opDroga').value = "Entrada";
-      document.getElementById('movValorTotal').innerText = "$ 0";
-      calcularLucroVenda();
-      calcularValorMovimento();
+    const snapChamados = await dbRef('chamados').once('value');
 
-      switchView('droga');
-      if(navId) {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        const btn = document.getElementById(navId);
-        if(btn) btn.classList.add('active');
+    const rows = [];
+    const totals = { total:0, Resolvido:0, Cancelado:0, Reaberto:0, Pendente:0, GA:0, Tasks:0 };
+
+    snapChamados.forEach(n => {
+      const c = n.val();
+      if(!c || !c.data) return;
+      if(c.data >= di && c.data <= df) {
+        const st = String(c.status||"").trim();
+        const tq = Number(c.taskQtd||0);
+        rows.push({ data:c.data, hora:c.hora||"", analista:c.analista||"", ritm:c.ritm||"", status:st, tasks:c.tasks||"Não", desc:c.desc||"", taskQtd:tq });
+        totals.total++;
+        if(totals[st] !== undefined) totals[st]++; 
+        totals.Tasks += tq;
       }
-      renderHistoricoItem();
+    });
+
+    if(rows.length === 0) {
+      corpo.innerHTML = `<tr><td style="color:var(--muted); padding:20px;">Sem registros no período.</td></tr>`;
+      return;
     }
 
-    function calcularValorMovimento() {
-      const qtd = Number(document.getElementById('qtdDroga').value || 0);
-      const preco = Number(document.getElementById('precoUnitDroga').value || 0);
-      const total = Math.max(0, qtd) * Math.max(0, preco);
-      document.getElementById('movValorTotal').innerText = formatarDinheiro(total);
-    }
+    // eficiência do período (opcional) = fechados / soma(totalInicial dos dias com dailyStats)
+    const diasNoPeriodo = [...new Set(rows.map(r => r.data))];
+    let filaTotalPeriodo = 0;
+    const snapsDaily = await Promise.all(diasNoPeriodo.map(d => dbRef('dailyStats/' + d).once('value')));
+    snapsDaily.forEach(s => {
+      const st = s.val();
+      if(st && Number(st.totalInicial) > 0) filaTotalPeriodo += Number(st.totalInicial);
+    });
 
-    // mantém sua regra de "previsão retorno" (qtd*45) para drogas, independente do preço unit
-    function calcularLucroVenda() {
-      const op = document.getElementById('opDroga').value;
-      const qtd = parseInt(document.getElementById('qtdDroga').value) || 0;
-      const divInfo = document.getElementById('lucroDrogaInfo');
-      const spanValor = document.getElementById('valLucroDroga');
+    const fechadosPeriodo = totals.Resolvido + totals.Cancelado + totals.Reaberto;
+    const eficienciaPeriodo = filaTotalPeriodo > 0 ? ((fechadosPeriodo / filaTotalPeriodo) * 100).toFixed(1) + "%" : "—";
 
-      calcularValorMovimento();
+    rows.sort((a,b) => (a.data + a.hora).localeCompare(b.data + b.hora));
 
-      if(op === 'Saida' && qtd > 0) {
-        divInfo.style.display = 'block';
-        spanValor.innerText = formatarDinheiro(qtd * 45);
-      } else {
-        divInfo.style.display = 'none';
+    const resumoHtml = `
+      <div style="margin: 0 0 16px 0; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: rgba(0,0,0,0.15); box-shadow: var(--shadow);">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+          <div style="font-weight:900;">📌 Resumo do período</div>
+          <div style="color: var(--muted); font-weight:800; font-size:.85rem;">${di} → ${df} • ${rows.length} registro(s)</div>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-top:12px;">
+          <div class="kpi-card"><div class="kpi-title">TOTAL</div><div class="kpi-value">${totals.total}</div></div>
+          <div class="kpi-card" style="border-bottom:3px solid var(--brand2)"><div class="kpi-title">RESOLVIDOS</div><div class="kpi-value" style="color:var(--brand2)">${totals.Resolvido}</div></div>
+          <div class="kpi-card" style="border-bottom:3px solid var(--danger)"><div class="kpi-title">CANCELADOS</div><div class="kpi-value" style="color:var(--danger)">${totals.Cancelado}</div></div>
+          <div class="kpi-card" style="border-bottom:3px solid var(--warn)"><div class="kpi-title">REABERTOS</div><div class="kpi-value" style="color:var(--warn)">${totals.Reaberto}</div></div>
+          <div class="kpi-card" style="border-bottom:3px solid var(--brand)"><div class="kpi-title">PENDENTES</div><div class="kpi-value" style="color:var(--brand)">${totals.Pendente}</div></div>
+          <div class="kpi-card" style="border-bottom:3px solid var(--brand)"><div class="kpi-title">GA</div><div class="kpi-value" style="color:var(--brand)">${totals.GA}</div></div>
+          <div class="kpi-card"><div class="kpi-title">TASKS (TOTAL)</div><div class="kpi-value">${totals.Tasks}</div></div>
+          <div class="kpi-card"><div class="kpi-title">EFICIÊNCIA</div><div class="kpi-value" style="color:var(--brand2)">${eficienciaPeriodo}</div></div>
+        </div>
+      </div>
+    `;
+
+    const tableHtml = `
+      ${resumoHtml}
+      <table>
+        <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>
+        <tbody>
+          ${rows.map(r => {
+            const pill = r.status === 'Resolvido' ? 'pill-ok'
+              : (r.status === 'Cancelado' ? 'pill-bad'
+              : (r.status === 'Reaberto' ? 'pill-warn' : 'pill-blue'));
+            return `<tr>
+              <td>${r.data}</td><td>${r.hora}</td><td><b>${r.analista}</b></td>
+              <td><b>${r.ritm}</b></td><td><span class="pill ${pill}">${r.status}</span></td>
+              <td>${r.tasks}</td><td>${r.desc}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+
+    corpo.innerHTML = `<tr><td style="padding:0;">${tableHtml}</td></tr>`;
+  }
+
+  // ====== GRÁFICO COMMAND ======
+  let chartInstance = null;
+  function atualizarGrafico(dados) {
+    if(!document.getElementById('meuGraficoBarras')) return;
+    const ctx = document.getElementById('meuGraficoBarras').getContext('2d');
+    if(chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: Object.keys(dados), datasets: [{ data: Object.values(dados), backgroundColor: '#60a5fa', borderRadius: 8 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
+    });
+  }
+
+  /* =================================================================================
+     DISTRITO 22 - (SEU CÓDIGO ORIGINAL)
+     A PARTIR DAQUI: mantido igual ao seu (itens, debitos, caixa, estoque, lavanderia, users)
+     ================================================================================= */
+  function obterEmojiItem(nomeItem) {
+    const txt = nomeItem.toLowerCase();
+    if(txt.includes('maconha')||txt.includes('erva')) return '🌿';
+    if(txt.includes('coca')||txt.includes('pó')) return '❄️';
+    if(txt.includes('meta')) return '💎';
+    if(txt.includes('lockpick')) return '🔓';
+    if(txt.includes('c4') || txt.includes('bomba')) return '💣';
+    if(txt.includes('chip') || txt.includes('celular')) return '📱';
+    if(txt.includes('arma') || txt.includes('ak')) return '🔫';
+    if(txt.includes('muni')) return '🎒';
+    if(txt.includes('colete')) return '🦺';
+    return '📦';
+  }
+
+  function carregarItensDinamicos() {
+    dbRef('config/itens').on('value', snap => {
+      listaDeItensDinamicos = [];
+      const menuSidebar = document.getElementById('menuItensDinamico');
+      const selects = document.querySelectorAll('.dynamic-item-select');
+      const listaTabela = document.getElementById('corpoListaItens');
+
+      if(menuSidebar) menuSidebar.innerHTML = "";
+      selects.forEach(s => s.innerHTML = "<option value=''>Selecione o Item...</option>");
+      if(listaTabela) listaTabela.innerHTML = "";
+
+      let temItens = false;
+
+      snap.forEach(item => {
+        temItens = true;
+        const nomeItem = item.val().nome;
+        const icone = obterEmojiItem(nomeItem);
+        listaDeItensDinamicos.push(nomeItem);
+
+        if(menuSidebar) {
+          menuSidebar.innerHTML += `<div class="nav-item only-distrito" id="navItem_${item.key}" onclick="abrirDroga('${nomeItem}', 'navItem_${item.key}')"><span style="font-size:1.1rem">${icone}</span> ${nomeItem}</div>`;
+        }
+        selects.forEach(s => s.innerHTML += `<option value="${nomeItem}">${nomeItem}</option>`);
+
+        if(listaTabela) {
+          listaTabela.innerHTML += `<tr><td><span style="font-size:1.2rem">${icone}</span> <b>${nomeItem}</b></td><td style="text-align:right"><button class="btn btn-danger" onclick="deletarRegistro('config/itens', '${item.key}', 'Deletou o item ${nomeItem} do sistema')">🗑 Excluir</button></td></tr>`;
+        }
+      });
+
+      if(!temItens && isHighRank()) {
+        const defaults = ["Maconha", "Cocaina", "Metanfetamina", "Lockpick", "C4", "Chip Celular"];
+        defaults.forEach(d => dbRef('config/itens').push({ nome: d }));
       }
-    }
+    });
+  }
 
-    // Movimentação: trava qty e valor por transaction
-    function salvarEstoque() {
-      if(!currentDroga) return showToast("Selecione um item.", "error");
+  function salvarNovoItem() {
+    const n = document.getElementById('novoItemNome').value.trim();
+    if(!n) return;
+    dbRef('config/itens').push({ nome: n }).then(() => {
+      document.getElementById('novoItemNome').value = "";
+      registrarLog('SISTEMA', `Cadastrou novo item no baú: ${n}`);
+      showToast("Item cadastrado!");
+    });
+  }
 
-      const op = document.getElementById('opDroga').value;
-      const qtd = parseInt(document.getElementById('qtdDroga').value);
-      const preco = Number(document.getElementById('precoUnitDroga').value);
+  function salvarDebito() {
+    const item = document.getElementById('itemDebito').value;
+    const val = parseFloat(document.getElementById('valorDebito').value);
+    const det = document.getElementById('detalheDebito').value.trim();
+    if(!item || !val || val <= 0) return alert("Selecione o item e insira um valor válido!");
+    dbRef('debitos').push({ data: getHoje(), hora: getHora(), membro: logado.nome, item: item, valor: val, detalhe: det, status: 'Pendente' }).then(() => {
+      registrarLog('DÉBITO', `Solicitou reembolso de $${val} referente a ${item}`);
+      document.getElementById('valorDebito').value = ""; document.getElementById('detalheDebito').value = "";
+      showToast("Reembolso solicitado!", "success");
+    });
+  }
 
-      if(!qtd || qtd <= 0) return showToast("Quantidade inválida.", "error");
-      if(!Number.isFinite(preco) || preco < 0) return showToast("Preço inválido.", "error");
+  function escutarDebitos() {
+    dbRef('debitos').on('value', snap => {
+      const tbody = document.getElementById('corpoDebitos');
+      if(!tbody) return; tbody.innerHTML = "";
+      let totalDevedor = 0;
 
-      const total = qtd * preco;
+      snap.forEach(item => {
+        const c = item.val();
+        if(!isHighRank() && c.membro !== logado.nome) return;
+        if(c.status === 'Pendente') totalDevedor += c.valor;
 
-      // 1) trava QTD do item
-      const refQtd = dbRef(`saldos_protegidos/estoque_${currentDroga}`);
-      // 2) trava VALOR do item
-      const refValItem = dbRef(`saldos_protegidos/estoque_valor_${currentDroga}`);
-      // 3) trava VALOR global
-      const refValTotal = dbRef(`saldos_protegidos/estoque_valor_total`);
+        let corPill = c.status === 'Pendente' ? 'pill-warn' : 'pill-ok';
+        let acoes = "---";
+        if(isHighRank() && c.status === 'Pendente') {
+          acoes = `<button class="btn btn-success" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="pagarDebito('${item.key}', ${c.valor}, '${c.membro}', '${c.item}')">PAGAR</button>`;
+        } else if (isHighRank() && c.status === 'Pago') {
+          acoes = `<button class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="deletarRegistro('debitos', '${item.key}', 'Excluiu débito pago de ${c.membro} ($${c.valor})')">🗑</button>`;
+        }
 
-      // Primeiro: QTD
-      refQtd.transaction((atual) => {
-        let e = Number(atual || 0);
-        if(op === 'Saida' && e < qtd) return; // abort
-        return op === 'Entrada' ? e + qtd : e - qtd;
-      }, (err, committed) => {
-        if(err) return showToast("Erro no servidor (QTD).", "error");
-        if(!committed) return showToast("Estoque insuficiente (QTD).", "error");
+        tbody.innerHTML = `<tr>
+          <td>${c.data}</td>
+          <td><b>${c.membro}</b></td>
+          <td><span style="font-size:1.1rem">${obterEmojiItem(c.item)}</span> ${c.item} <br><span style="color:var(--muted); font-size:0.75rem;">${c.detalhe}</span></td>
+          <td style="font-weight:800; font-size:1rem;">$${c.valor}</td>
+          <td><span class="pill ${corPill}">${c.status}</span></td>
+          <td class="only-high-rank" style="text-align:right">${acoes}</td>
+        </tr>` + tbody.innerHTML;
+      });
 
-        // Segundo: Valor por item
-        refValItem.transaction((vAtual) => {
-          let v = Number(vAtual || 0);
-          if(op === 'Saida' && v < total) {
-            // você pode permitir negativo se quiser; aqui eu bloqueio pra não ficar estranho
-            // (se quiser permitir, remova essa checagem)
-            return;
-          }
-          return op === 'Entrada' ? v + total : v - total;
-        }, (err2, committed2) => {
-          if(err2) return showToast("Erro no servidor (VALOR).", "error");
-          if(!committed2) return showToast("Valor em estoque insuficiente pra essa saída (ajuste o preço).", "error");
+      if(document.getElementById('kpiTotalDevedor')) document.getElementById('kpiTotalDevedor').innerText = formatarDinheiro(totalDevedor);
+      if(document.getElementById('dashKpiDivida')) document.getElementById('dashKpiDivida').innerText = formatarDinheiro(totalDevedor);
+    });
+  }
 
-          // Terceiro: Valor total
-          refValTotal.transaction((vAtualTotal) => {
-            let vT = Number(vAtualTotal || 0);
-            return op === 'Entrada' ? vT + total : vT - total;
-          }, (err3) => {
-            if(err3) return showToast("Erro no servidor (VALOR TOTAL).", "error");
-
-            // grava histórico
-            dbRef('estoque_drogas').push({
-              data: getHoje(),
-              hora: getHora(),
-              membro: logado.nome,
-              item: currentDroga,
-              operacao: op,
-              qtd: qtd,
-              precoUnit: preco,
-              valorTotal: total
-            }).then(() => {
-              registrarLog('ESTOQUE', `${op} ${qtd}x ${currentDroga} @ $${preco} (Total $${total})`);
-              document.getElementById('qtdDroga').value = "";
-              calcularLucroVenda();
-              showToast("Estoque atualizado!", "success");
-            });
-          });
-        });
+  function pagarDebito(id, valor, membro, itemDesc) {
+    if(confirm(`Confirmar pagamento de $${valor} para ${membro}?\n\nIsto será DEBITADO do Cofre da Família.`)) {
+      dbRef('debitos').child(id).update({ status: 'Pago', pagoPor: logado.nome }).then(() => {
+        dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Saque', valor: valor, desc: `Reembolso de ${itemDesc} para ${membro}` });
+        registrarLog('DÉBITO', `Pagou $${valor} para ${membro}`);
+        showToast("Dívida paga e Caixa atualizado!", "success");
       });
     }
+  }
 
-    function escutarHistoricoEstoque() {
-      dbRef('estoque_drogas').limitToLast(600).on('value', snap => {
-        historicoEstoqueGlobal = [];
-        snap.forEach(item => historicoEstoqueGlobal.push({ key: item.key, ...item.val() }));
-        historicoEstoqueGlobal.reverse();
-        renderHistoricoItem();
+  function salvarCaixaDistrito() {
+    const tipo = document.getElementById('tipoOperacaoDistrito').value;
+    const val = parseFloat(document.getElementById('valorDistrito').value);
+    const desc = document.getElementById('motivoDistrito').value.trim();
+    if(!val || !desc || val <= 0) return alert("Preencha valor e motivo!");
+
+    const saldoCaixaRef = dbRef('saldos_protegidos/caixa');
+    saldoCaixaRef.transaction((saldoAtual) => {
+      let s = saldoAtual || 0;
+      if (tipo === 'Saque' && s < val) return undefined;
+      return tipo === 'Deposito' ? s + val : s - val;
+    }, (error, committed) => {
+      if (error) return showToast("Erro no servidor.", "error");
+      if (!committed) return alert("Saldo insuficiente! Transação bloqueada.");
+
+      dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: tipo, valor: val, desc: desc }).then(() => {
+        registrarLog('CAIXA', `Realizou ${tipo} de $${val} (${desc})`);
+        document.getElementById('valorDistrito').value = ""; document.getElementById('motivoDistrito').value = "";
+        showToast("Transação salva com segurança!", "success");
       });
+    });
+  }
+
+  function escutarCaixaDistrito() {
+    dbRef('caixa').on('value', snap => {
+      const tbody = document.getElementById('corpoCaixaDistrito');
+      if(tbody) tbody.innerHTML = "";
+      let saldoTotal = 0;
+      snap.forEach(item => {
+        const c = item.val();
+        if(c.tipo === 'Deposito' || c.tipo === 'Lavagem') saldoTotal += c.valor;
+        if(c.tipo === 'Saque') saldoTotal -= c.valor;
+
+        const cor = (c.tipo === 'Saque') ? 'pill-bad' : 'pill-ok';
+        const sinal = (c.tipo === 'Saque') ? '-' : '+';
+        const deleteBtn = logado.role === 'admin' ? `<button class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="deletarRegistro('caixa', '${item.key}', 'Excluiu registro de caixa: ${c.tipo} de $${c.valor}')">🗑</button>` : '---';
+        if(tbody) tbody.innerHTML = `<tr><td>${c.data} ${c.hora}</td><td><b>${c.membro}</b></td><td><span class="pill ${cor}">${c.tipo}</span></td><td style="font-weight:800; font-size:1rem;">${sinal} $${c.valor}</td><td>${c.desc}</td><td class="only-high-rank" style="text-align:right">${deleteBtn}</td></tr>` + tbody.innerHTML;
+      });
+
+      dbRef('saldos_protegidos/caixa').set(saldoTotal);
+      if(document.getElementById('kpiSaldoDistrito')) document.getElementById('kpiSaldoDistrito').innerText = formatarDinheiro(saldoTotal);
+      if(document.getElementById('dashKpiSaldo')) document.getElementById('dashKpiSaldo').innerText = formatarDinheiro(saldoTotal);
+    });
+  }
+
+  function abrirDroga(nome, navId) {
+    currentDroga = nome;
+    if(document.getElementById('lblDrogaTitle')) document.getElementById('lblDrogaTitle').innerText = `ESTOQUE TOTAL - ${nome.toUpperCase()}`;
+    if(document.getElementById('txtDrogaNome')) document.getElementById('txtDrogaNome').innerText = nome;
+    if(document.getElementById('txtDrogaHist')) document.getElementById('txtDrogaHist').innerText = nome;
+    if(document.getElementById('qtdDroga')) document.getElementById('qtdDroga').value = "";
+    calcularLucroVenda();
+    switchView('droga');
+    if(navId) {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const btn = document.getElementById(navId);
+      if(btn) btn.classList.add('active');
     }
+    atualizarTelaEstoqueDinamico();
+  }
 
-    function renderHistoricoItem() {
-      const tbody = document.getElementById('corpoDroga');
-      if(!tbody || !currentDroga) return;
-      tbody.innerHTML = "";
+  function calcularLucroVenda() {
+    const opDropdown = document.getElementById('opDroga');
+    if(!opDropdown) return;
+    const op = opDropdown.value;
+    const qtd = parseInt(document.getElementById('qtdDroga').value) || 0;
+    const divInfo = document.getElementById('lucroDrogaInfo');
+    const spanValor = document.getElementById('valLucroDroga');
 
-      historicoEstoqueGlobal.forEach(c => {
-        if(c.item !== currentDroga) return;
+    if(op === 'Saida' && qtd > 0) {
+      divInfo.style.display = 'block'; spanValor.innerText = formatarDinheiro(qtd * 45);
+    } else { divInfo.style.display = 'none'; }
+  }
+
+  function salvarEstoque() {
+    const op = document.getElementById('opDroga').value;
+    const qtd = parseInt(document.getElementById('qtdDroga').value);
+    if(!qtd || qtd <= 0) return showToast("Quantidade inválida!", "error");
+
+    const estoqueTravaRef = dbRef(`saldos_protegidos/estoque_${currentDroga}`);
+    estoqueTravaRef.transaction((atual) => {
+      let e = atual || 0;
+      if (op === 'Saida' && e < qtd) return undefined;
+      return op === 'Entrada' ? e + qtd : e - qtd;
+    }, (error, committed) => {
+      if (error) return showToast("Erro no servidor.", "error");
+      if (!committed) return alert(`Estoque insuficiente! O baú tem menos de ${qtd} unidades.`);
+
+      dbRef('estoque_drogas').push({ data: getHoje(), hora: getHora(), membro: logado.nome, item: currentDroga, operacao: op, qtd: qtd }).then(() => {
+        registrarLog('ESTOQUE', `Realizou ${op} de ${qtd}x ${currentDroga}`);
+        document.getElementById('qtdDroga').value = ""; calcularLucroVenda(); showToast("Baú atualizado!", "success");
+      });
+    });
+  }
+
+  function escutarEstoqueGlobal() {
+    dbRef('estoque_drogas').on('value', snap => {
+      estoqueGlobalCalculado = {};
+      listaDeItensDinamicos.forEach(i => estoqueGlobalCalculado[i] = 0);
+      const historicoGeral = [];
+
+      snap.forEach(item => {
+        const c = item.val();
+        if(!estoqueGlobalCalculado[c.item]) estoqueGlobalCalculado[c.item] = 0;
+        if (c.operacao === 'Entrada') estoqueGlobalCalculado[c.item] += c.qtd;
+        else estoqueGlobalCalculado[c.item] -= c.qtd;
+        historicoGeral.push({ key: item.key, ...c });
+      });
+
+      for (const [nome, qtd] of Object.entries(estoqueGlobalCalculado)) {
+        dbRef(`saldos_protegidos/estoque_${nome}`).set(qtd);
+      }
+
+      const dashTable = document.getElementById('dashCorpoEstoque');
+      if(dashTable) {
+        dashTable.innerHTML = "";
+        for (const [nome, qtd] of Object.entries(estoqueGlobalCalculado)) {
+          dashTable.innerHTML += `<tr><td><span style="font-size:1.2rem">${obterEmojiItem(nome)}</span> <b style="margin-left:8px;">${nome}</b></td><td style="font-weight:800; color:var(--brand); font-size:1.1rem;">${qtd}</td></tr>`;
+        }
+      }
+
+      window.historicoEstoqueGlobal = historicoGeral.reverse();
+      atualizarTelaEstoqueDinamico();
+    });
+  }
+
+  function atualizarTelaEstoqueDinamico() {
+    if(!currentDroga) return;
+    if(document.getElementById('kpiDrogaTotal')) document.getElementById('kpiDrogaTotal').innerText = estoqueGlobalCalculado[currentDroga] || 0;
+
+    const tbodyDroga = document.getElementById('corpoDroga');
+    if(!tbodyDroga || !window.historicoEstoqueGlobal) return;
+
+    tbodyDroga.innerHTML = "";
+    window.historicoEstoqueGlobal.forEach(c => {
+      if(c.item === currentDroga) {
         const corOp = c.operacao === 'Entrada' ? 'pill-ok' : 'pill-bad';
         const sinal = c.operacao === 'Entrada' ? '+' : '-';
-
-        const del = isHighRank()
-          ? `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarRegistro('estoque_drogas','${c.key}','Excluiu movimento: ${c.operacao} ${c.qtd}x ${c.item} ($${c.valorTotal||0})')">🗑</button>`
-          : '---';
-
-        tbody.innerHTML += `<tr>
-          <td>${c.data} ${c.hora}</td>
-          <td><b>${c.membro}</b></td>
-          <td><span class="pill ${corOp}">${c.operacao}</span></td>
-          <td style="font-weight:950;">${sinal} ${c.qtd}</td>
-          <td>$${Number(c.precoUnit||0)}</td>
-          <td style="font-weight:950; color:var(--brand);">${formatarDinheiro(Number(c.valorTotal||0))}</td>
-          <td class="only-high-rank" style="text-align:right">${del}</td>
-        </tr>`;
-      });
-    }
-
-    // =========================
-    // DISTRITO: COFRE
-    // =========================
-    function salvarCaixaDistrito() {
-      const tipo = document.getElementById('tipoOperacaoDistrito').value;
-      const val = parseFloat(document.getElementById('valorDistrito').value);
-      const desc = document.getElementById('motivoDistrito').value.trim();
-      if(!val || !desc || val <= 0) return showToast("Preencha valor e motivo!", "error");
-
-      const saldoCaixaRef = dbRef('saldos_protegidos/caixa');
-      saldoCaixaRef.transaction((saldoAtual) => {
-        let s = Number(saldoAtual || 0);
-        if (tipo === 'Saque' && s < val) return;
-        return tipo === 'Deposito' ? s + val : s - val;
-      }, (error, committed) => {
-        if (error) return showToast("Erro no servidor.", "error");
-        if (!committed) return showToast("Saldo insuficiente! Bloqueado.", "error");
-
-        dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo, valor: val, desc }).then(() => {
-          registrarLog('CAIXA', `Realizou ${tipo} de $${val} (${desc})`);
-          document.getElementById('valorDistrito').value = "";
-          document.getElementById('motivoDistrito').value = "";
-          showToast("Transação registrada!", "success");
-        });
-      });
-    }
-
-    function escutarCaixaDistrito() {
-      dbRef('caixa').limitToLast(400).on('value', snap => {
-        const tbody = document.getElementById('corpoCaixaDistrito');
-        if(!tbody) return;
-        tbody.innerHTML = "";
-        let saldoTotal = 0;
-
-        let rows = [];
-        snap.forEach(item => rows.push({ key:item.key, ...item.val() }));
-        rows.reverse().forEach(c => {
-          if(c.tipo === 'Deposito' || c.tipo === 'Lavagem') saldoTotal += Number(c.valor||0);
-          if(c.tipo === 'Saque') saldoTotal -= Number(c.valor||0);
-
-          const cor = (c.tipo === 'Saque') ? 'pill-bad' : 'pill-ok';
-          const sinal = (c.tipo === 'Saque') ? '-' : '+';
-          const deleteBtn = isHighRank()
-            ? `<button class="btn btn-danger" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="deletarRegistro('caixa', '${c.key}', 'Excluiu caixa: ${c.tipo} $${c.valor}')">🗑</button>`
-            : '---';
-
-          tbody.innerHTML += `<tr>
-            <td>${c.data} ${c.hora}</td>
-            <td><b>${c.membro}</b></td>
-            <td><span class="pill ${cor}">${c.tipo}</span></td>
-            <td style="font-weight:950;">${sinal} $${Number(c.valor||0)}</td>
-            <td>${c.desc || ""}</td>
-            <td class="only-high-rank" style="text-align:right">${deleteBtn}</td>
-          </tr>`;
-        });
-
-        // mantém compatibilidade com seu saldo protegido (mesmo estilo do seu código)
-        dbRef('saldos_protegidos/caixa').set(saldoTotal);
-
-        document.getElementById('kpiSaldoDistrito').innerText = formatarDinheiro(saldoTotal);
-        document.getElementById('dashKpiSaldo').innerText = formatarDinheiro(saldoTotal);
-      });
-    }
-
-    // =========================
-    // DISTRITO: REEMBOLSOS
-    // =========================
-    function salvarDebito() {
-      const item = document.getElementById('itemDebito').value;
-      const val = parseFloat(document.getElementById('valorDebito').value);
-      const det = document.getElementById('detalheDebito').value.trim();
-      if(!item || !val || val <= 0) return showToast("Selecione item e valor válido!", "error");
-
-      dbRef('debitos').push({ data: getHoje(), hora: getHora(), membro: logado.nome, item, valor: val, detalhe: det, status: 'Pendente' }).then(() => {
-        registrarLog('DÉBITO', `Solicitou reembolso $${val} (${item})`);
-        document.getElementById('valorDebito').value = ""; document.getElementById('detalheDebito').value = "";
-        showToast("Reembolso solicitado!", "success");
-      });
-    }
-
-    function escutarDebitos() {
-      dbRef('debitos').on('value', snap => {
-        const tbody = document.getElementById('corpoDebitos');
-        if(!tbody) return;
-        tbody.innerHTML = "";
-        let totalDevedor = 0;
-
-        let rows = [];
-        snap.forEach(item => rows.push({ key:item.key, ...item.val() }));
-        rows.reverse().forEach(c => {
-          if(!isHighRank() && c.membro !== logado.nome) return;
-          if(c.status === 'Pendente') totalDevedor += Number(c.valor||0);
-
-          const corPill = c.status === 'Pendente' ? 'pill-warn' : 'pill-ok';
-          let acoes = "---";
-          if(isHighRank() && c.status === 'Pendente') {
-            acoes = `<button class="btn btn-success" style="padding:6px 10px; font-size:.72rem; width:auto;" onclick="pagarDebito('${c.key}', ${Number(c.valor||0)}, '${escapeAttr(c.membro)}', '${escapeAttr(c.item)}')">PAGAR</button>`;
-          }
-
-          tbody.innerHTML += `<tr>
-            <td>${c.data}</td>
-            <td><b>${c.membro}</b></td>
-            <td>${c.item} <br><span class="mini">${c.detalhe || ""}</span></td>
-            <td style="font-weight:950;">$${Number(c.valor||0)}</td>
-            <td><span class="pill ${corPill}">${c.status}</span></td>
-            <td class="only-high-rank" style="text-align:right">${acoes}</td>
-          </tr>`;
-        });
-
-        document.getElementById('kpiTotalDevedor').innerText = formatarDinheiro(totalDevedor);
-        document.getElementById('dashKpiDivida').innerText = formatarDinheiro(totalDevedor);
-      });
-    }
-
-    function pagarDebito(id, valor, membro, itemDesc) {
-      if(!isHighRank()) return showToast("Sem permissão.", "error");
-      if(!confirm(`Confirmar pagamento de $${valor} para ${membro}? (Debita do cofre)`)) return;
-      dbRef('debitos').child(id).update({ status: 'Pago', pagoPor: logado.nome }).then(() => {
-        dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Saque', valor, desc: `Reembolso (${itemDesc}) para ${membro}` });
-        registrarLog('DÉBITO', `Pagou $${valor} para ${membro} (${itemDesc})`);
-        showToast("Pago e registrado no cofre!", "success");
-      });
-    }
-
-    // =========================
-    // LAVANDERIA
-    // =========================
-    function calcularPrevisaoLavagem() {
-      let val = parseInt(document.getElementById('sujoLavar').value) || 0;
-      if(val > 50000) { val = 50000; document.getElementById('sujoLavar').value = 50000; }
-      const tempoMin = (val / 50000) * 25;
-      const limpo = val * 0.5;
-      document.getElementById('prevTempo').innerText = tempoMin.toFixed(1) + " min";
-      document.getElementById('prevLimpo').innerText = formatarDinheiro(limpo);
-    }
-
-    function iniciarLavagem() {
-      const val = parseInt(document.getElementById('sujoLavar').value);
-      if(!val || val <= 0 || val > 50000) return showToast("Valor inválido! Máx: 50.000", "error");
-
-      const tempoMs = ((val / 50000) * 25) * 60 * 1000;
-      const endsAt = nowServer() + tempoMs;
-
-      dbRef('lavanderia').push({ membro: logado.nome, sujo: val, limpo: val*0.5, endTime: endsAt, status: 'lavando', data: getHoje() }).then(() => {
-        registrarLog('LAVANDERIA', `Iniciou lavagem com $${val} sujo`);
-        document.getElementById('sujoLavar').value = "";
-        calcularPrevisaoLavagem();
-      });
-    }
-
-    function iniciarLoopLavanderia() {
-      if(loopLavanderia) clearInterval(loopLavanderia);
-      loopLavanderia = setInterval(renderizarMaquinas, 1000);
-    }
-
-    function renderizarMaquinas() {
-      dbRef('lavanderia').once('value', snap => {
-        const container = document.getElementById('listaMaquinas');
-        container.innerHTML = "";
-        let maquinasAtivas = 0;
-        const agora = nowServer();
-
-        snap.forEach(item => {
-          const maq = item.val();
-          if(!maq || maq.status !== 'lavando') return;
-          maquinasAtivas++;
-
-          const restanteMs = Number(maq.endTime||0) - agora;
-          if(restanteMs <= 0) {
-            container.innerHTML += `<div class="machine-card" style="border-color: var(--brand2); background: rgba(34,197,94,0.06);">
-              <div>
-                <div class="mini">LAVAGEM DE <b>${maq.membro}</b></div>
-                <div style="font-weight:950; color:var(--brand2); margin-top:4px;">Pronto: ${formatarDinheiro(maq.limpo)}</div>
-              </div>
-              <button class="btn btn-success" style="width:auto;" onclick="coletarLavagem('${item.key}', ${maq.limpo})">📥 COLETAR</button>
-            </div>`;
-          } else {
-            const min = Math.floor(restanteMs / 60000);
-            const seg = Math.floor((restanteMs % 60000) / 1000);
-            container.innerHTML += `<div class="machine-card">
-              <div>
-                <div class="mini">LAVAGEM DE <b>${maq.membro}</b> (${formatarDinheiro(maq.sujo)} sujo)</div>
-                <div style="font-weight:900; color:var(--brand); margin-top:4px;">Aguardando...</div>
-              </div>
-              <div class="machine-timer">${min}m ${seg < 10 ? '0'+seg : seg}s</div>
-            </div>`;
-          }
-        });
-
-        document.getElementById('dashKpiLavanderia').innerText = maquinasAtivas;
-        if(maquinasAtivas === 0) container.innerHTML = `<p class="subnote" style="padding:14px; border:1px dashed var(--border); border-radius:14px; text-align:center;">Nenhuma lavagem ativa.</p>`;
-      });
-    }
-
-    function coletarLavagem(id, valorLimpo) {
-      dbRef('lavanderia').child(id).update({ status: 'coletado' }).then(() => {
-        dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Lavagem', valor: valorLimpo, desc: "Dinheiro lavado e coletado" });
-        registrarLog('LAVANDERIA', `Coletou $${valorLimpo} limpo`);
-        showToast("Cofre abastecido!", "success");
-      });
-    }
-
-    // =========================
-    // ADMIN USERS
-    // =========================
-    function listarUsuarios() {
-      if(!isHighRank()) return;
-      dbRef('usuarios').on('value', snap => {
-        const lista = document.getElementById('listaUsuarios');
-        lista.innerHTML = "";
-        snap.forEach(u => {
-          const val = u.val() || {};
-          const login = decodeKey(u.key);
-          const deleteBtn = isAdminRole()
-            ? `<button onclick="deletarRegistro('usuarios', '${u.key}', 'Excluiu o membro ${login}')" class="btn btn-danger" style="padding: 6px 10px; font-size:0.72rem; width:auto;">🗑</button>`
-            : '';
-          lista.innerHTML += `<tr>
-            <td><b>${val.nomeCompleto || ""}</b></td>
-            <td style="color:var(--muted)">${login}</td>
-            <td><span class="pill pill-blue">${val.role || ""}</span></td>
-            <td style="text-align:right">${deleteBtn}</td>
-          </tr>`;
-        });
-      });
-    }
-
-    function cadastrarAnalista() {
-      if(!isHighRank()) return showToast("Sem permissão.", "error");
-      const nc = document.getElementById('nCompleto').value.trim();
-      const u = document.getElementById('nUser').value.toUpperCase().trim();
-      const p = document.getElementById('nPass').value;
-      const r = document.getElementById('nRole').value;
-      if(!nc || !u || !p) return showToast("Preencha nome, login e senha provisória.", "error");
-
-      dbRef('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: r, senhaAlterada: false }).then(() => {
-        registrarLog('SISTEMA', `Cadastrou/Atualizou membro ${u}`);
-        showToast("Usuário criado!", "success");
-      });
-    }
-
-    // Utils: escape
-    function escapeHtml(str){ return String(str ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;"); }
-    function escapeAttr(str){ return escapeHtml(str).replaceAll('`','&#096;'); }
-
-    // =========================
-    // BOOT
-    // =========================
-    window.onload = function() {
-      atualizarIconeETitulo();
-      const salvo = localStorage.getItem('usuarioLogado');
-      if (salvo) {
-        logado = JSON.parse(salvo);
-        document.getElementById('telaLogin').style.display = 'none';
-
-        atualizarIconeETitulo();
-        document.body.classList.add(`proj-${logado.projeto}`);
-        if(isHighRank()) document.body.classList.add(`is-high-rank`);
-        if(isAdminRole()) document.body.classList.add(`is-admin`);
-
-        const t = localStorage.getItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme');
-        if(t) document.body.setAttribute('data-theme', t);
-        else if(logado.projeto === 'distrito22') document.body.setAttribute('data-theme', 'distrito-dark');
-
-        document.getElementById('displayUser').innerText = logado.nome;
-        document.getElementById('displayRole').innerText = logado.role;
-
-        if(logado.projeto === 'command') {
-          document.getElementById('navCommandHome').classList.add('active');
-          switchView('dashCommand');
-          verificarStatusTurno();
-          escutarBancoCommand();
-          calcularMetaPessoal();
-        } else {
-          document.getElementById('navDashRP').classList.add('active');
-          switchView('dashDistrito');
-          carregarItensDinamicos();
-          escutarCaixaDistrito();
-          escutarDebitos();
-          escutarHistoricoEstoque();
-          iniciarLoopLavanderia();
-          listarFeedbacks();
-          if(isAdminRole()) escutarLogs();
-        }
+        const deleteBtn = isHighRank() ? `<button class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="deletarRegistro('estoque_drogas', '${c.key}', 'Excluiu estoque: ${c.operacao} de ${c.qtd}x ${c.item}')">🗑</button>` : '---';
+        tbodyDroga.innerHTML += `<tr><td>${c.data} ${c.hora}</td><td><b>${c.membro}</b></td><td><span class="pill ${corOp}">${c.operacao}</span></td><td style="font-weight:800; font-size:1rem;">${sinal} ${c.qtd}</td><td class="only-high-rank" style="text-align:right">${deleteBtn}</td></tr>`;
       }
-    };
-  </script>
+    });
+  }
+
+  function calcularPrevisaoLavagem() {
+    let val = parseInt(document.getElementById('sujoLavar').value) || 0;
+    if(val > 50000) { val = 50000; document.getElementById('sujoLavar').value = 50000; }
+    const tempoMinutos = (val / 50000) * 25; const limpo = val * 0.5;
+    document.getElementById('prevTempo').innerText = tempoMinutos.toFixed(1) + " min";
+    document.getElementById('prevLimpo').innerText = formatarDinheiro(limpo);
+  }
+
+  function iniciarLavagem() {
+    const val = parseInt(document.getElementById('sujoLavar').value);
+    if(!val || val <= 0 || val > 50000) return alert("Valor inválido! Máx: 50.000");
+
+    const now = Date.now() + serverTimeOffset;
+    const tempoMs = ((val / 50000) * 25) * 60 * 1000;
+    const endsAt = now + tempoMs;
+
+    dbRef('lavanderia').push({ membro: logado.nome, sujo: val, limpo: val*0.5, endTime: endsAt, status: 'lavando', data: getHoje() }).then(() => {
+      registrarLog('LAVANDERIA', `Iniciou máquina com $${val} sujo`);
+      document.getElementById('sujoLavar').value = ""; calcularPrevisaoLavagem();
+    });
+  }
+
+  function iniciarLoopLavanderia() { if(loopLavanderia) clearInterval(loopLavanderia); loopLavanderia = setInterval(renderizarMaquinas, 1000); }
+
+  function renderizarMaquinas() {
+    dbRef('lavanderia').once('value', snap => {
+      const containerLavanderia = document.getElementById('listaMaquinas');
+      if(containerLavanderia) containerLavanderia.innerHTML = "";
+      let maquinasAtivas = 0;
+
+      const now = Date.now() + serverTimeOffset;
+
+      snap.forEach(item => {
+        const maq = item.val();
+        if(maq.status === 'lavando') {
+          maquinasAtivas++;
+          const restanteMs = maq.endTime - now;
+          let cardHtml = "";
+          if(restanteMs <= 0) {
+            cardHtml = `<div class="machine-card" style="border-color: var(--brand2); background: rgba(34,197,94,0.05);"><div><div style="font-size:0.8rem; color:var(--muted); font-weight:700;">LAVAGEM DE ${maq.membro}</div><div style="font-weight:800; font-size:1.2rem; color:var(--brand2)">Pronto: ${formatarDinheiro(maq.limpo)}</div></div><button class="btn btn-success" style="width: auto;" onclick="coletarLavagem('${item.key}', ${maq.limpo})">📥 COLETAR</button></div>`;
+          } else {
+            const min = Math.floor(restanteMs / 60000); const seg = Math.floor((restanteMs % 60000) / 1000);
+            cardHtml = `<div class="machine-card"><div><div style="font-size:0.8rem; color:var(--muted); font-weight:700;">LAVAGEM DE ${maq.membro} <span style="color:var(--text)">(${formatarDinheiro(maq.sujo)} Sujo)</span></div><div style="font-weight:800; font-size:1rem; color:var(--brand); margin-top:4px;">Aguardando...</div></div><div class="machine-timer">${min}m ${seg < 10 ? '0'+seg : seg}s</div></div>`;
+          }
+          if(containerLavanderia) containerLavanderia.innerHTML += cardHtml;
+        }
+      });
+
+      if(document.getElementById('dashKpiLavanderia')) document.getElementById('dashKpiLavanderia').innerText = maquinasAtivas;
+    });
+  }
+
+  function coletarLavagem(id, valorLimpo) {
+    dbRef('lavanderia').child(id).update({ status: 'coletado' }).then(() => {
+      dbRef('caixa').push({ data: getHoje(), hora: getHora(), membro: logado.nome, tipo: 'Lavagem', valor: valorLimpo, desc: "Dinheiro lavado e coletado" });
+      registrarLog('LAVANDERIA', `Coletou $${valorLimpo} limpo`);
+      showToast("Cofre abastecido!", "success");
+    });
+  }
+
+  function listarUsuarios() {
+    dbRef('usuarios').on('value', snap => {
+      const lista = document.getElementById('listaUsuarios');
+      if(lista) lista.innerHTML = "";
+      snap.forEach(u => {
+        const val = u.val(); const login = decodeKey(u.key);
+        const deleteBtn = isAdminRole() ? `<button onclick="deletarRegistro('usuarios', '${u.key}', 'Excluiu o membro ${login}')" class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;">🗑</button>` : '';
+        if(lista) lista.innerHTML += `<tr><td><b>${val.nomeCompleto}</b></td><td style="color:var(--muted)">${login}</td><td><span class="pill pill-blue">${val.role}</span></td><td style="text-align:right">${deleteBtn}</td></tr>`;
+      });
+    });
+  }
+
+  function cadastrarAnalista() {
+    const nc = document.getElementById('nCompleto').value;
+    const u = document.getElementById('nUser').value.toUpperCase().trim();
+    const p = document.getElementById('nPass').value;
+    const r = document.getElementById('nRole').value;
+
+    dbRef('usuarios/' + encodeKey(u)).set({ nomeCompleto: nc, senha: p, role: r, senhaAlterada: false }).then(() => {
+      registrarLog('SISTEMA', `Cadastrou/Atualizou membro ${u}`);
+      location.reload();
+    });
+  }
+
+  // ===== BOOT =====
+  window.onload = function() {
+    atualizarIconeETitulo();
+    const salvo = localStorage.getItem('usuarioLogado');
+    if (salvo) {
+      logado = JSON.parse(salvo);
+      document.getElementById('telaLogin').style.display = 'none';
+
+      atualizarIconeETitulo();
+      document.body.classList.add(`proj-${logado.projeto}`);
+      if(isHighRank()) document.body.classList.add(`is-high-rank`);
+      if(isAdminRole()) document.body.classList.add(`is-admin`);
+
+      const t = localStorage.getItem(logado.projeto === 'command' ? 'command_theme' : 'distrito_theme');
+      if(t) document.body.setAttribute('data-theme', t);
+      else if(logado.projeto === 'distrito22') document.body.setAttribute('data-theme', 'distrito-dark');
+
+      document.getElementById('displayUser').innerText = logado.nome;
+      document.getElementById('displayRole').innerText = logado.role;
+
+      if(logado.projeto === 'command') {
+        document.getElementById('navCommandHome').classList.add('active');
+        switchView('dashCommand');
+        verificarStatusTurno();
+        escutarBancoCommand();
+        calcularMetaPessoal();
+      } else {
+        document.getElementById('navDashRP').classList.add('active');
+        switchView('dashDistrito');
+        carregarItensDinamicos();
+        escutarCaixaDistrito();
+        escutarDebitos();
+        escutarEstoqueGlobal();
+        iniciarLoopLavanderia();
+        if(isAdminRole()) escutarLogs();
+      }
+    }
+  };
+</script>
 </body>
 </html>
