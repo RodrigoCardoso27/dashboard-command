@@ -8,62 +8,52 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
 <style>
 
-:root{
---bg:#0f172a;
---panel:#020617;
---accent:#3b82f6;
---text:#ffffff;
---muted:#94a3b8;
-}
-
-[data-theme="light"]{
---bg:#f1f5f9;
---panel:#ffffff;
---accent:#2563eb;
---text:#020617;
---muted:#64748b;
-}
-
 *{
-box-sizing:border-box;
 margin:0;
 padding:0;
-font-family:Inter,Arial;
+box-sizing:border-box;
+font-family:Inter;
 }
 
 body{
-background:var(--bg);
-color:var(--text);
+background:#0f172a;
+color:white;
 display:flex;
 height:100vh;
 }
 
+/* SIDEBAR */
+
 .sidebar{
-width:230px;
-background:var(--panel);
-padding:20px;
+width:240px;
+background:#020617;
+padding:25px;
 display:flex;
 flex-direction:column;
-gap:10px;
+gap:15px;
 }
 
 .logo{
-font-size:18px;
+font-size:20px;
 font-weight:700;
-margin-bottom:20px;
+margin-bottom:30px;
 }
 
-.nav{
+.menu{
 padding:10px;
 border-radius:8px;
 cursor:pointer;
 }
 
-.nav:hover{
-background:rgba(255,255,255,0.05);
+.menu:hover{
+background:#1e293b;
 }
+
+/* MAIN */
 
 .main{
 flex:1;
@@ -71,35 +61,46 @@ padding:30px;
 overflow:auto;
 }
 
-.top{
+.header{
 display:flex;
 justify-content:space-between;
-margin-bottom:20px;
+margin-bottom:30px;
 }
 
-.cards{
+/* KPI */
+
+.kpis{
 display:grid;
-grid-template-columns:repeat(4,1fr);
+grid-template-columns:repeat(6,1fr);
 gap:20px;
 margin-bottom:30px;
 }
 
 .card{
-background:var(--panel);
+background:#020617;
 padding:20px;
-border-radius:10px;
+border-radius:12px;
 }
 
-.card h3{
-font-size:14px;
-color:var(--muted);
+.card h4{
+font-size:13px;
+color:#94a3b8;
 }
 
-.card p{
-font-size:28px;
+.card h2{
 margin-top:8px;
-font-weight:700;
 }
+
+/* GRÁFICOS */
+
+.charts{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:40px;
+}
+
+/* FORM */
 
 form{
 display:flex;
@@ -112,16 +113,19 @@ input,select{
 padding:10px;
 border-radius:6px;
 border:none;
+width:200px;
 }
 
 button{
-padding:10px 20px;
+background:#3b82f6;
 border:none;
-background:var(--accent);
-color:white;
+padding:10px 20px;
 border-radius:6px;
+color:white;
 cursor:pointer;
 }
+
+/* TABLE */
 
 table{
 width:100%;
@@ -129,35 +133,25 @@ border-collapse:collapse;
 margin-top:20px;
 }
 
-th,td{
-padding:10px;
-border-bottom:1px solid rgba(255,255,255,0.08);
+th{
+text-align:left;
+padding:12px;
+background:#020617;
 }
 
-.delete{
-cursor:pointer;
-color:red;
+td{
+padding:12px;
+border-bottom:1px solid #1e293b;
 }
 
-.login{
-display:flex;
-height:100vh;
-align-items:center;
-justify-content:center;
-}
-
-.login-box{
-background:var(--panel);
-padding:40px;
-border-radius:10px;
-display:flex;
-flex-direction:column;
-gap:10px;
-width:280px;
+tr:hover{
+background:#020617;
 }
 
 .search{
 margin-bottom:15px;
+padding:10px;
+width:300px;
 }
 
 </style>
@@ -165,77 +159,70 @@ margin-bottom:15px;
 
 <body>
 
-<div id="login" class="login">
-
-<div class="login-box">
-
-<h2>Login</h2>
-
-<input id="user" placeholder="Usuário">
-<input id="pass" type="password" placeholder="Senha">
-
-<button onclick="login()">Entrar</button>
-
-</div>
-
-</div>
-
-<div id="app" style="display:none; width:100%;">
-
 <div class="sidebar">
 
 <div class="logo">Command Center</div>
 
-<div class="nav" onclick="view('dash')">Dashboard</div>
-<div class="nav" onclick="view('registro')">Registrar</div>
-<div class="nav" onclick="view('consulta')">Consulta</div>
-
-<button onclick="toggleTheme()">Tema</button>
+<div class="menu" onclick="mostrar('dashboard')">Dashboard</div>
+<div class="menu" onclick="mostrar('registro')">Registrar</div>
+<div class="menu" onclick="mostrar('consulta')">Consulta</div>
 
 </div>
 
 <div class="main">
 
-<div class="top">
-
-<div>
-<h2>Command Center</h2>
-<span id="userName"></span>
+<div class="header">
+<h2>Painel de Controle</h2>
 </div>
 
-<button onclick="logout()">Sair</button>
+<!-- DASHBOARD -->
 
-</div>
+<div id="dashboard">
 
-<div id="dash">
-
-<div class="cards">
+<div class="kpis">
 
 <div class="card">
-<h3>Resolvidos</h3>
-<p id="kpiResolvido">0</p>
+<h4>Resolvidos</h4>
+<h2 id="kpiResolvido">0</h2>
 </div>
 
 <div class="card">
-<h3>Reabertos</h3>
-<p id="kpiReaberto">0</p>
+<h4>Reabertos</h4>
+<h2 id="kpiReaberto">0</h2>
 </div>
 
 <div class="card">
-<h3>Escalados</h3>
-<p id="kpiEscalado">0</p>
+<h4>Escalados</h4>
+<h2 id="kpiEscalado">0</h2>
 </div>
 
 <div class="card">
-<h3>Cancelados</h3>
-<p id="kpiCancelado">0</p>
+<h4>Cancelados</h4>
+<h2 id="kpiCancelado">0</h2>
+</div>
+
+<div class="card">
+<h4>Total Hoje</h4>
+<h2 id="kpiHoje">0</h2>
+</div>
+
+<div class="card">
+<h4>Total Geral</h4>
+<h2 id="kpiTotal">0</h2>
 </div>
 
 </div>
 
-<canvas id="grafico"></canvas>
+<div class="charts">
+
+<canvas id="graficoStatus"></canvas>
+<canvas id="graficoAnalista"></canvas>
 
 </div>
+
+</div>
+
+<!-- REGISTRO -->
 
 <div id="registro" style="display:none">
 
@@ -255,6 +242,8 @@ margin-bottom:15px;
 
 </select>
 
+<input id="analista" placeholder="Analista">
+
 <input id="obs" placeholder="Observação">
 
 <button>Salvar</button>
@@ -263,29 +252,31 @@ margin-bottom:15px;
 
 </div>
 
+<!-- CONSULTA -->
+
 <div id="consulta" style="display:none">
 
 <h3>Consulta</h3>
 
-<input class="search" id="buscar" placeholder="Buscar RITM..." onkeyup="render()">
+<input class="search" id="busca" placeholder="Buscar RITM..." onkeyup="render()">
 
 <table>
 
 <thead>
+
 <tr>
 <th>Data</th>
 <th>RITM</th>
 <th>Analista</th>
 <th>Status</th>
-<th></th>
+<th>Obs</th>
 </tr>
+
 </thead>
 
 <tbody id="tabela"></tbody>
 
 </table>
-
-</div>
 
 </div>
 
@@ -303,66 +294,20 @@ messagingSenderId: "38631596446",
 appId: "1:38631596446:web:f9470a5b648173e168b68f"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+firebase.initializeApp(firebaseConfig)
 
-let usuario=null;
-let dados={};
+const db = firebase.database()
 
-function view(v){
+let registros={}
 
-document.getElementById("dash").style.display="none"
+function mostrar(p){
+
+document.getElementById("dashboard").style.display="none"
 document.getElementById("registro").style.display="none"
 document.getElementById("consulta").style.display="none"
 
-document.getElementById(v).style.display="block"
+document.getElementById(p).style.display="block"
 
-}
-
-function toggleTheme(){
-
-let t=document.body.getAttribute("data-theme")
-
-if(t=="light"){
-document.body.removeAttribute("data-theme")
-}else{
-document.body.setAttribute("data-theme","light")
-}
-
-}
-
-function login(){
-
-let u=document.getElementById("user").value.toUpperCase()
-let p=document.getElementById("pass").value
-
-db.ref("usuarios/"+u).once("value").then(snap=>{
-
-let val=snap.val()
-
-if(!val) return alert("Usuário não encontrado")
-
-if(val.senha!=p) return alert("Senha incorreta")
-
-usuario={
-nome:val.nomeCompleto,
-login:u,
-role:val.role
-}
-
-document.getElementById("login").style.display="none"
-document.getElementById("app").style.display="flex"
-
-document.getElementById("userName").innerText=usuario.nome
-
-carregar()
-
-})
-
-}
-
-function logout(){
-location.reload()
 }
 
 function salvar(e){
@@ -371,34 +316,17 @@ e.preventDefault()
 
 let ritm=document.getElementById("ritm").value
 let status=document.getElementById("status").value
+let analista=document.getElementById("analista").value
 let obs=document.getElementById("obs").value
+let data=new Date().toLocaleDateString()
 
-let ref=db.ref("command/registros")
+db.ref("command/registros").push({
 
-ref.orderByChild("ritm").equalTo(ritm).once("value").then(snap=>{
-
-if(snap.exists()){
-
-snap.forEach(c=>{
-ref.child(c.key).update({
-status,
-obs,
-data:new Date().toLocaleDateString(),
-analista:usuario.nome
-})
-})
-
-}else{
-
-ref.push({
 ritm,
 status,
+analista,
 obs,
-data:new Date().toLocaleDateString(),
-analista:usuario.nome
-})
-
-}
+data
 
 })
 
@@ -408,10 +336,10 @@ function carregar(){
 
 db.ref("command/registros").on("value",snap=>{
 
-dados={}
+registros={}
 
 snap.forEach(i=>{
-dados[i.key]=i.val()
+registros[i.key]=i.val()
 })
 
 render()
@@ -426,29 +354,38 @@ let resolvido=0
 let reaberto=0
 let escalado=0
 let cancelado=0
+let hoje=0
 
-let tbody=document.getElementById("tabela")
-tbody.innerHTML=""
+let tabela=document.getElementById("tabela")
+tabela.innerHTML=""
 
-let busca=document.getElementById("buscar")?.value?.toLowerCase() || ""
+let busca=document.getElementById("busca")?.value?.toLowerCase() || ""
 
-Object.entries(dados).forEach(([k,d])=>{
+let analistas={}
 
-if(d.ritm.toLowerCase().includes(busca)==false) return
+Object.values(registros).forEach(r=>{
 
-if(d.status=="Resolvido") resolvido++
-if(d.status=="Reaberto") reaberto++
-if(d.status=="Escalado") escalado++
-if(d.status.includes("Cancelado")) cancelado++
+if(r.ritm.toLowerCase().includes(busca)==false) return
 
-tbody.innerHTML+=`
+if(r.status=="Resolvido") resolvido++
+if(r.status=="Reaberto") reaberto++
+if(r.status=="Escalado") escalado++
+if(r.status.includes("Cancelado")) cancelado++
+
+if(r.data==new Date().toLocaleDateString()) hoje++
+
+analistas[r.analista]=(analistas[r.analista]||0)+1
+
+tabela.innerHTML+=`
+
 <tr>
-<td>${d.data}</td>
-<td>${d.ritm}</td>
-<td>${d.analista}</td>
-<td>${d.status}</td>
-<td>${usuario.role=="admin"?`<span class="delete" onclick="del('${k}')">🗑</span>`:""}</td>
+<td>${r.data}</td>
+<td>${r.ritm}</td>
+<td>${r.analista}</td>
+<td>${r.status}</td>
+<td>${r.obs}</td>
 </tr>
+
 `
 
 })
@@ -457,45 +394,53 @@ document.getElementById("kpiResolvido").innerText=resolvido
 document.getElementById("kpiReaberto").innerText=reaberto
 document.getElementById("kpiEscalado").innerText=escalado
 document.getElementById("kpiCancelado").innerText=cancelado
+document.getElementById("kpiHoje").innerText=hoje
+document.getElementById("kpiTotal").innerText=Object.keys(registros).length
 
-grafico()
-
-}
-
-function del(id){
-
-if(!confirm("Excluir registro?")) return
-
-db.ref("command/registros/"+id).remove()
+graficoStatus(resolvido,reaberto,escalado,cancelado)
+graficoAnalista(analistas)
 
 }
 
-let chart
+let g1,g2
 
-function grafico(){
+function graficoStatus(a,b,c,d){
 
-let analistas={}
+let ctx=document.getElementById("graficoStatus")
 
-Object.values(dados).forEach(d=>{
-analistas[d.analista]=(analistas[d.analista]||0)+1
-})
+if(g1) g1.destroy()
 
-let ctx=document.getElementById("grafico")
-
-if(chart) chart.destroy()
-
-chart=new Chart(ctx,{
-type:"bar",
+g1=new Chart(ctx,{
+type:"doughnut",
 data:{
-labels:Object.keys(analistas),
+labels:["Resolvido","Reaberto","Escalado","Cancelado"],
 datasets:[{
-data:Object.values(analistas),
-backgroundColor:"#3b82f6"
+data:[a,b,c,d]
 }]
 }
 })
 
 }
+
+function graficoAnalista(analistas){
+
+let ctx=document.getElementById("graficoAnalista")
+
+if(g2) g2.destroy()
+
+g2=new Chart(ctx,{
+type:"bar",
+data:{
+labels:Object.keys(analistas),
+datasets:[{
+data:Object.values(analistas)
+}]
+}
+})
+
+}
+
+carregar()
 
 </script>
 
