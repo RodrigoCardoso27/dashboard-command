@@ -56,7 +56,6 @@
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text);
       display: flex; min-height: 100vh; overflow: hidden; transition: background 0.4s ease, color 0.4s ease;
-      /* Gradientes radiais sutis no fundo para profundidade */
       background-image: 
         radial-gradient(1000px 600px at 0% 0%, var(--brand-glow), transparent 70%),
         radial-gradient(800px 400px at 100% 100%, rgba(16, 185, 129, 0.05), transparent 70%);
@@ -96,7 +95,7 @@
     .view-section.active { display: block; animation: viewFade 0.3s ease; }
     @keyframes viewFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* CARDS (Glassmorphism) */
+    /* CARDS */
     .card { background: var(--panel); backdrop-filter: blur(16px); border-radius: var(--radius); border: 1px solid var(--border); padding: 30px; margin-bottom: 24px; box-shadow: var(--shadow); transition: transform 0.2s; }
     .card-header { font-size: 1.15rem; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .subnote { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
@@ -154,7 +153,7 @@
     body.is-admin div.only-admin:not(.view-section):not(.nav-item) { display: block; }
     body.is-admin div.nav-item.only-admin { display: flex; }
 
-    /* LAVANDERIA */
+    /* LAVANDERIA CARDS */
     .machine-card { background: rgba(0,0,0,0.1); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; backdrop-filter: blur(8px); }
     .machine-card:hover { transform: scale(1.01); background: rgba(0,0,0,0.15); }
     .machine-timer { font-family: 'Inter', monospace; font-size: 1.5rem; font-weight: 900; color: var(--warn); letter-spacing: -1px; }
@@ -322,11 +321,15 @@
         <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" style="height: 46px;" onclick="consultarBanco()">BUSCAR</button></div>
       </div>
     </div>
+    
     <div class="card">
-      <div class="card-header" style="margin-bottom: 0;">
+      <div class="card-header" style="margin-bottom: 5px;">
         <span>📚 Resultados</span>
         <button class="btn" style="border-color: var(--brand2); color: var(--brand2);" onclick="exportarConsultaExcel()">⬇ Exportar Excel</button>
       </div>
+      
+      <div id="resumoConsulta" style="margin-top: 10px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
+      
       <table>
         <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>
         <tbody id="corpoConsulta"></tbody>
@@ -564,6 +567,13 @@
         t.style.borderLeft = `4px solid ${type === 'success' ? 'var(--brand2)' : (type === 'alert' ? 'var(--warn)' : 'var(--danger)')}`;
         t.innerHTML = `<span>${type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌')}</span> ${msg}`;
         c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
+    }
+
+    function statusToPill(st) {
+        if(st === 'Resolvido') return 'pill-ok';
+        if(st === 'Cancelado') return 'pill-bad';
+        if(st === 'Reaberto') return 'pill-warn';
+        return 'pill-blue'; 
     }
 
     // ====== LOGS ROOT ======
@@ -862,13 +872,6 @@
         dbRef('chamados').child(chave).remove().then(() => showToast("Registro excluído!", "success"));
     }
 
-    function statusToPill(st) {
-        if(st === 'Resolvido') return 'pill-ok';
-        if(st === 'Cancelado') return 'pill-bad';
-        if(st === 'Reaberto') return 'pill-warn';
-        return 'pill-blue'; 
-    }
-
     function escutarBancoCommand() {
         dbRef('chamados').on('value', snap => {
             const tb = document.getElementById('corpoTabela'); if(tb) tb.innerHTML = "";
@@ -904,7 +907,7 @@
         chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dados), datasets: [{ data: Object.values(dados), backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } } });
     }
 
-    // ====== CONSULTA AVANÇADA (COM FILTRO DE ANALISTA/RITM) ======
+    // ====== CONSULTA AVANÇADA (COM BARRA DE RESUMO) ======
     async function consultarBanco() {
         const di = document.getElementById('dataInicio').value;
         const df = document.getElementById('dataFim').value;
@@ -913,11 +916,17 @@
         if(!di || !df) return showToast("Selecione as datas.", "error");
         if(di > df) return showToast("Início maior que Fim.", "error");
 
-        const corpo = document.getElementById('corpoConsulta'); if(!corpo) return;
+        const corpo = document.getElementById('corpoConsulta'); 
+        const resumo = document.getElementById('resumoConsulta');
+        if(!corpo) return;
+        
         corpo.innerHTML = `<tr><td colspan="7" style="color:var(--muted); text-align:center;">Carregando...</td></tr>`;
+        if(resumo) resumo.innerHTML = '';
 
         const snap = await dbRef('chamados').once('value');
         cacheConsulta = [];
+        
+        let totais = { total: 0, Resolvido: 0, Cancelado: 0, Reaberto: 0, Pendente: 0, GA: 0 };
         
         snap.forEach(n => {
             const c = n.val(); if(!c || !c.data) return;
@@ -925,7 +934,7 @@
                 // Filtro de Privacidade
                 if(!isAdminRole() && c.analista !== logado.nome) return;
                 
-                // Filtro Avançado por Texto (Analista ou RITM)
+                // Filtro Avançado por Texto
                 if(termoBusca) {
                     const analista = (c.analista || "").toLowerCase();
                     const ritm = (c.ritm || "").toLowerCase();
@@ -933,6 +942,9 @@
                 }
                 
                 cacheConsulta.push(c);
+                totais.total++;
+                const st = c.status;
+                if(totais[st] !== undefined) totais[st]++;
             }
         });
 
@@ -948,6 +960,19 @@
             const pill = statusToPill(r.status);
             corpo.innerHTML += `<tr><td style="white-space:nowrap">${r.data}</td><td>${r.hora}</td><td><b>${r.analista}</b></td><td><b>${r.ritm}</b></td><td><span class="pill ${pill}">${r.status}</span></td><td>${r.tasks}</td><td>${r.desc}</td></tr>`;
         });
+
+        // Renderiza a barra de resumo com pílulas
+        if(resumo) {
+            resumo.innerHTML = `
+                <span class="pill" style="border: 1px solid var(--border); color: var(--text);">Total: ${totais.total}</span>
+                <span class="pill pill-ok">Resolvidos: ${totais.Resolvido}</span>
+                <span class="pill pill-bad">Cancelados: ${totais.Cancelado}</span>
+                <span class="pill pill-warn">Reabertos: ${totais.Reaberto}</span>
+                <span class="pill pill-blue">Pendentes: ${totais.Pendente}</span>
+                <span class="pill pill-blue">GA: ${totais.GA}</span>
+            `;
+        }
+
         showToast(`Foram achados ${cacheConsulta.length} registros!`, "success");
     }
 
