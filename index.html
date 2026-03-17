@@ -186,7 +186,8 @@
     <div class="card-header" style="justify-content: center; color: var(--brand);">✅ Relatório de Fim de Turno</div>
     <p class="subnote" style="margin-bottom: 20px;">Resumo da sua produção de hoje.</p>
     
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">TOTAL HOJE</div><div class="kpi-value" id="endTotal">0</div></div>
         <div class="kpi-card"><div class="kpi-title">Resolvidos</div><div class="kpi-value" id="endRes" style="color:var(--brand2)">0</div></div>
         <div class="kpi-card"><div class="kpi-title">Cancelados</div><div class="kpi-value" id="endCan" style="color:var(--danger)">0</div></div>
         <div class="kpi-card"><div class="kpi-title">Reabertos</div><div class="kpi-value" id="endRea" style="color:var(--warn)">0</div></div>
@@ -971,6 +972,7 @@
         document.getElementById('modalEndTurn').style.display = 'flex';
         const s = window.meusStatsHoje || {res:0, can:0, rea:0, dup:0, ritms:0, incs:0};
         
+        document.getElementById('endTotal').innerText = s.res + s.can + s.rea + s.dup;
         document.getElementById('endRes').innerText = s.res;
         document.getElementById('endCan').innerText = s.can;
         document.getElementById('endRea').innerText = s.rea;
