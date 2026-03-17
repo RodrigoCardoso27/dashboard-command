@@ -190,6 +190,17 @@
         <div class="kpi-card"><div class="kpi-title">Cancelados</div><div class="kpi-value" id="endCan" style="color:var(--danger)">0</div></div>
         <div class="kpi-card"><div class="kpi-title">Reabertos</div><div class="kpi-value" id="endRea" style="color:var(--warn)">0</div></div>
     </div>
+
+    <div class="form-grid" style="margin-bottom: 20px;">
+        <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: 16px; border: 1px solid var(--border);">
+            <div style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase;">Requisições (RITM)</div>
+            <div id="endKpiRitm" style="font-size: 1.8rem; font-weight: 900; color: var(--brand); margin-top: 5px;">0</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: 16px; border: 1px solid var(--border);">
+            <div style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase;">Incidentes (INC)</div>
+            <div id="endKpiInc" style="font-size: 1.8rem; font-weight: 900; color: #a855f7; margin-top: 5px;">0</div>
+        </div>
+    </div>
     
     <div style="height: 200px; margin-bottom: 20px;"><canvas id="chartEndTurn"></canvas></div>
     
@@ -303,9 +314,9 @@
         <button class="btn btn-primary" style="width: 250px;" onclick="abrirModalTurno()">🚀 INICIAR TURNO</button>
       </div>
 
-      <div class="card-header">✍️ Registrar Chamado (RITM)</div>
+      <div class="card-header">✍️ Registrar Chamado</div>
       <div class="form-grid">
-        <div><label>Número RITM*</label><input type="text" id="ritm" placeholder="Ex: RITM123456"></div>
+        <div><label>RITM / INC*</label><input type="text" id="ritm" placeholder="Ex: RITM123 ou INC123"></div>
         <div>
           <label>Status*</label>
           <select id="statusRitm">
@@ -334,7 +345,7 @@
     <div class="card">
       <div class="card-header">📋 Meus Lançamentos (Hoje)</div>
       <table>
-        <thead><tr><th>HORA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
+        <thead><tr><th>HORA</th><th>CHAMADO</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
         <tbody id="corpoTabela"></tbody>
       </table>
     </div>
@@ -346,7 +357,7 @@
       <div class="form-grid" style="grid-template-columns: 1fr 1fr 2fr 150px;">
         <div><label>Data Início</label><input type="date" id="dataInicio"></div>
         <div><label>Data Fim</label><input type="date" id="dataFim"></div>
-        <div><label>Buscar (Analista ou RITM)</label><input type="text" id="termoBusca" placeholder="Digite para filtrar..."></div>
+        <div><label>Buscar (Analista ou RITM/INC)</label><input type="text" id="termoBusca" placeholder="Digite para filtrar..."></div>
         <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" style="height: 46px;" onclick="consultarBanco()">BUSCAR</button></div>
       </div>
     </div>
@@ -359,7 +370,7 @@
       <div id="resumoConsulta" style="margin-top: 10px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
       
       <table>
-        <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>RITM</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>
+        <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>CHAMADO</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>
         <tbody id="corpoConsulta"></tbody>
       </table>
     </div>
@@ -687,7 +698,7 @@
         });
     }
 
-    // ====== LOGIN & SEGURANÇA PIN ======
+    // ====== LOGIN ======
     function setLoginProject(proj) {
         loginProject = proj;
         document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
@@ -744,7 +755,7 @@
         });
     }
 
-    // ====== BOOT & THEMES ======
+    // ====== BOOT ======
     window.onload = function() {
         atualizarIconeETitulo(); 
         const salvo = localStorage.getItem('usuarioLogado');
@@ -757,7 +768,6 @@
             if(isHighRank()) document.body.classList.add(`is-high-rank`); 
             if(isAdminRole()) document.body.classList.add(`is-admin`); 
 
-            // Aplica o tema Universal
             const t = localStorage.getItem('universal_theme');
             if(t && t !== 'default') document.body.setAttribute('data-theme', t);
             
@@ -873,7 +883,7 @@
         const st = document.getElementById('statusRitm').value;
         const d0 = document.getElementById('descResumida').value.trim();
         
-        if(!r || !d0) return showToast("Preencha RITM e Descrição.", "error");
+        if(!r || !d0) return showToast("Preencha RITM/INC e Descrição.", "error");
 
         let tArr = []; document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tArr.push(i.value.toUpperCase().trim()); });
         let descFinal = d0;
@@ -881,7 +891,7 @@
         try {
             if(st === 'Reaberto') {
                 const dataRef = await migrarReabertoSePreciso(r);
-                if(dataRef) { descFinal = `[Ref. ${dataRef}] ` + descFinal; showToast("RITM movida para hoje.", "alert"); }
+                if(dataRef) { descFinal = `[Ref. ${dataRef}] ` + descFinal; showToast("Chamado movido para hoje.", "alert"); }
             }
             const snap = await dbRef('chamados').once('value');
             let keyHoje = null; let keyOutro = null; let dAnt = null;
@@ -901,7 +911,7 @@
     }
 
     function deletarChamadoCommand(chave, ritm) {
-        if(!confirm(`Excluir o registro da RITM ${ritm}?`)) return;
+        if(!confirm(`Excluir o registro ${ritm}?`)) return;
         dbRef('chamados').child(chave).remove().then(() => showToast("Registro excluído!", "success"));
     }
 
@@ -909,12 +919,11 @@
         dbRef('chamados').on('value', snap => {
             const tb = document.getElementById('corpoTabela'); if(tb) tb.innerHTML = "";
             let fechadosMeu = 0; let fechadosEquipe = 0; let tasksMeu = 0; let cont = {};
-            let statsHoje = { res: 0, can: 0, rea: 0 };
+            let statsHoje = { res: 0, can: 0, rea: 0, ritms: 0, incs: 0 };
 
             snap.forEach(item => {
                 const c = item.val(); if(!c || c.data !== getHoje()) return;
                 
-                // NOVA REGRA UNIVERSAL: Se não é Pendente e não é GA, está Fechado!
                 const fechou = c.status !== 'Pendente' && c.status !== 'GA';
                 
                 if(fechou) { 
@@ -928,7 +937,12 @@
                     
                     if (c.status === 'Resolvido') statsHoje.res++;
                     else if (c.status === 'Reaberto') statsHoje.rea++;
-                    else statsHoje.can++; // Se não é Resolvido nem Reaberto, é algum tipo de Cancelado
+                    else statsHoje.can++; 
+
+                    // Inteligência para separar RITM e INC (mesmo se o cara só digitou o número sem as letras)
+                    const ticketStr = (c.ritm || "").toUpperCase();
+                    if(ticketStr.startsWith('INC')) statsHoje.incs++;
+                    else statsHoje.ritms++; 
                 }
 
                 if(isAdminRole() || c.analista === logado.nome) {
@@ -950,10 +964,15 @@
     let chartEndTurnInstance = null;
     function abrirRelatorioFimTurno() {
         document.getElementById('modalEndTurn').style.display = 'flex';
-        const s = window.meusStatsHoje || {res:0, can:0, rea:0};
+        const s = window.meusStatsHoje || {res:0, can:0, rea:0, ritms:0, incs:0};
+        
         document.getElementById('endRes').innerText = s.res;
         document.getElementById('endCan').innerText = s.can;
         document.getElementById('endRea').innerText = s.rea;
+
+        // Atualiza a nova divisão RITM / INC
+        document.getElementById('endKpiRitm').innerText = s.ritms;
+        document.getElementById('endKpiInc').innerText = s.incs;
 
         const ctx = document.getElementById('chartEndTurn').getContext('2d');
         if(chartEndTurnInstance) chartEndTurnInstance.destroy();
@@ -1001,7 +1020,7 @@
         const snap = await dbRef('chamados').once('value');
         cacheConsulta = [];
         
-        let totais = { total: 0, Resolvido: 0, Cancelado: 0, Reaberto: 0, Pendente: 0, GA: 0 };
+        let totais = { total: 0, Resolvido: 0, Cancelado: 0, Reaberto: 0, Pendente: 0, GA: 0, ritms: 0, incs: 0 };
         
         snap.forEach(n => {
             const c = n.val(); if(!c || !c.data) return;
@@ -1015,6 +1034,12 @@
                 
                 cacheConsulta.push(c);
                 totais.total++;
+                
+                // Classificação Inteligente (RITM / INC)
+                const ticketStr = (c.ritm || "").toUpperCase();
+                if(ticketStr.startsWith('INC')) totais.incs++;
+                else totais.ritms++; 
+
                 const st = c.status;
                 if (st.includes('Cancel')) totais.Cancelado++;
                 else if (totais[st] !== undefined) totais[st]++;
@@ -1037,6 +1062,9 @@
         if(resumo) {
             resumo.innerHTML = `
                 <span class="pill" style="border: 1px solid var(--border); color: var(--text);">Total: ${totais.total}</span>
+                <span class="pill" style="border: 1px solid var(--brand); color: var(--brand);">RITMs: ${totais.ritms}</span>
+                <span class="pill" style="border: 1px solid #a855f7; color: #a855f7;">INCs: ${totais.incs}</span>
+                <span style="border-left: 1px solid var(--border); margin: 0 5px;"></span>
                 <span class="pill pill-ok">Resolvidos: ${totais.Resolvido}</span>
                 <span class="pill pill-bad">Cancelados: ${totais.Cancelado}</span>
                 <span class="pill pill-warn">Reabertos: ${totais.Reaberto}</span>
@@ -1050,7 +1078,7 @@
 
     function exportarConsultaExcel() {
         if(!cacheConsulta || cacheConsulta.length === 0) return showToast("Busque algo primeiro.", "alert");
-        const rows = cacheConsulta.map(c => ({ Data: c.data, Hora: c.hora, Analista: c.analista, RITM: c.ritm, Status: c.status, "Qtd Tasks": c.taskQtd, Tasks: c.tasks, Descricao: c.desc }));
+        const rows = cacheConsulta.map(c => ({ Data: c.data, Hora: c.hora, Analista: c.analista, Chamado: c.ritm, Status: c.status, "Qtd Tasks": c.taskQtd, Tasks: c.tasks, Descricao: c.desc }));
         const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Consulta");
         XLSX.writeFile(wb, `Command_Consulta_${getHoje()}.xlsx`);
     }
