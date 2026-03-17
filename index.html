@@ -137,6 +137,7 @@
     .pill-bad { color: var(--danger); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
     .pill-warn { color: var(--warn); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
     .pill-blue { color: var(--brand); background: var(--brand-glow); border-color: rgba(96,165,250,0.2); }
+    .pill-muted { color: var(--muted); background: rgba(161,161,170,0.15); border-color: rgba(161,161,170,0.3); }
 
     /* ACESSO */
     .only-command, .only-distrito, .only-high-rank, .only-admin { display: none; }
@@ -181,14 +182,15 @@
 </div>
 
 <div id="modalEndTurn" class="modal-overlay" style="z-index: 12000;">
-  <div class="modal-box" style="max-width: 600px;">
+  <div class="modal-box" style="max-width: 650px;">
     <div class="card-header" style="justify-content: center; color: var(--brand);">✅ Relatório de Fim de Turno</div>
     <p class="subnote" style="margin-bottom: 20px;">Resumo da sua produção de hoje.</p>
     
-    <div class="kpi-grid">
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
         <div class="kpi-card"><div class="kpi-title">Resolvidos</div><div class="kpi-value" id="endRes" style="color:var(--brand2)">0</div></div>
         <div class="kpi-card"><div class="kpi-title">Cancelados</div><div class="kpi-value" id="endCan" style="color:var(--danger)">0</div></div>
         <div class="kpi-card"><div class="kpi-title">Reabertos</div><div class="kpi-value" id="endRea" style="color:var(--warn)">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Duplicados</div><div class="kpi-value" id="endDup" style="color:var(--muted)">0</div></div>
     </div>
 
     <div class="form-grid" style="margin-bottom: 20px;">
@@ -321,6 +323,7 @@
           <label>Status*</label>
           <select id="statusRitm">
             <option value="Resolvido">Resolvido</option>
+            <option value="Duplicado">Duplicado</option>
             <option value="Cancelar (Abertura Incorreta)">Cancelar (Abertura Incorreta)</option>
             <option value="Cancelar (A pedido do solicitante)">Cancelar (A pedido do solicitante)</option>
             <option value="Reaberto">Reaberto</option>
@@ -612,6 +615,7 @@
         if(st === 'Resolvido') return 'pill-ok';
         if(st.includes('Cancel')) return 'pill-bad';
         if(st === 'Reaberto') return 'pill-warn';
+        if(st === 'Duplicado') return 'pill-muted';
         return 'pill-blue'; 
     }
 
@@ -698,7 +702,7 @@
         });
     }
 
-    // ====== LOGIN ======
+    // ====== LOGIN & SEGURANÇA PIN ======
     function setLoginProject(proj) {
         loginProject = proj;
         document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
@@ -755,7 +759,7 @@
         });
     }
 
-    // ====== BOOT ======
+    // ====== BOOT & THEMES ======
     window.onload = function() {
         atualizarIconeETitulo(); 
         const salvo = localStorage.getItem('usuarioLogado');
@@ -768,6 +772,7 @@
             if(isHighRank()) document.body.classList.add(`is-high-rank`); 
             if(isAdminRole()) document.body.classList.add(`is-admin`); 
 
+            // Aplica o tema Universal
             const t = localStorage.getItem('universal_theme');
             if(t && t !== 'default') document.body.setAttribute('data-theme', t);
             
@@ -919,7 +924,7 @@
         dbRef('chamados').on('value', snap => {
             const tb = document.getElementById('corpoTabela'); if(tb) tb.innerHTML = "";
             let fechadosMeu = 0; let fechadosEquipe = 0; let tasksMeu = 0; let cont = {};
-            let statsHoje = { res: 0, can: 0, rea: 0, ritms: 0, incs: 0 };
+            let statsHoje = { res: 0, can: 0, rea: 0, dup: 0, ritms: 0, incs: 0 };
 
             snap.forEach(item => {
                 const c = item.val(); if(!c || c.data !== getHoje()) return;
@@ -937,9 +942,9 @@
                     
                     if (c.status === 'Resolvido') statsHoje.res++;
                     else if (c.status === 'Reaberto') statsHoje.rea++;
+                    else if (c.status === 'Duplicado') statsHoje.dup++;
                     else statsHoje.can++; 
 
-                    // Inteligência para separar RITM e INC (mesmo se o cara só digitou o número sem as letras)
                     const ticketStr = (c.ritm || "").toUpperCase();
                     if(ticketStr.startsWith('INC')) statsHoje.incs++;
                     else statsHoje.ritms++; 
@@ -964,13 +969,13 @@
     let chartEndTurnInstance = null;
     function abrirRelatorioFimTurno() {
         document.getElementById('modalEndTurn').style.display = 'flex';
-        const s = window.meusStatsHoje || {res:0, can:0, rea:0, ritms:0, incs:0};
+        const s = window.meusStatsHoje || {res:0, can:0, rea:0, dup:0, ritms:0, incs:0};
         
         document.getElementById('endRes').innerText = s.res;
         document.getElementById('endCan').innerText = s.can;
         document.getElementById('endRea').innerText = s.rea;
+        document.getElementById('endDup').innerText = s.dup;
 
-        // Atualiza a nova divisão RITM / INC
         document.getElementById('endKpiRitm').innerText = s.ritms;
         document.getElementById('endKpiInc').innerText = s.incs;
 
@@ -979,8 +984,8 @@
         chartEndTurnInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Resolvidos', 'Cancelados', 'Reabertos'],
-                datasets: [{ data: [s.res, s.can, s.rea], backgroundColor: ['#10b981', '#ef4444', '#f59e0b'], borderWidth: 0 }]
+                labels: ['Resolvidos', 'Cancelados', 'Reabertos', 'Duplicados'],
+                datasets: [{ data: [s.res, s.can, s.rea, s.dup], backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#94a3b8'], borderWidth: 0 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa', font: { family: 'Inter' } } } }, cutout: '70%' }
         });
@@ -1020,7 +1025,7 @@
         const snap = await dbRef('chamados').once('value');
         cacheConsulta = [];
         
-        let totais = { total: 0, Resolvido: 0, Cancelado: 0, Reaberto: 0, Pendente: 0, GA: 0, ritms: 0, incs: 0 };
+        let totais = { total: 0, Resolvido: 0, Cancelado: 0, Reaberto: 0, Duplicado: 0, Pendente: 0, GA: 0, ritms: 0, incs: 0 };
         
         snap.forEach(n => {
             const c = n.val(); if(!c || !c.data) return;
@@ -1035,7 +1040,6 @@
                 cacheConsulta.push(c);
                 totais.total++;
                 
-                // Classificação Inteligente (RITM / INC)
                 const ticketStr = (c.ritm || "").toUpperCase();
                 if(ticketStr.startsWith('INC')) totais.incs++;
                 else totais.ritms++; 
@@ -1043,6 +1047,7 @@
                 const st = c.status;
                 if (st.includes('Cancel')) totais.Cancelado++;
                 else if (totais[st] !== undefined) totais[st]++;
+                else totais[st] = 1; 
             }
         });
 
@@ -1068,6 +1073,7 @@
                 <span class="pill pill-ok">Resolvidos: ${totais.Resolvido}</span>
                 <span class="pill pill-bad">Cancelados: ${totais.Cancelado}</span>
                 <span class="pill pill-warn">Reabertos: ${totais.Reaberto}</span>
+                <span class="pill pill-muted" style="background: rgba(148, 163, 184, 0.1); color: var(--muted); border-color: rgba(148, 163, 184, 0.2);">Duplicados: ${totais.Duplicado}</span>
                 <span class="pill pill-blue">Pendentes: ${totais.Pendente}</span>
                 <span class="pill pill-blue">GA: ${totais.GA}</span>
             `;
