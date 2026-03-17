@@ -180,6 +180,26 @@
   </div>
 </div>
 
+<div id="modalEndTurn" class="modal-overlay" style="z-index: 12000;">
+  <div class="modal-box" style="max-width: 600px;">
+    <div class="card-header" style="justify-content: center; color: var(--brand);">✅ Relatório de Fim de Turno</div>
+    <p class="subnote" style="margin-bottom: 20px;">Resumo da sua produção de hoje.</p>
+    
+    <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-title">Resolvidos</div><div class="kpi-value" id="endRes" style="color:var(--brand2)">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Cancelados</div><div class="kpi-value" id="endCan" style="color:var(--danger)">0</div></div>
+        <div class="kpi-card"><div class="kpi-title">Reabertos</div><div class="kpi-value" id="endRea" style="color:var(--warn)">0</div></div>
+    </div>
+    
+    <div style="height: 200px; margin-bottom: 20px;"><canvas id="chartEndTurn"></canvas></div>
+    
+    <div style="display: flex; gap: 10px;">
+      <button class="btn" style="width: 100%;" onclick="fecharEndTurn()">Voltar</button>
+      <button class="btn btn-danger" style="width: 100%;" onclick="confirmarFimTurno()">ENCERRAR SESSÃO</button>
+    </div>
+  </div>
+</div>
+
 <div id="modalTrocaSenha" class="modal-overlay" style="background: rgba(0,0,0,0.95); z-index: 11000;">
   <div class="modal-box" style="border-color: var(--brand);">
     <div class="card-header" style="justify-content: center; color: var(--brand);">🔒 Segurança de Acesso</div>
@@ -271,7 +291,10 @@
     </div>
 
     <div class="card">
-      <div class="card-header">📊 Produção da Equipe</div>
+      <div class="card-header">
+          <span>📊 Produção da Equipe</span>
+          <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem; width: auto;" onclick="abrirRelatorioFimTurno()">🛑 Finalizar Turno</button>
+      </div>
       <div style="height: 250px;"><canvas id="meuGraficoBarras"></canvas></div>
     </div>
 
@@ -286,8 +309,11 @@
         <div>
           <label>Status*</label>
           <select id="statusRitm">
-            <option value="Resolvido">Resolvido</option><option value="Cancelado">Cancelado</option>
-            <option value="Reaberto">Reaberto</option><option value="Pendente">Pendente</option>
+            <option value="Resolvido">Resolvido</option>
+            <option value="Cancelar (Abertura Incorreta)">Cancelar (Abertura Incorreta)</option>
+            <option value="Cancelar (A pedido do solicitante)">Cancelar (A pedido do solicitante)</option>
+            <option value="Reaberto">Reaberto</option>
+            <option value="Pendente">Pendente</option>
             <option value="GA">Aguardando GA</option>
           </select>
         </div>
@@ -295,9 +321,12 @@
         <div id="divQtdTask" style="visibility: hidden;"><label>Qtd. Tasks</label><input type="number" id="taskQtd" min="1" oninput="gerarCamposTask()"></div>
       </div>
       <div id="containerTasksDinamicas" style="display: none; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;"></div>
-      <div class="form-grid" style="grid-template-columns: 2fr 1fr; margin-top: 15px;">
-        <input type="text" id="descResumida" placeholder="Descrição Resumida do Problema/Solução*">
-        <input type="text" id="linkRitm" placeholder="Link da RITM (Opcional)">
+      
+      <div class="form-grid" style="grid-template-columns: 1fr; margin-top: 15px;">
+        <div>
+            <label>Descrição Resumida do Problema/Solução*</label>
+            <input type="text" id="descResumida" placeholder="Descreva aqui o que foi feito...">
+        </div>
       </div>
       <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarCommand()">GRAVAR NO BANCO</button>
     </div>
@@ -321,9 +350,8 @@
         <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" style="height: 46px;" onclick="consultarBanco()">BUSCAR</button></div>
       </div>
     </div>
-    
     <div class="card">
-      <div class="card-header" style="margin-bottom: 5px;">
+      <div class="card-header" style="margin-bottom: 0;">
         <span>📚 Resultados</span>
         <button class="btn" style="border-color: var(--brand2); color: var(--brand2);" onclick="exportarConsultaExcel()">⬇ Exportar Excel</button>
       </div>
@@ -540,7 +568,7 @@
         serverTimeOffset = snap.val() || 0;
     });
 
-    // ====== WEBCRYPTO SHA-256 (Hash Senhas) ======
+    // ====== WEBCRYPTO SHA-256 ======
     async function hashCriptografico(texto) {
         const encoder = new TextEncoder();
         const data = encoder.encode(texto);
@@ -571,7 +599,7 @@
 
     function statusToPill(st) {
         if(st === 'Resolvido') return 'pill-ok';
-        if(st === 'Cancelado') return 'pill-bad';
+        if(st.includes('Cancelar')) return 'pill-bad';
         if(st === 'Reaberto') return 'pill-warn';
         return 'pill-blue'; 
     }
@@ -604,7 +632,7 @@
         }
     }
 
-    // ====== UI DINÂMICA (Favicon, Emojis) ======
+    // ====== UI DINÂMICA ======
     function obterEmojiItem(nomeItem) {
         const txt = nomeItem.toLowerCase();
         if(txt.includes('maconha')||txt.includes('erva')) return '🌿';
@@ -654,7 +682,7 @@
             if(!lista) return; lista.innerHTML = "";
             snap.forEach(item => {
                 const f = item.val();
-                lista.innerHTML = `<tr><td style="white-space:nowrap">${f.data}</td><td><b>${f.membro}</b></td><td>${f.msg}</td><td style="text-align:right"><button class="btn btn-success" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="dbRef('feedbacks').child('${item.key}').remove()">LIDO ✅</button></td></tr>` + lista.innerHTML;
+                lista.innerHTML = `<tr><td style="white-space:nowrap">${f.data} ${f.hora}</td><td><b>${f.membro}</b></td><td>${f.msg}</td><td style="text-align:right"><button class="btn btn-success" style="padding: 6px 12px; font-size:0.7rem; width:auto;" onclick="dbRef('feedbacks').child('${item.key}').remove()">LIDO ✅</button></td></tr>` + lista.innerHTML;
             });
         });
     }
@@ -729,7 +757,6 @@
             if(isHighRank()) document.body.classList.add(`is-high-rank`); 
             if(isAdminRole()) document.body.classList.add(`is-admin`); 
 
-            // Aplica o tema Universal
             const t = localStorage.getItem('universal_theme');
             if(t && t !== 'default') document.body.setAttribute('data-theme', t);
             
@@ -809,7 +836,7 @@
     function calcularMetaPessoal() {
         dbRef('chamados').once('value', snap => {
             let dias = new Set(); let res = 0;
-            snap.forEach(i => { const c = i.val(); if (c.analista === logado.nome && ['Resolvido','Cancelado','Reaberto'].includes(c.status)) { dias.add(c.data); res++; } });
+            snap.forEach(i => { const c = i.val(); if (c.analista === logado.nome && ['Resolvido','Cancelar (Abertura Incorreta)','Cancelar (A pedido do solicitante)','Reaberto'].includes(c.status)) { dias.add(c.data); res++; } });
             if(document.getElementById('kpiMeta')) document.getElementById('kpiMeta').innerText = dias.size > 0 ? Math.ceil(res / dias.size) : "--";
         });
     }
@@ -839,7 +866,7 @@
         const r = document.getElementById('ritm').value.toUpperCase().trim();
         const st = document.getElementById('statusRitm').value;
         const d0 = document.getElementById('descResumida').value.trim();
-        const l = document.getElementById('linkRitm').value.trim();
+        
         if(!r || !d0) return showToast("Preencha RITM e Descrição.", "error");
 
         let tArr = []; document.querySelectorAll('.input-task-dinamica').forEach(i => { if(i.value) tArr.push(i.value.toUpperCase().trim()); });
@@ -856,13 +883,13 @@
                 const c = child.val(); if(!c) return;
                 if((c.ritm||"").toUpperCase().trim() === r) { if(c.data === getHoje()) keyHoje = child.key; else { keyOutro = child.key; dAnt = c.data; } }
             });
-            const payload = { ritm: r, status: st, desc: descFinal, link: l||"---", data: getHoje(), hora: getHora(), analista: logado.nome, taskQtd: tArr.length, tasks: tArr.length ? tArr.join(", ") : "Não" };
+            const payload = { ritm: r, status: st, desc: descFinal, data: getHoje(), hora: getHora(), analista: logado.nome, taskQtd: tArr.length, tasks: tArr.length ? tArr.join(", ") : "Não" };
             
             if(keyHoje) { await dbRef('chamados').child(keyHoje).update(payload); }
             else if(keyOutro && st !== 'Reaberto') return showToast(`Já existe em ${dAnt}. Use Reaberto.`, "error");
             else await dbRef('chamados').push(payload);
 
-            document.getElementById('ritm').value = ''; document.getElementById('descResumida').value = ''; document.getElementById('linkRitm').value = ''; document.getElementById('temTask').value = 'nao'; toggleTaskInput();
+            document.getElementById('ritm').value = ''; document.getElementById('descResumida').value = ''; document.getElementById('temTask').value = 'nao'; toggleTaskInput();
             showToast("Salvo!", "success");
         } catch(e) { showToast("Falha ao salvar.", "error"); }
     }
@@ -876,27 +903,64 @@
         dbRef('chamados').on('value', snap => {
             const tb = document.getElementById('corpoTabela'); if(tb) tb.innerHTML = "";
             let fechadosMeu = 0; let fechadosEquipe = 0; let tasksMeu = 0; let cont = {};
+            let statsHoje = { res: 0, can: 0, rea: 0 };
 
             snap.forEach(item => {
                 const c = item.val(); if(!c || c.data !== getHoje()) return;
-                const fechou = ['Resolvido','Cancelado','Reaberto'].includes(c.status);
+                const fechou = ['Resolvido','Cancelar (Abertura Incorreta)','Cancelar (A pedido do solicitante)','Reaberto'].includes(c.status);
+                
                 if(fechou) { cont[c.analista] = (cont[c.analista] || 0) + 1; fechadosEquipe++; }
-                if(c.analista === logado.nome && c.status !== 'Pendente' && c.status !== 'GA') { fechadosMeu++; tasksMeu += Number(c.taskQtd||0); }
+                
+                if(c.analista === logado.nome && c.status !== 'Pendente' && c.status !== 'GA') { 
+                    fechadosMeu++; 
+                    tasksMeu += Number(c.taskQtd||0); 
+                    
+                    if (c.status === 'Resolvido') statsHoje.res++;
+                    if (c.status.includes('Cancelar')) statsHoje.can++;
+                    if (c.status === 'Reaberto') statsHoje.rea++;
+                }
 
                 if(isAdminRole() || c.analista === logado.nome) {
                     const pill = statusToPill(c.status);
-                    const linkHtml = (c.link && c.link !== '---') ? `<a href="${c.link}" target="_blank" class="pill pill-blue" style="text-decoration:none;">🔗</a>` : '---';
                     const btnExcluir = (isAdminRole() || c.analista === logado.nome) ? `<button class="btn btn-danger" style="padding:6px 10px; font-size:.7rem; width:auto;" onclick="deletarChamadoCommand('${item.key}','${c.ritm}')">🗑</button>` : '---';
-                    if(tb) tb.innerHTML = `<tr><td style="white-space:nowrap;">${c.hora}</td><td><b>${c.ritm}</b></td><td><span class="pill ${pill}">${c.status}</span></td><td>${c.tasks||'Não'}</td><td>${c.desc||''}</td><td style="text-align:right">${linkHtml} ${btnExcluir}</td></tr>` + tb.innerHTML;
+                    if(tb) tb.innerHTML = `<tr><td style="white-space:nowrap;">${c.hora}</td><td><b>${c.ritm}</b></td><td><span class="pill ${pill}">${c.status}</span></td><td>${c.tasks||'Não'}</td><td>${c.desc||''}</td><td style="text-align:right">${btnExcluir}</td></tr>` + tb.innerHTML;
                 }
             });
             if(document.getElementById('kpiRitms')) document.getElementById('kpiRitms').innerText = fechadosMeu;
             if(document.getElementById('kpiTasks')) document.getElementById('kpiTasks').innerText = tasksMeu;
             if(pendenciaTotal > 0 && document.getElementById('kpiMedia')) document.getElementById('kpiMedia').innerText = ((fechadosEquipe / pendenciaTotal) * 100).toFixed(1) + "%";
             
+            window.meusStatsHoje = statsHoje;
             let dadosGrafico = isAdminRole() ? cont : { [logado.nome]: cont[logado.nome] || 0 };
             atualizarGrafico(dadosGrafico);
         });
+    }
+
+    let chartEndTurnInstance = null;
+    function abrirRelatorioFimTurno() {
+        document.getElementById('modalEndTurn').style.display = 'flex';
+        const s = window.meusStatsHoje || {res:0, can:0, rea:0};
+        document.getElementById('endRes').innerText = s.res;
+        document.getElementById('endCan').innerText = s.can;
+        document.getElementById('endRea').innerText = s.rea;
+
+        const ctx = document.getElementById('chartEndTurn').getContext('2d');
+        if(chartEndTurnInstance) chartEndTurnInstance.destroy();
+        chartEndTurnInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Resolvidos', 'Cancelados', 'Reabertos'],
+                datasets: [{ data: [s.res, s.can, s.rea], backgroundColor: ['#10b981', '#ef4444', '#f59e0b'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa', font: { family: 'Inter' } } } }, cutout: '70%' }
+        });
+    }
+    
+    function fecharEndTurn() { document.getElementById('modalEndTurn').style.display = 'none'; }
+    function confirmarFimTurno() {
+        localStorage.removeItem('usuarioLogado');
+        showToast("Turno finalizado. Saindo...", "success");
+        setTimeout(() => location.reload(), 800);
     }
 
     let chartInstance = null;
@@ -931,10 +995,7 @@
         snap.forEach(n => {
             const c = n.val(); if(!c || !c.data) return;
             if(c.data >= di && c.data <= df) {
-                // Filtro de Privacidade
                 if(!isAdminRole() && c.analista !== logado.nome) return;
-                
-                // Filtro Avançado por Texto
                 if(termoBusca) {
                     const analista = (c.analista || "").toLowerCase();
                     const ritm = (c.ritm || "").toLowerCase();
@@ -944,7 +1005,8 @@
                 cacheConsulta.push(c);
                 totais.total++;
                 const st = c.status;
-                if(totais[st] !== undefined) totais[st]++;
+                if (st.includes('Cancelar')) totais.Cancelado++;
+                else if (totais[st] !== undefined) totais[st]++;
             }
         });
 
@@ -961,7 +1023,6 @@
             corpo.innerHTML += `<tr><td style="white-space:nowrap">${r.data}</td><td>${r.hora}</td><td><b>${r.analista}</b></td><td><b>${r.ritm}</b></td><td><span class="pill ${pill}">${r.status}</span></td><td>${r.tasks}</td><td>${r.desc}</td></tr>`;
         });
 
-        // Renderiza a barra de resumo com pílulas
         if(resumo) {
             resumo.innerHTML = `
                 <span class="pill" style="border: 1px solid var(--border); color: var(--text);">Total: ${totais.total}</span>
@@ -978,7 +1039,7 @@
 
     function exportarConsultaExcel() {
         if(!cacheConsulta || cacheConsulta.length === 0) return showToast("Busque algo primeiro.", "alert");
-        const rows = cacheConsulta.map(c => ({ Data: c.data, Hora: c.hora, Analista: c.analista, RITM: c.ritm, Status: c.status, "Qtd Tasks": c.taskQtd, Tasks: c.tasks, Descricao: c.desc, Link: c.link }));
+        const rows = cacheConsulta.map(c => ({ Data: c.data, Hora: c.hora, Analista: c.analista, RITM: c.ritm, Status: c.status, "Qtd Tasks": c.taskQtd, Tasks: c.tasks, Descricao: c.desc }));
         const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Consulta");
         XLSX.writeFile(wb, `Command_Consulta_${getHoje()}.xlsx`);
     }
