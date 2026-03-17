@@ -568,7 +568,7 @@
         serverTimeOffset = snap.val() || 0;
     });
 
-    // ====== WEBCRYPTO SHA-256 ======
+    // ====== WEBCRYPTO SHA-256 (Hash Senhas) ======
     async function hashCriptografico(texto) {
         const encoder = new TextEncoder();
         const data = encoder.encode(texto);
@@ -599,7 +599,7 @@
 
     function statusToPill(st) {
         if(st === 'Resolvido') return 'pill-ok';
-        if(st.includes('Cancelar')) return 'pill-bad';
+        if(st.includes('Cancel')) return 'pill-bad';
         if(st === 'Reaberto') return 'pill-warn';
         return 'pill-blue'; 
     }
@@ -757,6 +757,7 @@
             if(isHighRank()) document.body.classList.add(`is-high-rank`); 
             if(isAdminRole()) document.body.classList.add(`is-admin`); 
 
+            // Aplica o tema Universal
             const t = localStorage.getItem('universal_theme');
             if(t && t !== 'default') document.body.setAttribute('data-theme', t);
             
@@ -836,7 +837,12 @@
     function calcularMetaPessoal() {
         dbRef('chamados').once('value', snap => {
             let dias = new Set(); let res = 0;
-            snap.forEach(i => { const c = i.val(); if (c.analista === logado.nome && ['Resolvido','Cancelar (Abertura Incorreta)','Cancelar (A pedido do solicitante)','Reaberto'].includes(c.status)) { dias.add(c.data); res++; } });
+            snap.forEach(i => { 
+                const c = i.val(); 
+                if (c.analista === logado.nome && c.status !== 'Pendente' && c.status !== 'GA') { 
+                    dias.add(c.data); res++; 
+                } 
+            });
             if(document.getElementById('kpiMeta')) document.getElementById('kpiMeta').innerText = dias.size > 0 ? Math.ceil(res / dias.size) : "--";
         });
     }
@@ -907,17 +913,22 @@
 
             snap.forEach(item => {
                 const c = item.val(); if(!c || c.data !== getHoje()) return;
-                const fechou = ['Resolvido','Cancelar (Abertura Incorreta)','Cancelar (A pedido do solicitante)','Reaberto'].includes(c.status);
                 
-                if(fechou) { cont[c.analista] = (cont[c.analista] || 0) + 1; fechadosEquipe++; }
+                // NOVA REGRA UNIVERSAL: Se não é Pendente e não é GA, está Fechado!
+                const fechou = c.status !== 'Pendente' && c.status !== 'GA';
                 
-                if(c.analista === logado.nome && c.status !== 'Pendente' && c.status !== 'GA') { 
+                if(fechou) { 
+                    cont[c.analista] = (cont[c.analista] || 0) + 1; 
+                    fechadosEquipe++; 
+                }
+                
+                if(c.analista === logado.nome && fechou) { 
                     fechadosMeu++; 
                     tasksMeu += Number(c.taskQtd||0); 
                     
                     if (c.status === 'Resolvido') statsHoje.res++;
-                    if (c.status.includes('Cancelar')) statsHoje.can++;
-                    if (c.status === 'Reaberto') statsHoje.rea++;
+                    else if (c.status === 'Reaberto') statsHoje.rea++;
+                    else statsHoje.can++; // Se não é Resolvido nem Reaberto, é algum tipo de Cancelado
                 }
 
                 if(isAdminRole() || c.analista === logado.nome) {
@@ -1005,7 +1016,7 @@
                 cacheConsulta.push(c);
                 totais.total++;
                 const st = c.status;
-                if (st.includes('Cancelar')) totais.Cancelado++;
+                if (st.includes('Cancel')) totais.Cancelado++;
                 else if (totais[st] !== undefined) totais[st]++;
             }
         });
