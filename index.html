@@ -116,8 +116,6 @@
     input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
     textarea { resize: vertical; min-height: 100px; }
     input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); background: rgba(0,0,0,0.1); }
-    
-    /* === CORREÇÃO DO MENU SELECT === */
     option { background-color: var(--bg); color: var(--text); }
 
     /* BOTÕES */
@@ -166,6 +164,10 @@
     .theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
     .theme-btn { border: 2px solid var(--border); padding: 20px; border-radius: 16px; cursor: pointer; text-align: center; font-weight: 800; font-size: 0.85rem; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .theme-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    
+    /* AD GROUPS COPY CARDS */
+    .ad-group-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: 0.2s; }
+    .ad-group-card:hover { background: rgba(0,0,0,0.25); border-color: var(--brand); }
   </style>
 </head>
 <body>
@@ -266,6 +268,7 @@
   <div style="flex: 1;">
     <div class="nav-item only-command active" onclick="switchView('dashCommand', event)" id="navCommandHome">📊 Dashboard</div>
     <div class="nav-item only-command" onclick="switchView('consultCommand', event)">🔍 Consulta Avançada</div>
+    <div class="nav-item only-command" onclick="switchView('copiaCommand', event)">📋 Grupos AD</div>
 
     <div class="nav-item only-distrito active" onclick="switchView('dashDistrito', event)" id="navDashRP">📊 Visão Geral</div>
     <div class="nav-item only-distrito" onclick="switchView('caixaDistrito', event)">💰 Cofre Central</div>
@@ -380,6 +383,15 @@
         <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>CHAMADO</th><th>STATUS</th><th>TASKS</th><th>DESCRIÇÃO</th></tr></thead>
         <tbody id="corpoConsulta"></tbody>
       </table>
+    </div>
+  </div>
+
+  <div id="viewCopiaCommand" class="view-section">
+    <div class="card">
+      <div class="card-header">📋 Grupos AD (Cópia Rápida)</div>
+      <p class="subnote" style="margin-bottom: 20px;">Clique no botão para copiar o nome exato do grupo do Active Directory (Levantamento NEO).</p>
+      <div class="form-grid" id="containerGruposAD" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+        </div>
     </div>
   </div>
 
@@ -787,6 +799,7 @@
                 document.getElementById('navCommandHome').classList.add('active');
                 switchView('dashCommand');
                 verificarStatusTurno(); escutarBancoCommand(); calcularMetaPessoal();
+                renderizarGruposAD(); // <-- NOVA FUNÇÃO AQUI
             } else {
                 document.getElementById('navDashRP').classList.add('active');
                 switchView('dashDistrito');
@@ -815,8 +828,43 @@
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
 
     /* =================================================================================
-       COMMAND CENTER - FILA, RITMS E CONSULTA AVANÇADA
+       COMMAND CENTER - FILA, RITMS, CONSULTA AVANÇADA E GRUPOS AD
     ================================================================================= */
+    
+    // ====== CÓPIA RÁPIDA DE GRUPOS AD ======
+    const gruposAD = [
+        "digitaliza_captacao_gestor", "digitaliza_aluno_gestor", "digitaliza_aluno_registros_academicos",
+        "digitaliza_captacao_financiamentos_corporativo", "digitaliza_captacao_analista_csc_adm",
+        "digitaliza_captacao_consulta", "digitaliza_analista_digitalizador_polos",
+        "digitaliza_captacao_financiamentos_polosparceiros", "digitaliza_aluno_analista_digitalizador",
+        "digitaliza_aluno_secretaria", "digitaliza_aluno_coordenadorderelacionamento",
+        "digitaliza_analista_digitalizador", "digitaliza_captacao_financiamentos_unidades",
+        "digitaliza_captacao_supervisor_digitalizador", "digitaliza_captacao_analista_csc",
+        "digitaliza_captacao_analista_csc_coord_curso", "digitaliza_captacao_coord_curso_ibmec",
+        "digitaliza_captacao_coord_curso_medicina", "digitaliza_aluno_reitor"
+    ];
+
+    function renderizarGruposAD() {
+        const container = document.getElementById('containerGruposAD');
+        if(!container) return;
+        container.innerHTML = "";
+        gruposAD.forEach(g => {
+            container.innerHTML += `
+            <div class="ad-group-card">
+                <span style="font-family: monospace; font-size: 0.85rem; color: var(--text); word-break: break-all; font-weight: 600;">${g}</span>
+                <button class="btn" style="padding: 6px 12px; width: auto; font-size: 0.75rem; border-color: var(--brand); color: var(--brand);" onclick="copiarParaAreaDeTransferencia('${g}')">📋 Copiar</button>
+            </div>`;
+        });
+    }
+
+    function copiarParaAreaDeTransferencia(texto) {
+        navigator.clipboard.writeText(texto).then(() => {
+            showToast(`Copiado: ${texto}`, 'success');
+        }).catch(err => {
+            showToast("Erro ao copiar!", 'error');
+        });
+    }
+
     function abrirModalTurno() { document.getElementById('modalStartTurn').style.display = 'flex'; }
     function confirmarInicioTurno() {
         const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
