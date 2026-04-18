@@ -165,9 +165,9 @@
     .theme-btn { border: 2px solid var(--border); padding: 20px; border-radius: 16px; cursor: pointer; text-align: center; font-weight: 800; font-size: 0.85rem; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .theme-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
     
-    /* AD GROUPS COPY CARDS */
-    .ad-group-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: 0.2s; }
-    .ad-group-card:hover { background: rgba(0,0,0,0.25); border-color: var(--brand); }
+    /* GRUPOS AD CARDS */
+    .ad-group-card { background: rgba(0,0,0,0.15); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; transition: 0.2s; }
+    .ad-group-card:hover { background: rgba(0,0,0,0.25); border-color: var(--brand); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -390,8 +390,19 @@
     <div class="card">
       <div class="card-header">📋 Grupos AD (Cópia Rápida)</div>
       <p class="subnote" style="margin-bottom: 20px;">Clique no botão para copiar o nome exato do grupo do Active Directory (Levantamento NEO).</p>
-      <div class="form-grid" id="containerGruposAD" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+      
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
+        <div style="background: rgba(0,0,0,0.15); padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
+          <h3 style="margin-bottom: 15px; color: var(--brand); border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 1rem;">🏷️ Tipo de Perfil</h3>
+          <div id="containerPerfil" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </div>
+        
+        <div style="background: rgba(0,0,0,0.15); padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
+          <h3 style="margin-bottom: 15px; color: #a855f7; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 1rem;">🎯 Atuação</h3>
+          <div id="containerAtuacao" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -799,7 +810,7 @@
                 document.getElementById('navCommandHome').classList.add('active');
                 switchView('dashCommand');
                 verificarStatusTurno(); escutarBancoCommand(); calcularMetaPessoal();
-                renderizarGruposAD(); // <-- NOVA FUNÇÃO AQUI
+                renderizarGruposAD(); // Renderiza os botões de copiar
             } else {
                 document.getElementById('navDashRP').classList.add('active');
                 switchView('dashDistrito');
@@ -828,32 +839,51 @@
     function logout() { localStorage.removeItem('usuarioLogado'); location.reload(); }
 
     /* =================================================================================
-       COMMAND CENTER - FILA, RITMS, CONSULTA AVANÇADA E GRUPOS AD
+       COMMAND CENTER - CÓPIA RÁPIDA (GRUPOS AD)
     ================================================================================= */
-    
-    // ====== CÓPIA RÁPIDA DE GRUPOS AD ======
     const gruposAD = [
-        "digitaliza_captacao_gestor", "digitaliza_aluno_gestor", "digitaliza_aluno_registros_academicos",
-        "digitaliza_captacao_financiamentos_corporativo", "digitaliza_captacao_analista_csc_adm",
-        "digitaliza_captacao_consulta", "digitaliza_analista_digitalizador_polos",
-        "digitaliza_captacao_financiamentos_polosparceiros", "digitaliza_aluno_analista_digitalizador",
-        "digitaliza_aluno_secretaria", "digitaliza_aluno_coordenadorderelacionamento",
-        "digitaliza_analista_digitalizador", "digitaliza_captacao_financiamentos_unidades",
-        "digitaliza_captacao_supervisor_digitalizador", "digitaliza_captacao_analista_csc",
-        "digitaliza_captacao_analista_csc_coord_curso", "digitaliza_captacao_coord_curso_ibmec",
-        "digitaliza_captacao_coord_curso_medicina", "digitaliza_aluno_reitor"
+        // Tipo de Perfil
+        { cat: "perfil", label: "Gestor", grupo: "digitaliza_captacao_gestor" },
+        { cat: "perfil", label: "Gestor", grupo: "digitaliza_aluno_gestor" },
+        { cat: "perfil", label: "Registros Acadêmicos", grupo: "digitaliza_aluno_registros_academicos" },
+        { cat: "perfil", label: "Analista CSC e ADM", grupo: "digitaliza_captacao_financiamentos_corporativo" },
+        { cat: "perfil", label: "Analista CSC e ADM", grupo: "digitaliza_captacao_analista_csc_adm" },
+        { cat: "perfil", label: "Consulta", grupo: "digitaliza_captacao_consulta" },
+        { cat: "perfil", label: "Polos", grupo: "digitaliza_analista_digitalizador_polos" },
+        { cat: "perfil", label: "Polos", grupo: "digitaliza_captacao_financiamentos_polosparceiros" },
+        { cat: "perfil", label: "Digitalizador", grupo: "digitaliza_aluno_analista_digitalizador" },
+        { cat: "perfil", label: "Secretaria", grupo: "digitaliza_aluno_secretaria" },
+        { cat: "perfil", label: "Coord. de Relacionamento", grupo: "digitaliza_aluno_coordenadorderelacionamento" },
+        // Atuação
+        { cat: "atuacao", label: "Unidades", grupo: "digitaliza_analista_digitalizador" },
+        { cat: "atuacao", label: "Unidades", grupo: "digitaliza_captacao_financiamentos_unidades" },
+        { cat: "atuacao", label: "Digitalizador", grupo: "digitaliza_captacao_supervisor_digitalizador" },
+        { cat: "atuacao", label: "CSC (Toda a base)", grupo: "digitaliza_captacao_analista_csc" },
+        { cat: "atuacao", label: "CSC (Coord. IBMEC e MED)", grupo: "digitaliza_captacao_analista_csc_coord_curso" },
+        { cat: "atuacao", label: "Coord. de curso (IBMEC)", grupo: "digitaliza_captacao_coord_curso_ibmec" },
+        { cat: "atuacao", label: "Coord. de curso (Medicina)", grupo: "digitaliza_captacao_coord_curso_medicina" },
+        { cat: "atuacao", label: "Reitor", grupo: "digitaliza_aluno_reitor" }
     ];
 
     function renderizarGruposAD() {
-        const container = document.getElementById('containerGruposAD');
-        if(!container) return;
-        container.innerHTML = "";
+        const cPerfil = document.getElementById('containerPerfil');
+        const cAtuacao = document.getElementById('containerAtuacao');
+        if(!cPerfil || !cAtuacao) return;
+
+        cPerfil.innerHTML = ""; cAtuacao.innerHTML = "";
+
         gruposAD.forEach(g => {
-            container.innerHTML += `
-            <div class="ad-group-card">
-                <span style="font-family: monospace; font-size: 0.85rem; color: var(--text); word-break: break-all; font-weight: 600;">${g}</span>
-                <button class="btn" style="padding: 6px 12px; width: auto; font-size: 0.75rem; border-color: var(--brand); color: var(--brand);" onclick="copiarParaAreaDeTransferencia('${g}')">📋 Copiar</button>
+            const html = `
+            <div class="ad-group-card" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                <div style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase;">${g.label}</div>
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <span style="font-family: monospace; font-size: 0.85rem; color: var(--text); word-break: break-all; font-weight: 600;">${g.grupo}</span>
+                    <button class="btn" style="padding: 6px 10px; width: auto; font-size: 0.7rem; border-color: var(--brand); color: var(--brand);" onclick="copiarParaAreaDeTransferencia('${g.grupo}')">📋 Copiar</button>
+                </div>
             </div>`;
+            
+            if(g.cat === 'perfil') cPerfil.innerHTML += html;
+            else cAtuacao.innerHTML += html;
         });
     }
 
@@ -865,6 +895,9 @@
         });
     }
 
+    /* =================================================================================
+       COMMAND CENTER - FILA, RITMS E CONSULTA AVANÇADA
+    ================================================================================= */
     function abrirModalTurno() { document.getElementById('modalStartTurn').style.display = 'flex'; }
     function confirmarInicioTurno() {
         const ni = parseInt(document.getElementById('startNaoIniciados').value) || 0;
