@@ -2,94 +2,87 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Omni Táxi Aéreo - Service Desk</title>
+  <title>Omni TI - Service Desk</title>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: #090e17; --panel: #1e293b; --text: #f8fafc; --brand: #0ea5e9; --brand2: #10b981; --danger: #ef4444; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
-    .card { background: var(--panel); padding: 25px; border-radius: 16px; margin: 20px; }
-    input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 5px; }
-    .btn { padding: 12px 20px; border-radius: 8px; cursor: pointer; border: none; font-weight: 700; }
+    /* Estilo Corporativo Omni (Azul e Branco) */
+    :root { --bg: #f8fafc; --panel: #ffffff; --text: #0f172a; --brand: #0284c7; --danger: #ef4444; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; }
+    .sidebar { width: 260px; height: 100vh; background: #0f172a; color: white; padding: 20px; position: fixed; }
+    .main { margin-left: 260px; width: calc(100% - 260px); padding: 30px; }
+    .card { background: var(--panel); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin: 8px 0; }
+    .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
     .btn-primary { background: var(--brand); color: white; }
-    #telaLogin { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    .login-card { background: #1e293b; padding: 40px; border-radius: 20px; width: 350px; text-align: center; }
+    .view { display: none; }
+    .active { display: block; }
   </style>
 </head>
 <body>
 
-<div id="telaLogin">
-  <div class="login-card">
-    <div style="font-size: 3rem; margin-bottom: 20px;">🚁</div>
-    <h2>Omni Táxi Aéreo</h2>
-    <input type="text" id="lUser" placeholder="Usuário" style="margin-bottom: 10px;">
-    <input type="password" id="lPass" placeholder="Senha" onkeypress="if(event.key === 'Enter') autenticar()">
-    <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="autenticar()">ENTRAR</button>
-  </div>
+<div class="sidebar">
+  <h3>Omni TI</h3>
+  <div onclick="showView('dash')" style="margin-top:20px; cursor:pointer;">📊 Dashboard</div>
+  <div onclick="showView('consult')" style="margin-top:10px; cursor:pointer;">🔍 Histórico</div>
+  <div onclick="logout()" style="margin-top:50px; color:var(--danger); cursor:pointer;">Sair</div>
 </div>
 
-<div class="main-content" id="painelPrincipal" style="display:none; padding: 20px;">
-  <div class="card">
-    <h2>Registrar Atendimento</h2>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <input type="text" id="ticketId" placeholder="Ticket">
-        <input type="text" id="solicitante" placeholder="Usuário/Setor">
+<div class="main">
+  <div id="dash" class="view active">
+    <div class="card">
+        <h2>Registrar Serviço</h2>
+        <input type="text" id="ticket" placeholder="Ticket">
+        <textarea id="desc" placeholder="Descrição"></textarea>
+        <button class="btn btn-primary" onclick="salvarServico()">SALVAR</button>
     </div>
-    <textarea id="descSolucao" placeholder="Descrição..." style="margin-top: 15px;"></textarea>
-    <button class="btn btn-primary" onclick="salvarAtendimento()" style="margin-top: 15px;">SALVAR</button>
-    <button class="btn" onclick="logout()" style="background:transparent; color:red; margin-top:15px;">SAIR</button>
+  </div>
+  
+  <div id="consult" class="view">
+    <div class="card">
+        <h2>Histórico de Atendimentos</h2>
+        <table id="tabelaHist"></table>
+    </div>
   </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
-        databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com",
-        projectId: "dashboard-command-1ef72"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const app = firebase.initializeApp({ databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com" });
+    const db = app.database();
 
-    // LOGIN BLINDADO
-    async function autenticar() {
-        const u = document.getElementById('lUser').value.trim();
-        const p = document.getElementById('lPass').value.trim();
-        
-        // Busca TODOS os usuários da pasta 'usuarios' para comparar manualmente
-        db.ref('usuarios').once('value', snap => {
-            let achou = false;
-            snap.forEach(child => {
-                const user = child.val();
-                // Compara sem case-sensitive (tudo minúsculo)
-                if (child.key.toLowerCase() === u.toLowerCase() && String(user.senha) === String(p)) {
-                    localStorage.setItem('omni_user', JSON.stringify({nome: u, role: user.role}));
-                    location.reload();
-                    achou = true;
-                }
-            });
-            if(!achou) alert("Usuário ou Senha incorretos!");
-        });
+    function showView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
     }
 
-    function salvarAtendimento() {
-        const payload = { 
-            ticket: document.getElementById('ticketId').value,
-            solicitante: document.getElementById('solicitante').value,
-            desc: document.getElementById('descSolucao').value,
-            data: new Date().toLocaleDateString()
-        };
-        db.ref('atendimentos_ti').push(payload).then(() => alert("Salvo!"));
+    async function salvarServico() {
+        const data = { ticket: document.getElementById('ticket').value, desc: document.getElementById('desc').value };
+        await db.ref('atendimentos_ti').push(data);
+        alert("Salvo!");
     }
 
-    function logout() { localStorage.removeItem('omni_user'); location.reload(); }
+    function logout() { localStorage.clear(); location.reload(); }
 
+    // Lógica de Login que você estava usando
     window.onload = () => {
-        if(localStorage.getItem('omni_user')) document.getElementById('painelPrincipal').style.display = 'block';
-        else document.getElementById('telaLogin').style.display = 'flex';
+        if(!localStorage.getItem('login')) {
+            const u = prompt("Usuário:");
+            const p = prompt("Senha:");
+            db.ref('usuarios').once('value', snap => {
+                let ok = false;
+                snap.forEach(c => {
+                    if(c.key.toLowerCase() === u.toLowerCase() && String(c.val().senha) === String(p)) {
+                        localStorage.setItem('login', 'ok');
+                        location.reload();
+                        ok = true;
+                    }
+                });
+                if(!ok) alert("Erro de login");
+            });
+        }
     };
 </script>
 </body>
