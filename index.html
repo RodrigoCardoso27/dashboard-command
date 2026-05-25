@@ -16,22 +16,19 @@
   <style>
     /* === VISUAL PREMIUM SAAS OMNI TÁXI AÉREO (Azul) === */
     :root {
-      /* Tema Default: Omni Dark Blue */
       --bg: #090e17; --panel: rgba(15, 23, 42, 0.85); --text: #f8fafc; --muted: #94a3b8;
-      --brand: #0ea5e9; --brand-glow: rgba(14, 165, 233, 0.15); /* Azul Omni */
+      --brand: #0ea5e9; --brand-glow: rgba(14, 165, 233, 0.15);
       --brand2: #10b981; --danger: #ef4444; --warn: #f59e0b;
       --border: rgba(255,255,255,0.08); --shadow: 0 8px 32px rgba(0,0,0,0.4);
       --radius: 16px;
     }
 
-    /* 🍎 Omni Light */
     [data-theme="apple"] { 
         --bg: #f0f4f8; --panel: rgba(255, 255, 255, 0.95); --text: #0f172a; --muted: #64748b; 
         --brand: #0284c7; --brand-glow: rgba(2, 132, 199, 0.15); --brand2: #059669; --danger: #dc2626; --warn: #d97706;
         --border: rgba(0, 0, 0, 0.1); --shadow: 0 8px 30px rgba(0, 0, 0, 0.04); 
     }
     
-    /* 💻 Midnight Pro */
     [data-theme="midnight"] { 
         --bg: #111111; --panel: rgba(30, 30, 30, 0.8); --text: #cccccc; --muted: #858585; 
         --brand: #007acc; --brand-glow: rgba(0, 122, 204, 0.15); --border: rgba(255,255,255,0.05); 
@@ -46,7 +43,6 @@
       background-attachment: fixed;
     }
 
-    /* UI ELEMENTS */
     #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 11000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
     .toast { background: var(--panel); backdrop-filter: blur(12px); border: 1px solid var(--border); padding: 16px 20px; border-radius: 12px; color: var(--text); font-weight: 600; font-size: 0.85rem; box-shadow: var(--shadow); animation: toastIn 0.4s forwards; display: flex; gap: 12px; align-items: center; }
     @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -55,11 +51,9 @@
     @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     .modal-box { background: var(--panel); backdrop-filter: blur(20px); border: 1px solid var(--border); padding: 35px; border-radius: 20px; width: 100%; max-width: 520px; text-align: center; box-shadow: var(--shadow); }
 
-    /* LOGIN CARD */
     #telaLogin { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
     .login-card { background: var(--panel); backdrop-filter: blur(20px); padding: 40px; border-radius: 24px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
 
-    /* SIDEBAR */
     .sidebar { width: 280px; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(16px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 30px 20px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; overflow-y: auto; }
     .logo-area { display: flex; align-items: center; gap: 14px; padding: 16px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 30px; }
     .logo-icon { font-size: 2rem; color: var(--brand); font-weight: 900; }
@@ -70,34 +64,29 @@
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
     .nav-item.active { background: var(--brand-glow); border-color: var(--border); color: var(--brand); font-weight: 700; }
 
-    /* MAIN */
     .main-content { margin-left: 280px; padding: 30px 50px; width: calc(100% - 280px); overflow-y: auto; height: 100vh; scroll-behavior: smooth; }
     .view-section { display: none; }
     .view-section.active { display: block; animation: viewFade 0.3s ease; }
     @keyframes viewFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* CARDS */
     .card { background: var(--panel); backdrop-filter: blur(16px); border-radius: var(--radius); border: 1px solid var(--border); padding: 30px; margin-bottom: 24px; box-shadow: var(--shadow); transition: transform 0.2s; }
     .card-header { font-size: 1.15rem; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .subnote { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
 
-    /* KPIS */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 24px; }
     .kpi-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: 0.2s; }
     .kpi-card:hover { transform: translateY(-2px); background: rgba(0,0,0,0.3); }
     .kpi-title { font-size: 0.65rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
     .kpi-value { font-size: 2.2rem; font-weight: 900; margin-top: 8px; color: var(--text); letter-spacing: -1px; }
 
-    /* FORMS & INPUTS */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
     label { font-size: 0.75rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block; text-align: left; }
     input, select, textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; color: var(--text); font-family: inherit; font-size: 0.9rem; transition: 0.2s; }
     input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
     textarea { resize: vertical; min-height: 80px; }
     input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); background: rgba(0,0,0,0.4); }
-    option { background-color: #0f172a; color: #fff; } /* Fundo escuro pro select não bugar */
+    option { background-color: #0f172a; color: #fff; }
 
-    /* BOTÕES */
     .btn { border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
     .btn-primary { background: var(--brand); color: #fff; border: none; width: 100%; }
@@ -107,7 +96,6 @@
     .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
     .btn-danger:hover { background: var(--danger); color: #fff; }
 
-    /* TABELAS & PILLS */
     table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 10px; }
     th { text-align: left; padding: 14px 16px; color: var(--muted); font-weight: 800; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; }
     td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; color: var(--text); }
@@ -118,16 +106,13 @@
     .pill-warn { color: var(--warn); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
     .pill-blue { color: var(--brand); background: var(--brand-glow); border-color: rgba(14,165,233,0.2); }
 
-    /* GRUPOS AD CARDS */
     .ad-group-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 14px 18px; border-radius: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; transition: 0.2s; }
     .ad-group-card:hover { background: rgba(0,0,0,0.4); border-color: var(--brand); transform: translateY(-2px); }
 
-    /* ACESSO ADMIN */
     .only-admin { display: none; }
     body.is-admin .only-admin { display: block; }
     body.is-admin div.nav-item.only-admin { display: flex; }
 
-    /* TEMA PICKER GRID */
     .theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
     .theme-btn { border: 2px solid var(--border); padding: 20px; border-radius: 16px; cursor: pointer; text-align: center; font-weight: 800; font-size: 0.85rem; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .theme-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
@@ -158,23 +143,13 @@
   </div>
 </div>
 
-<div id="modalTrocaSenha" class="modal-overlay" style="background: rgba(0,0,0,0.95); z-index: 11000;">
-  <div class="modal-box" style="border-color: var(--brand);">
-    <div class="card-header" style="justify-content: center; color: var(--brand);">🔒 Segurança de Acesso</div>
-    <p class="subnote" style="margin-bottom: 25px;">Primeiro acesso detectado. Crie um PIN numérico definitivo.</p>
-    <input type="password" id="novoPin" placeholder="Novo PIN" style="margin-bottom: 12px; text-align: center; font-size: 1.3rem; letter-spacing: 8px;">
-    <input type="password" id="confirmaPin" placeholder="Confirme" style="margin-bottom: 25px; text-align: center; font-size: 1.3rem; letter-spacing: 8px;">
-    <button class="btn btn-primary" onclick="salvarNovoPin()">CRIPTOGRAFAR E ENTRAR</button>
-  </div>
-</div>
-
 <div id="telaLogin">
   <div class="login-card">
     <div style="font-size: 3.5rem; margin-bottom: 15px; color: var(--brand);">🚁</div>
     <h2 style="margin-bottom: 10px; font-weight: 900; letter-spacing: -1px;">Omni Táxi Aéreo</h2>
     <p class="subnote" style="margin-bottom: 25px;">Service Desk TI - Controle Pessoal</p>
     <input type="text" id="lUser" placeholder="Usuário" style="margin-bottom: 12px;">
-    <input type="password" id="lPass" placeholder="Senha ou PIN" onkeypress="if(event.key === 'Enter') autenticar()">
+    <input type="password" id="lPass" placeholder="Senha" onkeypress="if(event.key === 'Enter') autenticar()">
     <button class="btn btn-primary" style="margin-top: 25px; height: 50px; font-size:1rem;" onclick="autenticar()">Acessar Painel</button>
   </div>
 </div>
@@ -350,7 +325,7 @@
       <div class="form-grid">
         <input type="text" id="nCompleto" placeholder="Nome Completo">
         <input type="text" id="nUser" placeholder="Login (Sem espaços)">
-        <input type="password" id="nPass" placeholder="Senha Provisória">
+        <input type="password" id="nPass" placeholder="Senha">
         <select id="nRole">
           <option value="Analista N1">Analista N1</option>
           <option value="Analista N2">Analista N2</option>
@@ -384,15 +359,7 @@
     let logado = null; 
     let cacheConsulta = [];
 
-    // ====== UTILS & WEBCRYPTO ======
-    async function hashCriptografico(texto) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(texto);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
+    // ====== UTILS ======
     function getHoje() { return new Date().toISOString().split('T')[0]; }
     function getMesAtual() { return getHoje().substring(0, 7); }
     function getHora() { return new Date().toLocaleTimeString('pt-BR'); }
@@ -413,71 +380,39 @@
         return 'pill-blue'; 
     }
 
-    // ====== LOGIN & SEGURANÇA PIN ======
+    // ====== LOGIN DIRETO AO PONTO ======
     async function autenticar() { 
         const userInput = document.getElementById('lUser').value.trim(); 
         const p = document.getElementById('lPass').value.trim(); 
+        
         if(!userInput || !p) return showToast("Digite usuário e senha!", "error");
 
-        // Transforma a digitação no padrão do banco
-        const u = userInput.toUpperCase();
-        const key = u.replace(/\./g, ','); 
+        const key = userInput.replace(/\./g, ','); 
         
         rootDatabase.ref('usuarios/' + key).once('value', async snap => { 
             let user = snap.val(); 
             
-            // Tratativa dupla caso tenha sido gravado sem ser maiúsculo no painel
+            // Busca secundária exata caso tenha problema de case sensitive no Firebase
             if(!user) {
                 const keyNoCase = userInput.replace(/\./g, ',');
                 const snapNoCase = await rootDatabase.ref('usuarios/' + keyNoCase).once('value');
                 user = snapNoCase.val();
-                if(!user) {
-                    showToast("Usuário não encontrado!", "error"); 
-                    return; 
-                }
             }
 
-            let senhaBate = false;
-            // Prevenção contra falha de tipos (String vs Number)
-            const senhaBanco = String(user.senha);
-            
-            // Assume que é o primeiro acesso se não tiver a propriedade definida
-            const senhaAlterada = user.senhaAlterada === true; 
-
-            if (senhaAlterada) {
-                const hashDigitado = await hashCriptografico(p);
-                if (hashDigitado === senhaBanco) senhaBate = true;
-            } else {
-                if (String(p) === senhaBanco) senhaBate = true;
+            if(!user) {
+                showToast("Usuário não encontrado!", "error"); 
+                return; 
             }
 
-            if (senhaBate) {
-                if (!senhaAlterada) {
-                    window.usuarioPendente = { nome: userInput, role: user.role };
-                    document.getElementById('modalTrocaSenha').style.display = 'flex';
-                    return; 
-                }
+            // Comparação direta de senhas convertendo ambas para texto
+            if (String(p) === String(user.senha)) {
                 logado = { nome: userInput, role: user.role }; 
                 localStorage.setItem('usuarioOmni', JSON.stringify(logado)); 
                 location.reload(); 
-            } else { showToast("Senha incorreta!", "error"); }
+            } else { 
+                showToast("Senha incorreta!", "error"); 
+            }
         }); 
-    }
-
-    async function salvarNovoPin() {
-        const p1 = document.getElementById('novoPin').value;
-        const p2 = document.getElementById('confirmaPin').value;
-        
-        if (p1 !== p2) return showToast("Os PINs não batem!", "error");
-        if (!/^\d{6,}$/.test(p1)) return showToast("Apenas números. Min: 6", "error");
-        
-        const hashFinal = await hashCriptografico(p1);
-        const tempUser = window.usuarioPendente;
-        const key = tempUser.nome.toUpperCase().replace(/\./g, ',');
-
-        rootDatabase.ref('usuarios/' + key).update({ senha: hashFinal, senhaAlterada: true }).then(() => {
-            logado = tempUser; localStorage.setItem('usuarioOmni', JSON.stringify(logado)); location.reload();
-        });
     }
 
     // ====== BOOT & UI ======
@@ -773,12 +708,12 @@
     
     function cadastrarAnalista() {
         const nc = document.getElementById('nCompleto').value; 
-        const u = document.getElementById('nUser').value.toUpperCase().trim(); 
+        const u = document.getElementById('nUser').value.trim(); 
         const p = document.getElementById('nPass').value.trim(); 
         const r = document.getElementById('nRole').value;
         if(!u || !nc || !p) return showToast("Faltam dados!", "error");
         
-        rootDatabase.ref('usuarios/' + u.replace(/\./g, ',')).set({ nomeCompleto: nc, senha: String(p), role: r, senhaAlterada: false })
+        rootDatabase.ref('usuarios/' + u.replace(/\./g, ',')).set({ nomeCompleto: nc, senha: String(p), role: r })
         .then(() => { 
             document.getElementById('nCompleto').value = ''; document.getElementById('nUser').value = ''; document.getElementById('nPass').value = '';
             showToast("Analista Cadastrado!"); 
