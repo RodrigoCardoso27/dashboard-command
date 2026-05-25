@@ -407,8 +407,8 @@
     <input type="password" id="lPass" placeholder="Senha" onkeypress="if(event.key === 'Enter') autenticar()">
     <button class="btn btn-primary" style="margin-top: 25px; height: 50px; font-size:1rem;" onclick="autenticar()">Acessar Painel</button>
     <div id="firebaseStatus" class="connection-pill">⚪ Firebase verificando...</div>
-    <button class="btn" style="margin-top:14px; width:100%; font-size:.75rem;" onclick="criarAdminInicial()">Criar admin inicial</button>
-    <p class="subnote" style="margin-top:12px; text-align:center; font-size:.72rem;">Use apenas se ainda não existir usuário no banco.</p>
+    <button class="btn" style="margin-top:14px; width:100%; font-size:.75rem;" onclick="corrigirAdminFirebase()">Corrigir/Criar admin Firebase</button>
+    <p class="subnote" style="margin-top:12px; text-align:center; font-size:.72rem;">Remove o usuário antigo ADMIN/Admin e recria o admin correto.</p>
   </div>
 </div>
 
@@ -714,26 +714,46 @@
     }
   }
 
-  async function criarAdminInicial() {
+  async function corrigirAdminFirebase() {
+    const confirmar = confirm(
+      "Isso vai remover os usuários antigos ADMIN/Admin/administrador e criar o usuário correto:\n\nLogin: admin\nSenha: Admin123\n\nDeseja continuar?"
+    );
+
+    if (!confirmar) return;
+
     try {
-      const snap = await rootDatabase.ref('usuarios').once('value');
-      if (snap.exists()) {
-        showToast("Já existem usuários cadastrados. Entre com um admin para criar novos.", "alert");
-        return;
-      }
+      const updates = {};
 
-      await rootDatabase.ref('usuarios/admin').set({
+      // Remove variações antigas/incorretas do usuário admin.
+      updates['usuarios/ADMIN'] = null;
+      updates['usuarios/Admin'] = null;
+      updates['usuarios/Administrador'] = null;
+      updates['usuarios/administrador'] = null;
+
+      // Cria/recria o admin no padrão que o login procura.
+      updates['usuarios/admin'] = {
         nomeCompleto: "Administrador",
-        senha: "123",
+        senha: "Admin123",
         role: "admin",
-        criadoEm: new Date().toISOString()
-      });
+        atualizadoEm: new Date().toISOString()
+      };
 
-      showToast("Admin inicial criado. Login: admin | Senha: 123", "success");
+      await rootDatabase.ref().update(updates);
+
+      localStorage.removeItem('usuarioOmni');
+      document.getElementById('lUser').value = 'admin';
+      document.getElementById('lPass').value = 'Admin123';
+
+      showToast("Admin corrigido! Login: admin | Senha: Admin123", "success");
     } catch (error) {
-      console.error("Erro ao criar admin inicial:", error);
-      showToast("Erro ao criar admin: " + error.message, "error");
+      console.error("Erro ao corrigir admin:", error);
+      showToast("Erro ao corrigir admin: " + error.message, "error");
     }
+  }
+
+  // Compatibilidade: caso algum botão antigo ainda chame criarAdminInicial.
+  async function criarAdminInicial() {
+    return corrigirAdminFirebase();
   }
 
   // ====== BOOT & UI ======
