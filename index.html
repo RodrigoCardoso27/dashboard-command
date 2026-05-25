@@ -3,722 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Omni Táxi Aéreo - Service Desk TI</title>
-
+  <title>Omni Táxi Aéreo - Service Desk</title>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    /* === VISUAL PREMIUM SAAS OMNI TÁXI AÉREO (Azul) === */
-    :root {
-      --bg: #090e17; --panel: rgba(15, 23, 42, 0.85); --text: #f8fafc; --muted: #94a3b8;
-      --brand: #0ea5e9; --brand-glow: rgba(14, 165, 233, 0.15);
-      --brand2: #10b981; --danger: #ef4444; --warn: #f59e0b;
-      --border: rgba(255,255,255,0.08); --shadow: 0 8px 32px rgba(0,0,0,0.4);
-      --radius: 16px;
-    }
-
-    [data-theme="apple"] { 
-        --bg: #f0f4f8; --panel: rgba(255, 255, 255, 0.95); --text: #0f172a; --muted: #64748b; 
-        --brand: #0284c7; --brand-glow: rgba(2, 132, 199, 0.15); --brand2: #059669; --danger: #dc2626; --warn: #d97706;
-        --border: rgba(0, 0, 0, 0.1); --shadow: 0 8px 30px rgba(0, 0, 0, 0.04); 
-    }
-    
-    [data-theme="midnight"] { 
-        --bg: #111111; --panel: rgba(30, 30, 30, 0.8); --text: #cccccc; --muted: #858585; 
-        --brand: #007acc; --brand-glow: rgba(0, 122, 204, 0.15); --border: rgba(255,255,255,0.05); 
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-    
-    body {
-      font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
-      display: flex; min-height: 100vh; overflow: hidden; transition: background 0.4s ease, color 0.4s ease;
-      background-image: radial-gradient(800px 500px at 0% 0%, var(--brand-glow), transparent 70%);
-      background-attachment: fixed;
-    }
-
-    #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 11000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-    .toast { background: var(--panel); backdrop-filter: blur(12px); border: 1px solid var(--border); padding: 16px 20px; border-radius: 12px; color: var(--text); font-weight: 600; font-size: 0.85rem; box-shadow: var(--shadow); animation: toastIn 0.4s forwards; display: flex; gap: 12px; align-items: center; }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-    .modal-box { background: var(--panel); backdrop-filter: blur(20px); border: 1px solid var(--border); padding: 35px; border-radius: 20px; width: 100%; max-width: 520px; text-align: center; box-shadow: var(--shadow); }
-
-    #telaLogin { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-    .login-card { background: var(--panel); backdrop-filter: blur(20px); padding: 40px; border-radius: 24px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
-
-    .sidebar { width: 280px; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(16px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 30px 20px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; overflow-y: auto; }
-    .logo-area { display: flex; align-items: center; gap: 14px; padding: 16px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 30px; }
-    .logo-icon { font-size: 2rem; color: var(--brand); font-weight: 900; }
-    .logo-text { font-weight: 900; font-size: 1rem; line-height: 1.2; letter-spacing: -0.5px; }
-
-    .sidebar-title { padding: 20px 10px 8px 10px; font-size: 0.7rem; font-weight: 800; color: var(--brand); letter-spacing: 1px; text-transform: uppercase; }
-    .nav-item { padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 4px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 12px; font-size: 0.85rem; border: 1px solid transparent; }
-    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-    .nav-item.active { background: var(--brand-glow); border-color: var(--border); color: var(--brand); font-weight: 700; }
-
-    .main-content { margin-left: 280px; padding: 30px 50px; width: calc(100% - 280px); overflow-y: auto; height: 100vh; scroll-behavior: smooth; }
-    .view-section { display: none; }
-    .view-section.active { display: block; animation: viewFade 0.3s ease; }
-    @keyframes viewFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-    .card { background: var(--panel); backdrop-filter: blur(16px); border-radius: var(--radius); border: 1px solid var(--border); padding: 30px; margin-bottom: 24px; box-shadow: var(--shadow); transition: transform 0.2s; }
-    .card-header { font-size: 1.15rem; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .subnote { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
-
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 24px; }
-    .kpi-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: 0.2s; }
-    .kpi-card:hover { transform: translateY(-2px); background: rgba(0,0,0,0.3); }
-    .kpi-title { font-size: 0.65rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-    .kpi-value { font-size: 2.2rem; font-weight: 900; margin-top: 8px; color: var(--text); letter-spacing: -1px; }
-
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-    label { font-size: 0.75rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block; text-align: left; }
-    input, select, textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; color: var(--text); font-family: inherit; font-size: 0.9rem; transition: 0.2s; }
-    input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
-    textarea { resize: vertical; min-height: 80px; }
-    input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); background: rgba(0,0,0,0.4); }
-    option { background-color: #0f172a; color: #fff; }
-
-    .btn { border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
-    .btn-primary { background: var(--brand); color: #fff; border: none; width: 100%; }
-    .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 6px 20px var(--brand-glow); }
-    .btn-success { background: var(--brand2); color: #fff; border: none; width: 100%; }
-    .btn-success:hover { filter: brightness(1.1); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2); }
-    .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
-    .btn-danger:hover { background: var(--danger); color: #fff; }
-
-    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 10px; }
-    th { text-align: left; padding: 14px 16px; color: var(--muted); font-weight: 800; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; }
-    td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; color: var(--text); }
-    
-    .pill { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; border: 1px solid transparent; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
-    .pill-ok { color: var(--brand2); background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.2); }
-    .pill-bad { color: var(--danger); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
-    .pill-warn { color: var(--warn); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
-    .pill-blue { color: var(--brand); background: var(--brand-glow); border-color: rgba(14,165,233,0.2); }
-
-    .ad-group-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 14px 18px; border-radius: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; transition: 0.2s; }
-    .ad-group-card:hover { background: rgba(0,0,0,0.4); border-color: var(--brand); transform: translateY(-2px); }
-
-    .only-admin { display: none; }
-    body.is-admin .only-admin { display: block; }
-    body.is-admin div.nav-item.only-admin { display: flex; }
-
-    .theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
-    .theme-btn { border: 2px solid var(--border); padding: 20px; border-radius: 16px; cursor: pointer; text-align: center; font-weight: 800; font-size: 0.85rem; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .theme-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    :root { --bg: #090e17; --panel: #1e293b; --text: #f8fafc; --brand: #0ea5e9; --brand2: #10b981; --danger: #ef4444; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+    .card { background: var(--panel); padding: 25px; border-radius: 16px; margin: 20px; }
+    input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 5px; }
+    .btn { padding: 12px 20px; border-radius: 8px; cursor: pointer; border: none; font-weight: 700; }
+    .btn-primary { background: var(--brand); color: white; }
+    #telaLogin { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .login-card { background: #1e293b; padding: 40px; border-radius: 20px; width: 350px; text-align: center; }
   </style>
 </head>
 <body>
 
-<div id="toast-container"></div>
-
-<div id="modalEndTurn" class="modal-overlay" style="z-index: 12000;">
-  <div class="modal-box" style="max-width: 650px;">
-    <div class="card-header" style="justify-content: center; color: var(--brand);">✅ Resumo da Operação</div>
-    <p class="subnote" style="margin-bottom: 20px;">Resumo dos serviços de TI executados hoje.</p>
-    
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-        <div class="kpi-card" style="border-bottom: 3px solid var(--brand);"><div class="kpi-title">TOTAL HOJE</div><div class="kpi-value" id="endTotal">0</div></div>
-        <div class="kpi-card"><div class="kpi-title">Resolvidos</div><div class="kpi-value" id="endRes" style="color:var(--brand2)">0</div></div>
-        <div class="kpi-card"><div class="kpi-title">Pendentes</div><div class="kpi-value" id="endPen" style="color:var(--warn)">0</div></div>
-        <div class="kpi-card"><div class="kpi-title">Cancelados</div><div class="kpi-value" id="endCan" style="color:var(--danger)">0</div></div>
-    </div>
-    
-    <div style="height: 200px; margin-bottom: 20px;"><canvas id="chartEndTurn"></canvas></div>
-    
-    <div style="display: flex; gap: 10px;">
-      <button class="btn" style="width: 100%;" onclick="fecharEndTurn()">Voltar</button>
-      <button class="btn btn-danger" style="width: 100%;" onclick="confirmarFimTurno()">ENCERRAR SESSÃO</button>
-    </div>
-  </div>
-</div>
-
 <div id="telaLogin">
   <div class="login-card">
-    <div style="font-size: 3.5rem; margin-bottom: 15px; color: var(--brand);">🚁</div>
-    <h2 style="margin-bottom: 10px; font-weight: 900; letter-spacing: -1px;">Omni Táxi Aéreo</h2>
-    <p class="subnote" style="margin-bottom: 25px;">Service Desk TI - Controle Pessoal</p>
-    <input type="text" id="lUser" placeholder="Usuário" style="margin-bottom: 12px;">
+    <div style="font-size: 3rem; margin-bottom: 20px;">🚁</div>
+    <h2>Omni Táxi Aéreo</h2>
+    <input type="text" id="lUser" placeholder="Usuário" style="margin-bottom: 10px;">
     <input type="password" id="lPass" placeholder="Senha" onkeypress="if(event.key === 'Enter') autenticar()">
-    <button class="btn btn-primary" style="margin-top: 25px; height: 50px; font-size:1rem;" onclick="autenticar()">Acessar Painel</button>
+    <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="autenticar()">ENTRAR</button>
   </div>
 </div>
 
-<div class="sidebar">
-  <div class="logo-area">
-    <div class="logo-icon">🚁</div>
-    <div class="logo-text">Omni TI<br><span style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">Service Desk</span></div>
-  </div>
-
-  <div style="flex: 1;">
-    <div class="sidebar-title">OPERAÇÃO DIÁRIA</div>
-    <div class="nav-item active" onclick="switchView('dashOmni', event)" id="navHome">📊 Meu Dashboard</div>
-    <div class="nav-item" onclick="switchView('consult', event)">🔍 Histórico & Relatórios</div>
-    
-    <div class="sidebar-title" style="margin-top: 15px;">FERRAMENTAS DE APOIO</div>
-    <div class="nav-item" onclick="switchView('copiaAd', event)">📋 Grupos do AD</div>
-
-    <div class="sidebar-title only-admin" style="margin-top: 15px;">SISTEMA</div>
-    <div class="nav-item only-admin" onclick="switchView('admin', event)">👥 Gestão de Analistas</div>
-    <div class="nav-item" onclick="switchView('themes', event)">🎨 Visual do Painel</div>
-  </div>
-
-  <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
-    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-      <div id="displayUser" style="font-weight: 800; font-size: 0.9rem;">Analista</div>
-      <div id="displayRole" style="font-size: 0.7rem; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; font-weight: 700;">Cargo</div>
-      <div onclick="logout()" style="color: var(--danger); font-size: 0.8rem; font-weight: 800; cursor: pointer; display: inline-block;">🚪 Encerrar Sessão</div>
+<div class="main-content" id="painelPrincipal" style="display:none; padding: 20px;">
+  <div class="card">
+    <h2>Registrar Atendimento</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <input type="text" id="ticketId" placeholder="Ticket">
+        <input type="text" id="solicitante" placeholder="Usuário/Setor">
     </div>
-  </div>
-</div>
-
-<div class="main-content">
-
-  <div id="viewDashOmni" class="view-section active">
-    
-    <div class="kpi-grid">
-      <div class="kpi-card" style="border-bottom: 3px solid var(--brand2);">
-        <div class="kpi-title">Resolvidos Hoje</div><div class="kpi-value" id="kpiResolvidos" style="color: var(--brand2);">0</div>
-      </div>
-      <div class="kpi-card" style="border-bottom: 3px solid var(--brand);">
-        <div class="kpi-title">Em Andamento</div><div class="kpi-value" id="kpiAndamento" style="color: var(--brand);">0</div>
-      </div>
-      <div class="kpi-card" style="border-bottom: 3px solid var(--warn);">
-        <div class="kpi-title">Pendências (Aguard. Terceiros)</div><div class="kpi-value" id="kpiPendentes">0</div>
-      </div>
-      <div class="kpi-card" style="border-bottom: 3px solid #8b5cf6;">
-        <div class="kpi-title">Minha Média (Resolvidos/Dia)</div><div class="kpi-value" id="kpiMedia">0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-          <span>📊 Volume de Chamados x Categoria (Mês Atual)</span>
-          <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem; width: auto;" onclick="abrirRelatorioFimTurno()">🛑 Fechar Dia</button>
-      </div>
-      <div style="height: 250px;"><canvas id="graficoCategorias"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">✍️ Registrar Novo Atendimento / Serviço</div>
-      <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-        <div>
-          <label>Nº do Ticket (Opcional)</label>
-          <input type="text" id="ticketId" placeholder="Ex: INC123456">
-        </div>
-        <div>
-          <label>Usuário / Setor</label>
-          <input type="text" id="solicitante" placeholder="Ex: João (Contabilidade)">
-        </div>
-        <div>
-          <label>Categoria do Serviço*</label>
-          <select id="categoriaSvc">
-            <option value="Acessos / AD">Acessos / Active Directory</option>
-            <option value="Hardware / Equipamento">Hardware / Equipamento</option>
-            <option value="Software / SO">Software / Sistema Operacional</option>
-            <option value="Rede / Telefonia">Rede / Telefonia</option>
-            <option value="Dúvida / Orientação">Dúvida / Orientação</option>
-          </select>
-        </div>
-        <div>
-          <label>Status do Serviço*</label>
-          <select id="statusSvc">
-            <option value="Resolvido">Resolvido (Concluído)</option>
-            <option value="Em Andamento">Em Andamento (Atuando)</option>
-            <option value="Pendente (Usuário)">Aguardando Retorno Usuário</option>
-            <option value="Pendente (Terceiros)">Aguardando Fornecedor/N2</option>
-            <option value="Cancelado">Cancelado / Indevido</option>
-          </select>
-        </div>
-      </div>
-      <div style="margin-top: 15px;">
-        <label>Descrição do Problema e Solução Aplicada*</label>
-        <textarea id="descSolucao" placeholder="Descreva brevemente o que foi feito para resolver a solicitação..."></textarea>
-      </div>
-      <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarAtendimento()">GRAVAR ATENDIMENTO</button>
-    </div>
-
-    <div class="card">
-      <div class="card-header">📋 Atendimentos Registrados (Hoje)</div>
-      <table>
-        <thead><tr><th>HORA</th><th>TICKET</th><th>USUÁRIO</th><th>CATEGORIA</th><th>STATUS</th><th>DESCRIÇÃO</th><th style="text-align:right">AÇÃO</th></tr></thead>
-        <tbody id="tabelaHoje"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="viewConsult" class="view-section">
-    <div class="card">
-      <div class="card-header">🔍 Histórico & Filtros Avançados</div>
-      <div class="form-grid" style="grid-template-columns: 1fr 1fr 2fr 150px;">
-        <div><label>Data Início</label><input type="date" id="dataInicio"></div>
-        <div><label>Data Fim</label><input type="date" id="dataFim"></div>
-        <div><label>Buscar (Ticket, Usuário ou Termo)</label><input type="text" id="termoBusca" placeholder="O que você procura?"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" style="height: 46px;" onclick="consultarBanco()">BUSCAR</button></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header" style="margin-bottom: 0;">
-        <span>📚 Resultados da Pesquisa</span>
-        <button class="btn" style="border-color: var(--brand2); color: var(--brand2);" onclick="exportarConsultaExcel()">⬇ Exportar Excel</button>
-      </div>
-      
-      <div id="resumoConsulta" style="margin-top: 10px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
-      
-      <table>
-        <thead><tr><th>DATA</th><th>HORA</th><th>ANALISTA</th><th>TICKET</th><th>USUÁRIO</th><th>CATEGORIA</th><th>STATUS</th><th>DESCRIÇÃO</th></tr></thead>
-        <tbody id="corpoConsulta"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="viewCopiaAd" class="view-section">
-    <div class="card">
-      <div class="card-header">📋 Cópia Rápida - Grupos AD Omni</div>
-      <p class="subnote" style="margin-bottom: 20px;">Use os botões abaixo para copiar o nome exato do grupo do Active Directory (Levantamento).</p>
-      
-      <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
-        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
-          <h3 style="margin-bottom: 15px; color: var(--brand); border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 1rem;">🏷️ Grupos por Perfil</h3>
-          <div id="containerPerfil" style="display: flex; flex-direction: column; gap: 10px;"></div>
-        </div>
-        
-        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
-          <h3 style="margin-bottom: 15px; color: #a855f7; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 1rem;">🎯 Grupos por Atuação</h3>
-          <div id="containerAtuacao" style="display: flex; flex-direction: column; gap: 10px;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="viewThemes" class="view-section">
-    <div class="card">
-      <div class="card-header">🎨 Visual do Sistema</div>
-      <p class="subnote" style="margin-bottom: 25px;">Personalize as cores do seu dashboard.</p>
-      <div class="theme-grid">
-        <div class="theme-btn" onclick="setTheme('default')" style="background: #090e17; border-color: #0ea5e9; color: #fff;">
-          <div style="font-size:1.8rem">🏢</div>Omni Dark Blue<br><span style="font-size:0.6rem; color:#a1a1aa">Azul Escuro & Ciano</span>
-        </div>
-        <div class="theme-btn" onclick="setTheme('apple')" style="background: #f0f4f8; border-color: #0284c7; color: #1e293b;">
-          <div style="font-size:1.8rem">🍎</div>Omni Light<br><span style="font-size:0.6rem; color:#64748b">Claro & Clean</span>
-        </div>
-        <div class="theme-btn" onclick="setTheme('midnight')" style="background: #111; border-color: #007acc; color: #ccc;">
-          <div style="font-size:1.8rem">💻</div>Midnight Pro<br><span style="font-size:0.6rem; color:#858585">Cinza Escuro</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="viewAdmin" class="view-section only-admin">
-    <div class="card">
-      <div class="card-header">🛠 Gestão da Equipe de TI</div>
-      <div class="form-grid">
-        <input type="text" id="nCompleto" placeholder="Nome Completo">
-        <input type="text" id="nUser" placeholder="Login (Sem espaços)">
-        <input type="password" id="nPass" placeholder="Senha">
-        <select id="nRole">
-          <option value="Analista N1">Analista N1</option>
-          <option value="Analista N2">Analista N2</option>
-          <option value="admin">Coordenador (Admin)</option>
-        </select>
-        <button class="btn btn-success" id="btnSalvarAnalista" onclick="cadastrarAnalista()">CADASTRAR</button>
-      </div>
-      <table style="margin-top: 30px;">
-        <thead><tr><th>NOME</th><th>LOGIN</th><th>CARGO</th><th style="text-align:right">AÇÃO</th></tr></thead>
-        <tbody id="listaUsuarios"></tbody>
-      </table>
-    </div>
+    <textarea id="descSolucao" placeholder="Descrição..." style="margin-top: 15px;"></textarea>
+    <button class="btn btn-primary" onclick="salvarAtendimento()" style="margin-top: 15px;">SALVAR</button>
+    <button class="btn" onclick="logout()" style="background:transparent; color:red; margin-top:15px;">SAIR</button>
   </div>
 </div>
 
 <script>
-    // ====== FIREBASE CONFIG ======
     const firebaseConfig = {
         apiKey: "AIzaSyAG-d9URUUArNworWOaIMhavnVYNwUfEW0",
-        authDomain: "dashboard-command-1ef72.firebaseapp.com",
         databaseURL: "https://dashboard-command-1ef72-default-rtdb.firebaseio.com",
-        projectId: "dashboard-command-1ef72",
-        storageBucket: "dashboard-command-1ef72.firebasestorage.app",
-        messagingSenderId: "38631596446",
-        appId: "1:38631596446:web:f9470a5b648173e168b68f"
+        projectId: "dashboard-command-1ef72"
     };
-
     firebase.initializeApp(firebaseConfig);
-    const rootDatabase = firebase.database();
-    
-    let logado = null; 
-    let cacheConsulta = [];
+    const db = firebase.database();
 
-    // ====== UTILS ======
-    function getHoje() { return new Date().toISOString().split('T')[0]; }
-    function getMesAtual() { return getHoje().substring(0, 7); }
-    function getHora() { return new Date().toLocaleTimeString('pt-BR'); }
-    function isAdminRole() { return logado && logado.role === 'admin'; }
-
-    function showToast(msg, type = 'success') {
-        const c = document.getElementById('toast-container'); const t = document.createElement('div'); t.className = 'toast';
-        t.style.borderLeft = `4px solid ${type === 'success' ? 'var(--brand2)' : (type === 'alert' ? 'var(--warn)' : 'var(--danger)')}`;
-        t.innerHTML = `<span>${type === 'success' ? '✅' : (type === 'alert' ? '🔔' : '❌')}</span> ${msg}`;
-        c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
-    }
-
-    function statusToPill(st) {
-        if(st.includes('Resolvido')) return 'pill-ok';
-        if(st.includes('Cancelado')) return 'pill-bad';
-        if(st.includes('Pendente')) return 'pill-warn';
-        if(st.includes('Andamento')) return 'pill-blue';
-        return 'pill-blue'; 
-    }
-
-    // ====== LOGIN DIRETO AO PONTO ======
-    async function autenticar() { 
-        const userInput = document.getElementById('lUser').value.trim(); 
-        const p = document.getElementById('lPass').value.trim(); 
+    // LOGIN BLINDADO
+    async function autenticar() {
+        const u = document.getElementById('lUser').value.trim();
+        const p = document.getElementById('lPass').value.trim();
         
-        if(!userInput || !p) return showToast("Digite usuário e senha!", "error");
-
-        const key = userInput.replace(/\./g, ','); 
-        
-        rootDatabase.ref('usuarios/' + key).once('value', async snap => { 
-            let user = snap.val(); 
-            
-            // Busca secundária exata caso tenha problema de case sensitive no Firebase
-            if(!user) {
-                const keyNoCase = userInput.replace(/\./g, ',');
-                const snapNoCase = await rootDatabase.ref('usuarios/' + keyNoCase).once('value');
-                user = snapNoCase.val();
-            }
-
-            if(!user) {
-                showToast("Usuário não encontrado!", "error"); 
-                return; 
-            }
-
-            // Comparação direta de senhas convertendo ambas para texto
-            if (String(p) === String(user.senha)) {
-                logado = { nome: userInput, role: user.role }; 
-                localStorage.setItem('usuarioOmni', JSON.stringify(logado)); 
-                location.reload(); 
-            } else { 
-                showToast("Senha incorreta!", "error"); 
-            }
-        }); 
+        // Busca TODOS os usuários da pasta 'usuarios' para comparar manualmente
+        db.ref('usuarios').once('value', snap => {
+            let achou = false;
+            snap.forEach(child => {
+                const user = child.val();
+                // Compara sem case-sensitive (tudo minúsculo)
+                if (child.key.toLowerCase() === u.toLowerCase() && String(user.senha) === String(p)) {
+                    localStorage.setItem('omni_user', JSON.stringify({nome: u, role: user.role}));
+                    location.reload();
+                    achou = true;
+                }
+            });
+            if(!achou) alert("Usuário ou Senha incorretos!");
+        });
     }
 
-    // ====== BOOT & UI ======
-    window.onload = function() {
-        const salvo = localStorage.getItem('usuarioOmni');
-        if (salvo) { 
-            logado = JSON.parse(salvo); 
-            document.getElementById('telaLogin').style.display = 'none'; 
-            if(isAdminRole()) document.body.classList.add(`is-admin`); 
-
-            const t = localStorage.getItem('omni_theme');
-            if(t && t !== 'default') document.body.setAttribute('data-theme', t);
-            
-            document.getElementById('displayUser').innerText = logado.nome; 
-            document.getElementById('displayRole').innerText = logado.role; 
-            
-            escutarAtendimentos();
-            calcularMediaResolvidos();
-            renderizarGruposAD();
-        }
-    };
-
-    function switchView(v, event) { 
-        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active')); 
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        const alvo = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
-        if (alvo) alvo.classList.add('active'); 
-        if (event && event.currentTarget) event.currentTarget.classList.add('active');
-        if(v === 'admin') listarUsuarios();
-    }
-
-    function setTheme(t) { 
-        localStorage.setItem('omni_theme', t); 
-        if(t === 'default') document.body.removeAttribute('data-theme');
-        else document.body.setAttribute('data-theme', t); 
-    }
-    
-    function logout() { localStorage.removeItem('usuarioOmni'); location.reload(); }
-
-    /* =================================================================================
-       OMNI IT - REGISTRO E PAINEL
-    ================================================================================= */
     function salvarAtendimento() {
-        const t = document.getElementById('ticketId').value.trim() || 'S/N';
-        const sol = document.getElementById('solicitante').value.trim();
-        const cat = document.getElementById('categoriaSvc').value;
-        const st = document.getElementById('statusSvc').value;
-        const desc = document.getElementById('descSolucao').value.trim();
-        
-        if(!cat || !st || !desc) return showToast("Preencha Categoria, Status e Descrição.", "error");
-
-        const payload = { ticket: t, solicitante: sol||'Não informado', categoria: cat, status: st, desc: desc, data: getHoje(), mes: getMesAtual(), hora: getHora(), analista: logado.nome };
-        
-        rootDatabase.ref('atendimentos_ti').push(payload).then(() => {
-            document.getElementById('ticketId').value = ''; document.getElementById('solicitante').value = ''; document.getElementById('descSolucao').value = '';
-            showToast("Atendimento registrado!", "success");
-        }).catch(e => showToast("Falha ao salvar.", "error"));
+        const payload = { 
+            ticket: document.getElementById('ticketId').value,
+            solicitante: document.getElementById('solicitante').value,
+            desc: document.getElementById('descSolucao').value,
+            data: new Date().toLocaleDateString()
+        };
+        db.ref('atendimentos_ti').push(payload).then(() => alert("Salvo!"));
     }
 
-    function deletarAtendimento(chave) {
-        if(!confirm(`Excluir este registro?`)) return;
-        rootDatabase.ref('atendimentos_ti').child(chave).remove().then(() => showToast("Excluído com sucesso!", "success"));
-    }
+    function logout() { localStorage.removeItem('omni_user'); location.reload(); }
 
-    function escutarAtendimentos() {
-        rootDatabase.ref('atendimentos_ti').on('value', snap => {
-            const tb = document.getElementById('tabelaHoje'); if(tb) tb.innerHTML = "";
-            
-            let statsHoje = { res: 0, and: 0, pen: 0, can: 0 };
-            let categoriasMes = {}; 
-
-            snap.forEach(item => {
-                const c = item.val(); 
-                if(!c) return;
-
-                if (c.analista === logado.nome && c.mes === getMesAtual()) {
-                    categoriasMes[c.categoria] = (categoriasMes[c.categoria] || 0) + 1;
-                }
-                
-                if(c.data === getHoje() && c.analista === logado.nome) { 
-                    if (c.status.includes('Resolvido')) statsHoje.res++;
-                    else if (c.status.includes('Andamento')) statsHoje.and++;
-                    else if (c.status.includes('Pendente')) statsHoje.pen++;
-                    else if (c.status.includes('Cancelado')) statsHoje.can++;
-                }
-
-                if((c.data === getHoje()) && (isAdminRole() || c.analista === logado.nome)) {
-                    const pill = statusToPill(c.status);
-                    const btnExcluir = `<button class="btn btn-danger" style="padding:6px 10px; font-size:.7rem; width:auto;" onclick="deletarAtendimento('${item.key}')">🗑</button>`;
-                    const nomeTabela = isAdminRole() ? `<b>${c.analista}</b><br><span style="color:var(--muted)">${c.solicitante}</span>` : c.solicitante;
-                    
-                    if(tb) tb.innerHTML = `<tr><td style="white-space:nowrap;">${c.hora}</td><td><b>${c.ticket}</b></td><td>${nomeTabela}</td><td>${c.categoria}</td><td><span class="pill ${pill}">${c.status}</span></td><td>${c.desc}</td><td style="text-align:right">${btnExcluir}</td></tr>` + tb.innerHTML;
-                }
-            });
-
-            if(document.getElementById('kpiResolvidos')) document.getElementById('kpiResolvidos').innerText = statsHoje.res;
-            if(document.getElementById('kpiAndamento')) document.getElementById('kpiAndamento').innerText = statsHoje.and;
-            if(document.getElementById('kpiPendentes')) document.getElementById('kpiPendentes').innerText = statsHoje.pen;
-            
-            window.meusStatsHoje = statsHoje;
-            atualizarGrafico(categoriasMes);
-        });
-    }
-
-    function calcularMediaResolvidos() {
-        rootDatabase.ref('atendimentos_ti').once('value', snap => {
-            let dias = new Set(); let resolvidos = 0;
-            snap.forEach(i => { 
-                const c = i.val(); 
-                if (c.analista === logado.nome && c.status.includes('Resolvido')) { 
-                    dias.add(c.data); resolvidos++; 
-                } 
-            });
-            if(document.getElementById('kpiMedia')) document.getElementById('kpiMedia').innerText = dias.size > 0 ? Math.ceil(resolvidos / dias.size) : "0";
-        });
-    }
-
-    // ====== GRÁFICO E FIM DE TURNO ======
-    let chartInstance = null;
-    function atualizarGrafico(dados) {
-        if(!document.getElementById('graficoCategorias')) return;
-        const ctx = document.getElementById('graficoCategorias').getContext('2d');
-        if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, { 
-            type: 'bar', 
-            data: { 
-                labels: Object.keys(dados), 
-                datasets: [{ data: Object.values(dados), backgroundColor: '#0ea5e9', borderRadius: 6 }] 
-            }, 
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } } 
-        });
-    }
-
-    let chartEndTurnInstance = null;
-    function abrirRelatorioFimTurno() {
-        document.getElementById('modalEndTurn').style.display = 'flex';
-        const s = window.meusStatsHoje || {res:0, and:0, pen:0, can:0};
-        
-        const total = s.res + s.and + s.pen + s.can;
-        document.getElementById('endTotal').innerText = total;
-        document.getElementById('endRes').innerText = s.res;
-        document.getElementById('endPen').innerText = s.pen;
-        document.getElementById('endCan').innerText = s.can;
-
-        const ctx = document.getElementById('chartEndTurn').getContext('2d');
-        if(chartEndTurnInstance) chartEndTurnInstance.destroy();
-        chartEndTurnInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Resolvidos', 'Pendentes', 'Em Andamento', 'Cancelados'],
-                datasets: [{ data: [s.res, s.pen, s.and, s.can], backgroundColor: ['#10b981', '#f59e0b', '#0ea5e9', '#ef4444'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa', font: { family: 'Inter' } } } }, cutout: '70%' }
-        });
-    }
-    
-    function fecharEndTurn() { document.getElementById('modalEndTurn').style.display = 'none'; }
-    function confirmarFimTurno() {
-        localStorage.removeItem('usuarioOmni');
-        showToast("Encerrando expediente. Até logo!", "success");
-        setTimeout(() => location.reload(), 800);
-    }
-
-    // ====== CONSULTA AVANÇADA EXCEL ======
-    async function consultarBanco() {
-        const di = document.getElementById('dataInicio').value;
-        const df = document.getElementById('dataFim').value;
-        const termoBusca = document.getElementById('termoBusca').value.toLowerCase().trim();
-
-        if(!di || !df) return showToast("Selecione as datas.", "error");
-
-        const corpo = document.getElementById('corpoConsulta'); const resumo = document.getElementById('resumoConsulta');
-        corpo.innerHTML = `<tr><td colspan="8" style="color:var(--muted); text-align:center;">Buscando registros...</td></tr>`;
-        
-        const snap = await rootDatabase.ref('atendimentos_ti').once('value');
-        cacheConsulta = [];
-        let totais = { total: 0, Resolvido: 0, Pendente: 0, Cancelado: 0 };
-        
-        snap.forEach(n => {
-            const c = n.val(); if(!c || !c.data) return;
-            if(c.data >= di && c.data <= df) {
-                if(!isAdminRole() && c.analista !== logado.nome) return;
-                
-                if(termoBusca) {
-                    const texto = `${c.ticket} ${c.solicitante} ${c.desc}`.toLowerCase();
-                    if(!texto.includes(termoBusca)) return;
-                }
-                
-                cacheConsulta.push(c);
-                totais.total++;
-                if (c.status.includes('Resolvido')) totais.Resolvido++;
-                else if (c.status.includes('Pendente')) totais.Pendente++;
-                else if (c.status.includes('Cancelado')) totais.Cancelado++;
-            }
-        });
-
-        if(cacheConsulta.length === 0) {
-            corpo.innerHTML = `<tr><td colspan="8" style="color:var(--muted); text-align:center;">Nenhum registro encontrado.</td></tr>`;
-            if(resumo) resumo.innerHTML = '';
-            return;
-        }
-
-        cacheConsulta.sort((a,b) => (b.data + b.hora).localeCompare(a.data + a.hora));
-        corpo.innerHTML = '';
-        
-        cacheConsulta.forEach(r => {
-            const pill = statusToPill(r.status);
-            corpo.innerHTML += `<tr><td style="white-space:nowrap">${r.data}</td><td>${r.hora}</td><td><b>${r.analista}</b></td><td><b>${r.ticket}</b></td><td>${r.solicitante}</td><td>${r.categoria}</td><td><span class="pill ${pill}">${r.status}</span></td><td>${r.desc}</td></tr>`;
-        });
-
-        if(resumo) {
-            resumo.innerHTML = `
-                <span class="pill" style="border: 1px solid var(--border); color: var(--text);">Total Achado: ${totais.total}</span>
-                <span class="pill pill-ok">Resolvidos: ${totais.Resolvido}</span>
-                <span class="pill pill-warn">Pendentes: ${totais.Pendente}</span>
-                <span class="pill pill-bad">Cancelados: ${totais.Cancelado}</span>
-            `;
-        }
-        showToast(`Foram achados ${cacheConsulta.length} registros!`, "success");
-    }
-
-    function exportarConsultaExcel() {
-        if(!cacheConsulta || cacheConsulta.length === 0) return showToast("Busque algo primeiro.", "alert");
-        const rows = cacheConsulta.map(c => ({ Data: c.data, Hora: c.hora, Analista: c.analista, Ticket: c.ticket, Solicitante: c.solicitante, Categoria: c.categoria, Status: c.status, Descricao: c.desc }));
-        const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BaseOmni");
-        XLSX.writeFile(wb, `Omni_TI_Export_${getHoje()}.xlsx`);
-    }
-
-    /* =================================================================================
-       GRUPOS AD OMNI (Cópia Rápida)
-    ================================================================================= */
-    const gruposAD = [
-        { cat: "perfil", label: "Gestor", grupo: "digitaliza_captacao_gestor" },
-        { cat: "perfil", label: "Gestor", grupo: "digitaliza_aluno_gestor" },
-        { cat: "perfil", label: "Registros Acadêmicos", grupo: "digitaliza_aluno_registros_academicos" },
-        { cat: "perfil", label: "Analista CSC e ADM", grupo: "digitaliza_captacao_financiamentos_corporativo" },
-        { cat: "perfil", label: "Analista CSC e ADM", grupo: "digitaliza_captacao_analista_csc_adm" },
-        { cat: "perfil", label: "Consulta", grupo: "digitaliza_captacao_consulta" },
-        { cat: "perfil", label: "Polos", grupo: "digitaliza_analista_digitalizador_polos" },
-        { cat: "perfil", label: "Polos", grupo: "digitaliza_captacao_financiamentos_polosparceiros" },
-        { cat: "perfil", label: "Digitalizador", grupo: "digitaliza_aluno_analista_digitalizador" },
-        { cat: "perfil", label: "Secretaria", grupo: "digitaliza_aluno_secretaria" },
-        { cat: "perfil", label: "Coord. de Relacionamento", grupo: "digitaliza_aluno_coordenadorderelacionamento" },
-        
-        { cat: "atuacao", label: "Unidades", grupo: "digitaliza_analista_digitalizador" },
-        { cat: "atuacao", label: "Unidades", grupo: "digitaliza_captacao_financiamentos_unidades" },
-        { cat: "atuacao", label: "Digitalizador", grupo: "digitaliza_captacao_supervisor_digitalizador" },
-        { cat: "atuacao", label: "CSC (Toda a base)", grupo: "digitaliza_captacao_analista_csc" },
-        { cat: "atuacao", label: "CSC (Coord. IBMEC e MED)", grupo: "digitaliza_captacao_analista_csc_coord_curso" },
-        { cat: "atuacao", label: "Coord. de curso (IBMEC)", grupo: "digitaliza_captacao_coord_curso_ibmec" },
-        { cat: "atuacao", label: "Coord. de curso (Medicina)", grupo: "digitaliza_captacao_coord_curso_medicina" },
-        { cat: "atuacao", label: "Reitor", grupo: "digitaliza_aluno_reitor" }
-    ];
-
-    function renderizarGruposAD() {
-        const cPerfil = document.getElementById('containerPerfil');
-        const cAtuacao = document.getElementById('containerAtuacao');
-        if(!cPerfil || !cAtuacao) return;
-
-        cPerfil.innerHTML = ""; cAtuacao.innerHTML = "";
-
-        gruposAD.forEach(g => {
-            const html = `
-            <div class="ad-group-card">
-                <div style="font-size: 0.7rem; font-weight: 800; color: var(--muted); text-transform: uppercase;">${g.label}</div>
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 4px;">
-                    <span style="font-family: monospace; font-size: 0.85rem; color: var(--text); word-break: break-all; font-weight: 600;">${g.grupo}</span>
-                    <button class="btn" style="padding: 6px 10px; width: auto; font-size: 0.7rem; border-color: var(--brand); color: var(--brand);" onclick="copiarAD('${g.grupo}')">📋 Copiar</button>
-                </div>
-            </div>`;
-            
-            if(g.cat === 'perfil') cPerfil.innerHTML += html;
-            else cAtuacao.innerHTML += html;
-        });
-    }
-
-    function copiarAD(texto) {
-        navigator.clipboard.writeText(texto).then(() => showToast(`Copiado: ${texto}`, 'success'))
-        .catch(err => showToast("Erro ao copiar!", 'error'));
-    }
-
-    // ====== GESTÃO DE ANALISTAS ======
-    function listarUsuarios() { 
-        rootDatabase.ref('usuarios').on('value', snap => { 
-            const lista = document.getElementById('listaUsuarios'); if(lista) lista.innerHTML = ""; 
-            snap.forEach(u => { 
-                const val = u.val(); const login = u.key.replace(/,/g, '.'); 
-                const deleteBtn = `<button onclick="rootDatabase.ref('usuarios/${u.key}').remove()" class="btn btn-danger" style="padding: 6px 12px; font-size:0.7rem; width:auto;">🗑</button>`;
-                if(lista) lista.innerHTML += `<tr><td><b>${val.nomeCompleto}</b></td><td style="color:var(--muted)">${login}</td><td><span class="pill pill-blue">${val.role}</span></td><td style="text-align:right; white-space:nowrap;">${deleteBtn}</td></tr>`; 
-            }); 
-        }); 
-    }
-    
-    function cadastrarAnalista() {
-        const nc = document.getElementById('nCompleto').value; 
-        const u = document.getElementById('nUser').value.trim(); 
-        const p = document.getElementById('nPass').value.trim(); 
-        const r = document.getElementById('nRole').value;
-        if(!u || !nc || !p) return showToast("Faltam dados!", "error");
-        
-        rootDatabase.ref('usuarios/' + u.replace(/\./g, ',')).set({ nomeCompleto: nc, senha: String(p), role: r })
-        .then(() => { 
-            document.getElementById('nCompleto').value = ''; document.getElementById('nUser').value = ''; document.getElementById('nPass').value = '';
-            showToast("Analista Cadastrado!"); 
-        });
-    }
+    window.onload = () => {
+        if(localStorage.getItem('omni_user')) document.getElementById('painelPrincipal').style.display = 'block';
+        else document.getElementById('telaLogin').style.display = 'flex';
+    };
 </script>
 </body>
 </html>
