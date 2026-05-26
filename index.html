@@ -679,7 +679,7 @@
           </div>
           <button id="btnSalvarUsuario" class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarUsuario()">Salvar usuário</button>
         </div>
-        <div class="card"><div class="card-header"><div class="card-title">Usuários cadastrados</div></div><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbUsuarios"></tbody></table></div></div>
+        <div class="card"><div class="card-header"><div><div class="card-title">Usuários cadastrados</div><div id="usuariosStatus" class="subnote">Lista sincronizada com o Firebase.</div></div><button class="btn btn-sm" onclick="carregarUsuariosAgora(true)">🔄 Sincronizar lista</button></div><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbUsuarios"></tbody></table></div></div>
       </section>
 
       <!-- CONFIG -->
@@ -871,6 +871,7 @@
     ['filtroDataInicioChamado','filtroDataFimChamado','dmDataPrevista'].forEach(id => { const el = document.getElementById(id); if (el && !el.value) el.value = hoje; });
 
     escutarTudo();
+    if (isAdmin()) carregarUsuariosAgora(false);
     switchView('dashboard');
   }
 
@@ -926,6 +927,8 @@
       snap.forEach(item => cacheUsuarios.push({ id: item.key, ...item.val() }));
       cacheUsuarios.sort((a,b) => String(a.nomeCompleto || a.id).localeCompare(String(b.nomeCompleto || b.id), 'pt-BR'));
       renderUsuarios();
+      const stUsuarios = document.getElementById('usuariosStatus');
+      if (stUsuarios) stUsuarios.innerText = `${cacheUsuarios.length} usuário(s) carregado(s) do Firebase.`;
     }, error => {
       console.error('Erro ao escutar usuários:', error);
       showToast('Erro ao carregar usuários: ' + error.message, 'error');
@@ -1131,18 +1134,18 @@
       if (!isAdmin()) return showToast('Apenas admin pode criar usuários.', 'error');
 
       const nome = document.getElementById('usNome').value.trim();
-      const login = document.getElementById('usLogin').value.trim();
+      const loginDigitado = document.getElementById('usLogin').value.trim();
       const senha = document.getElementById('usSenha').value.trim();
       const role = document.getElementById('usRole').value;
 
-      if (!nome || !login || !senha) return showToast('Preencha nome, login e senha.', 'error');
+      if (!nome || !loginDigitado || !senha) return showToast('Preencha nome, login e senha.', 'error');
+      if (/\s/.test(loginDigitado)) return showToast('Login não pode ter espaços.', 'error');
       if (!validarSenhaForte(senha)) {
         validarSenhaUsuarioVisual();
         return showToast('A senha precisa ter no mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.', 'error');
       }
-      if (/\s/.test(login)) return showToast('Login não pode ter espaços.', 'error');
 
-      const key = normalizarLogin(login);
+      const key = normalizarLogin(loginDigitado);
       if (!key) return showToast('Login inválido.', 'error');
 
       if (btn) {
@@ -1152,13 +1155,8 @@
 
       const refUsuario = db.ref('usuarios/' + key);
       const existente = await refUsuario.once('value');
-
-      if (existente.exists()) {
-        const confirmar = confirm('Já existe um usuário com esse login. Deseja substituir os dados dele?');
-        if (!confirmar) return;
-      }
-
-      const criadoEmAnterior = existente.exists() && existente.val() && existente.val().criadoEm
+      const jaExistia = existente.exists();
+      const criadoEmAnterior = jaExistia && existente.val() && existente.val().criadoEm
         ? existente.val().criadoEm
         : new Date().toISOString();
 
@@ -1167,25 +1165,32 @@
         senha: String(senha),
         role: role,
         ativo: true,
+        loginOriginal: loginDigitado,
         criadoPor: logado.nome,
         criadoPorLogin: logado.login,
         criadoEm: criadoEmAnterior,
         atualizadoEm: new Date().toISOString()
       };
 
+      // Gravação direta no caminho exato que o login usa: usuarios/<login_normalizado>
       await refUsuario.set(payload);
 
-      // Confirma a gravação e força a atualização da tabela, mesmo se o listener atrasar.
+      // Confirma a gravação lendo o mesmo caminho. Se passar daqui, o usuário existe no Firebase.
       const gravado = await refUsuario.once('value');
-      if (!gravado.exists()) throw new Error('O Firebase confirmou a operação, mas o usuário não apareceu em usuarios/' + key + '.');
+      if (!gravado.exists()) throw new Error('O Firebase não retornou o usuário após salvar em usuarios/' + key + '.');
 
-      await carregarUsuariosAgora();
+      // Atualização garantida: injeta o usuário salvo no cache e depois força leitura completa.
+      cacheUsuarios = cacheUsuarios.filter(u => u.id !== key);
+      cacheUsuarios.push({ id: key, ...gravado.val() });
+      cacheUsuarios.sort((a,b) => String(a.nomeCompleto || a.id).localeCompare(String(b.nomeCompleto || b.id), 'pt-BR'));
+      renderUsuarios();
+      await carregarUsuariosAgora(false, key);
 
       ['usNome','usLogin','usSenha'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('usRole').value = 'Analista Pleno';
       validarSenhaUsuarioVisual();
 
-      showToast('Usuário salvo e listado com sucesso.');
+      showToast(jaExistia ? 'Usuário atualizado e listado com sucesso.' : 'Usuário criado e listado com sucesso.');
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       const msg = error && error.message ? error.message : String(error);
@@ -1199,12 +1204,32 @@
     }
   }
 
-  async function carregarUsuariosAgora() {
-    const snap = await db.ref('usuarios').once('value');
-    cacheUsuarios = [];
-    snap.forEach(item => cacheUsuarios.push({ id: item.key, ...item.val() }));
-    cacheUsuarios.sort((a,b) => String(a.nomeCompleto || a.id).localeCompare(String(b.nomeCompleto || b.id), 'pt-BR'));
-    renderUsuarios();
+  async function carregarUsuariosAgora(mostrarToast = false, loginGarantido = null) {
+    try {
+      const mapa = {};
+
+      // Leitura completa do nó usuarios.
+      const snap = await db.ref('usuarios').once('value');
+      snap.forEach(item => { mapa[item.key] = { id: item.key, ...item.val() }; });
+
+      // Leitura extra do usuário recém-salvo, para evitar falha de tela caso o listener/forEach atrase.
+      if (loginGarantido) {
+        const direto = await db.ref('usuarios/' + loginGarantido).once('value');
+        if (direto.exists()) mapa[loginGarantido] = { id: loginGarantido, ...direto.val() };
+      }
+
+      cacheUsuarios = Object.values(mapa);
+      cacheUsuarios.sort((a,b) => String(a.nomeCompleto || a.id).localeCompare(String(b.nomeCompleto || b.id), 'pt-BR'));
+      renderUsuarios();
+
+      const status = document.getElementById('usuariosStatus');
+      if (status) status.innerText = `${cacheUsuarios.length} usuário(s) carregado(s) do Firebase.`;
+      if (mostrarToast) showToast('Lista de usuários sincronizada.');
+    } catch (error) {
+      console.error('Erro ao sincronizar usuários:', error);
+      showToast('Erro ao sincronizar usuários: ' + error.message, 'error');
+      alert('Erro ao sincronizar usuários: ' + error.message);
+    }
   }
 
   function renderUsuarios() {
