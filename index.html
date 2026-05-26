@@ -849,7 +849,7 @@
         atualizadoEm: new Date().toISOString()
       };
       await db.ref().update(updates);
-      showToast('Admin recriado. Login: admin | Senha: Admin123');
+      showToast('Admin recriado. Login: admin | Senha: Admin@123');
     } catch (error) {
       console.error(error);
       showToast('Erro ao corrigir admin: ' + error.message, 'error');
@@ -924,7 +924,11 @@
     db.ref('usuarios').on('value', snap => {
       cacheUsuarios = [];
       snap.forEach(item => cacheUsuarios.push({ id: item.key, ...item.val() }));
+      cacheUsuarios.sort((a,b) => String(a.nomeCompleto || a.id).localeCompare(String(b.nomeCompleto || b.id), 'pt-BR'));
       renderUsuarios();
+    }, error => {
+      console.error('Erro ao escutar usuários:', error);
+      showToast('Erro ao carregar usuários: ' + error.message, 'error');
     });
   }
 
@@ -1154,23 +1158,34 @@
         if (!confirmar) return;
       }
 
-      await refUsuario.set({
+      const criadoEmAnterior = existente.exists() && existente.val() && existente.val().criadoEm
+        ? existente.val().criadoEm
+        : new Date().toISOString();
+
+      const payload = {
         nomeCompleto: nome,
         senha: String(senha),
         role: role,
         ativo: true,
         criadoPor: logado.nome,
         criadoPorLogin: logado.login,
-        criadoEm: existente.exists() && existente.val()?.criadoEm ? existente.val().criadoEm : new Date().toISOString(),
+        criadoEm: criadoEmAnterior,
         atualizadoEm: new Date().toISOString()
-      });
+      };
+
+      await refUsuario.set(payload);
+
+      // Confirma a gravação e força a atualização da tabela, mesmo se o listener atrasar.
+      const gravado = await refUsuario.once('value');
+      if (!gravado.exists()) throw new Error('O Firebase confirmou a operação, mas o usuário não apareceu em usuarios/' + key + '.');
+
+      await carregarUsuariosAgora();
 
       ['usNome','usLogin','usSenha'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('usRole').value = 'Analista Pleno';
       validarSenhaUsuarioVisual();
 
-      showToast('Usuário criado/atualizado com sucesso.');
-      renderUsuarios();
+      showToast('Usuário salvo e listado com sucesso.');
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       const msg = error && error.message ? error.message : String(error);
@@ -1184,10 +1199,41 @@
     }
   }
 
+  async function carregarUsuariosAgora() {
+    const snap = await db.ref('usuarios').once('value');
+    cacheUsuarios = [];
+    snap.forEach(item => cacheUsuarios.push({ id: item.key, ...item.val() }));
+    cacheUsuarios.sort((a,b) => String(a.nomeCompleto || a.id).localeCompare(String(b.nomeCompleto || b.id), 'pt-BR'));
+    renderUsuarios();
+  }
+
   function renderUsuarios() {
-    const tb = document.getElementById('tbUsuarios'); if (!tb || !isAdmin()) return;
-    if (!cacheUsuarios.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">Nenhum usuário.</td></tr>'; return; }
-    tb.innerHTML = cacheUsuarios.map(u => `<tr><td><b>${escapeHTML(u.nomeCompleto || u.id)}</b></td><td>${escapeHTML(desnormalizarLogin(u.id))}</td><td><span class="pill pill-blue">${escapeHTML(u.role)}</span></td><td><span class="pill ${u.ativo === false ? 'pill-bad' : 'pill-ok'}">${u.ativo === false ? 'Inativo' : 'Ativo'}</span></td><td><div class="actions"><button class="btn btn-sm" onclick="toggleUsuario('${u.id}', ${u.ativo === false ? 'true' : 'false'})">${u.ativo === false ? 'Ativar' : 'Inativar'}</button><button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">Excluir</button></div></td></tr>`).join('');
+    const tb = document.getElementById('tbUsuarios');
+    if (!tb || !isAdmin()) return;
+
+    if (!cacheUsuarios.length) {
+      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">Nenhum usuário cadastrado.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = cacheUsuarios.map(u => {
+      const idSeguro = JSON.stringify(u.id);
+      const ativoAtual = u.ativo !== false;
+      const proximoStatus = ativoAtual ? 'false' : 'true';
+      const textoBotao = ativoAtual ? 'Inativar' : 'Ativar';
+      const botaoStatus = `<button class="btn btn-sm" onclick='toggleUsuario(${idSeguro}, ${proximoStatus})'>${textoBotao}</button>`;
+      const botaoExcluir = u.id === 'admin'
+        ? '<span class="subnote">Protegido</span>'
+        : `<button class="btn btn-danger btn-sm" onclick='excluirUsuario(${idSeguro})'>Excluir</button>`;
+
+      return `<tr>
+        <td><b>${escapeHTML(u.nomeCompleto || u.id)}</b></td>
+        <td>${escapeHTML(desnormalizarLogin(u.id))}</td>
+        <td><span class="pill pill-blue">${escapeHTML(u.role || 'Analista')}</span></td>
+        <td><span class="pill ${ativoAtual ? 'pill-ok' : 'pill-bad'}">${ativoAtual ? 'Ativo' : 'Inativo'}</span></td>
+        <td><div class="actions">${botaoStatus}${botaoExcluir}</div></td>
+      </tr>`;
+    }).join('');
   }
 
   async function toggleUsuario(id, ativo) {
