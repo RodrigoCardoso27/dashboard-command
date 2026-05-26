@@ -634,24 +634,583 @@
       .cloud { opacity: .22; }
     }
 
-  </style>
+  
+
+    /* ====== V4 HOLO FLIGHT DESIGN OVERRIDES ====== */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(760px 380px at 80% 12%, rgba(56,189,248,.16), transparent 70%),
+        radial-gradient(580px 320px at 18% 86%, rgba(20,184,166,.10), transparent 72%),
+        linear-gradient(transparent 97%, rgba(255,255,255,.02) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #appShell, #loginScreen, .main, .sidebar, .card, .topbar, .kpi-card, .modal-overlay, #toast-container { position: relative; z-index: 2; }
+
+    .main {
+      padding: 26px 28px 44px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.012), transparent 38%),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px);
+      background-size: auto, 32px 32px, 32px 32px;
+      background-position: 0 0, 0 0, 0 0;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, rgba(7,16,30,.84), rgba(5,12,23,.62));
+      border-right: 1px solid rgba(148,210,255,.14);
+      box-shadow: inset -1px 0 0 rgba(255,255,255,.03), 18px 0 60px rgba(0,0,0,.18);
+    }
+
+    .logo-box, .user-box {
+      background: linear-gradient(145deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
+      border-color: rgba(148,210,255,.18);
+    }
+
+    .topbar {
+      margin-bottom: 18px;
+      border-radius: 26px;
+      padding: 26px 28px;
+      align-items: stretch;
+      gap: 28px;
+      min-height: 162px;
+      background:
+        radial-gradient(420px 220px at 78% 50%, rgba(56,189,248,.22), transparent 70%),
+        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      border: 1px solid rgba(148,210,255,.20);
+      box-shadow:
+        0 28px 90px rgba(0,0,0,.34),
+        inset 0 1px 0 rgba(255,255,255,.08),
+        inset 0 0 0 1px rgba(56,189,248,.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 30px 30px;
+      mask-image: linear-gradient(90deg, rgba(0,0,0,.9), rgba(0,0,0,.16));
+      pointer-events: none;
+    }
+
+    .hero-copy, .hero-side { position: relative; z-index: 1; }
+    .hero-copy { flex: 1 1 680px; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .hero-side { width: min(420px, 100%); display: flex; flex-direction: column; justify-content: space-between; gap: 18px; align-items: flex-end; }
+    .hero-kicker-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+    .page-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(56,189,248,.12);
+      border: 1px solid rgba(56,189,248,.24);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    .page-title {
+      font-size: clamp(2.05rem, 2.6vw, 2.85rem);
+      line-height: 1.03;
+      margin-top: 12px;
+      margin-bottom: 10px;
+      max-width: 820px;
+      text-wrap: balance;
+    }
+    .page-sub { max-width: 780px; font-size: 1rem; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      color: #d9f4ff;
+      background: rgba(255,255,255,.06);
+      font-size: .75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+    .hero-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #61e6ad;
+      box-shadow: 0 0 14px rgba(97,230,173,.75);
+    }
+
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(8,18,33,.34);
+      border: 1px solid rgba(148,210,255,.15);
+      color: #dceeff;
+      font-size: .79rem;
+      font-weight: 700;
+      letter-spacing: .1px;
+      backdrop-filter: blur(8px);
+    }
+    .hero-chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 10px rgba(56,189,248,.8);
+      flex: 0 0 auto;
+    }
+
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn.btn-hero {
+      min-width: 120px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border: 1px solid rgba(148,210,255,.18);
+      box-shadow: 0 8px 25px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .btn.btn-hero:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56,189,248,.42);
+      box-shadow: 0 16px 36px rgba(0,0,0,.24), 0 0 0 1px rgba(56,189,248,.10) inset;
+    }
+
+    .hero-radar {
+      position: relative;
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      align-self: flex-end;
+      background:
+        radial-gradient(circle at center, rgba(56,189,248,.18), rgba(56,189,248,.04) 55%, rgba(0,0,0,.18) 70%),
+        linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid rgba(148,210,255,.18);
+      box-shadow: inset 0 0 40px rgba(56,189,248,.08), 0 18px 40px rgba(0,0,0,.18);
+      overflow: hidden;
+    }
+    .hero-radar-ring {
+      position: absolute;
+      inset: 50%;
+      border-radius: 50%;
+      border: 1px solid rgba(148,210,255,.15);
+      transform: translate(-50%, -50%);
+    }
+    .hero-radar .ring-1 { width: 36px; height: 36px; }
+    .hero-radar .ring-2 { width: 72px; height: 72px; }
+    .hero-radar .ring-3 { width: 108px; height: 108px; }
+    .hero-radar-center {
+      position: absolute;
+      inset: 50%;
+      width: 10px;
+      height: 10px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #7dd3fc;
+      box-shadow: 0 0 18px rgba(125,211,252,.85);
+    }
+    .hero-radar-sweep {
+      position: absolute;
+      inset: -10%;
+      background: conic-gradient(from 0deg, transparent 0 68%, rgba(56,189,248,.36) 79%, rgba(56,189,248,.06) 88%, transparent 100%);
+      animation: radarSweep 5s linear infinite;
+      mix-blend-mode: screen;
+    }
+    .hero-radar-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #61e6ad;
+      box-shadow: 0 0 10px rgba(97,230,173,.7);
+      animation: dotPulse 1.8s ease-in-out infinite alternate;
+    }
+    .hero-radar .dot-1 { top: 28px; left: 84px; }
+    .hero-radar .dot-2 { top: 72px; left: 30px; animation-delay: -.8s; }
+    .hero-radar .dot-3 { top: 50px; left: 56px; animation-delay: -.4s; }
+    @keyframes radarSweep { to { transform: rotate(360deg); } }
+    @keyframes dotPulse { from { opacity: .55; transform: scale(.88); } to { opacity: 1; transform: scale(1.08); } }
+
+    .card {
+      border-radius: 24px;
+      padding: 22px 22px 20px;
+      background:
+        radial-gradient(420px 220px at 85% 18%, rgba(56,189,248,.11), transparent 72%),
+        linear-gradient(145deg, rgba(255,255,255,.11), rgba(255,255,255,.045));
+      box-shadow: 0 24px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .kpi-card {
+      border-radius: 24px;
+      min-height: 132px;
+      background:
+        radial-gradient(180px 120px at 86% 18%, rgba(56,189,248,.18), transparent 70%),
+        linear-gradient(145deg, rgba(255,255,255,.11), rgba(255,255,255,.045));
+      box-shadow: 0 18px 42px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .card-title { font-size: 1.14rem; }
+
+    .atmo-grid {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.016) 1px, transparent 1px);
+      background-size: 54px 54px;
+      opacity: .38;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,.68), transparent 88%);
+    }
+    .horizon-glow {
+      position: absolute;
+      inset: auto 0 -16% 0;
+      height: 40%;
+      background: radial-gradient(60% 70% at 50% 0%, rgba(56,189,248,.15), transparent 70%);
+      filter: blur(20px);
+    }
+    .tech-orb { opacity: .52; filter: blur(18px); }
+    .orb-1 { width: 320px; height: 320px; top: 8%; left: 74%; }
+    .orb-2 { width: 230px; height: 230px; bottom: 10%; left: 18%; animation-delay: -4s; }
+    .orb-3 { width: 160px; height: 160px; top: 54%; left: 48%; animation-delay: -7s; opacity: .3; }
+
+    .flight-line { height: 2px; opacity: .55; filter: drop-shadow(0 0 10px rgba(56,189,248,.45)); }
+    .line-a { top: 19%; left: -420px; width: 520px; }
+    .line-b { top: 64%; left: -620px; width: 620px; animation-delay: -2.8s; }
+    .line-c { top: 36%; left: -480px; width: 440px; animation-delay: -1.2s; opacity: .32; }
+
+    .cloud {
+      width: 240px;
+      height: 74px;
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.07));
+      box-shadow: inset 0 0 34px rgba(255,255,255,.16), 0 22px 48px rgba(3,8,16,.18);
+      border: 1px solid rgba(255,255,255,.08);
+      opacity: .85;
+      filter: blur(.15px);
+    }
+    .cloud::before, .cloud::after, .cloud span { background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.09)); }
+    .cloud::before { width: 96px; height: 96px; left: 24px; top: -40px; }
+    .cloud::after { width: 122px; height: 122px; left: 84px; top: -58px; }
+    .cloud span { width: 88px; height: 88px; right: 18px; top: -30px; }
+    .cloud.cleared { opacity: 0; filter: blur(24px); transform: scale(1.5) translateY(-24px); }
+    .cloud-a { top: 10%; left: 5%; transform: scale(.75); animation-duration: 46s; }
+    .cloud-b { top: 18%; left: 64%; transform: scale(.92); animation-duration: 52s; animation-delay: -18s; }
+    .cloud-c { top: 29%; left: 30%; transform: scale(.68); animation-duration: 40s; animation-delay: -8s; }
+    .cloud-d { top: 42%; left: 80%; transform: scale(.74); animation-duration: 50s; animation-delay: -26s; }
+    .cloud-e { top: 54%; left: 14%; transform: scale(.90); animation-duration: 58s; animation-delay: -10s; }
+    .cloud-f { top: 66%; left: 52%; transform: scale(.82); animation-duration: 48s; animation-delay: -22s; }
+    .cloud-g { top: 75%; left: 77%; transform: scale(.60); animation-duration: 42s; animation-delay: -14s; }
+    .cloud-h { top: 82%; left: 22%; transform: scale(.72); animation-duration: 54s; animation-delay: -28s; }
+    .cloud-i { top: 6%; left: 84%; transform: scale(.56); animation-duration: 62s; animation-delay: -20s; }
+    .cloud-j { top: 47%; left: 46%; transform: scale(.58); animation-duration: 44s; animation-delay: -32s; }
+
+    #heliCursor {
+      width: 82px;
+      height: 82px;
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.38));
+      transform-origin: center;
+    }
+    #heliCursor .heli-machine {
+      position: relative;
+      width: 82px;
+      height: 82px;
+      display: grid;
+      place-items: center;
+    }
+    #heliCursor svg {
+      width: 72px;
+      height: 72px;
+      overflow: visible;
+      transform: translateY(1px);
+    }
+    #heliCursor .heli-frame { filter: drop-shadow(0 6px 12px rgba(0,0,0,.22)); }
+    #heliCursor .heli-rotor {
+      position: absolute;
+      left: 50%;
+      top: 17px;
+      width: 52px;
+      height: 5px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(232,247,255,.95), transparent);
+      box-shadow: 0 0 16px rgba(125,211,252,.76);
+      opacity: .98;
+      mix-blend-mode: screen;
+      animation: rotorIdle .28s linear infinite;
+    }
+    #heliCursor .rotor-tail {
+      width: 14px;
+      top: 40px;
+      left: 72px;
+      transform-origin: center;
+      animation-duration: .20s;
+    }
+    #heliCursor .heli-trace {
+      position: absolute;
+      left: -8px;
+      top: 37px;
+      width: 22px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(125,211,252,.28), transparent);
+      filter: blur(3px);
+      opacity: .75;
+    }
+    #heliCursor.clicking { filter: drop-shadow(0 0 18px rgba(56,189,248,.95)); }
+    #heliCursor.clicking .rotor-main { animation-duration: .12s; }
+    #heliCursor.clicking .rotor-tail { animation-duration: .10s; }
+    @keyframes rotorIdle { to { transform: translateX(-50%) rotate(360deg); } }
+
+    @media (max-width: 1200px) {
+      .topbar { flex-direction: column; }
+      .hero-side {
+        width: 100%;
+        align-items: flex-start;
+      }
+      .hero-actions { justify-content: flex-start; }
+    }
+
+    @media (max-width: 760px) {
+      .main { padding: 18px 16px 30px; }
+      .topbar { padding: 20px 18px; min-height: auto; }
+      .page-title { font-size: 1.8rem; }
+      .hero-meta { flex-direction: column; }
+      .hero-radar { width: 110px; height: 110px; }
+    }
+
+  
+/* ====== V4.1 HELICÓPTERO CORRIGIDO ====== */
+#heliCursor {
+  width: 118px !important;
+  height: 86px !important;
+  transform-origin: 58px 42px !important;
+  filter: drop-shadow(0 14px 18px rgba(0,0,0,.46)) !important;
+}
+
+#heliCursor .heli-machine {
+  position: relative !important;
+  width: 118px !important;
+  height: 86px !important;
+  display: block !important;
+  transform-origin: 58px 42px !important;
+}
+
+#heliCursor .heli-svg {
+  position: absolute !important;
+  left: 1px !important;
+  top: 14px !important;
+  width: 112px !important;
+  height: 70px !important;
+  overflow: visible !important;
+  z-index: 3 !important;
+}
+
+#heliCursor .heli-aircraft {
+  transform-origin: center;
+}
+
+#heliCursor .rotor-disc {
+  position: absolute;
+  left: 12px;
+  top: 5px;
+  width: 86px;
+  height: 16px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,.82), rgba(125,211,252,.28) 45%, transparent 73%);
+  filter: blur(.2px);
+  opacity: .78;
+  z-index: 5;
+  transform-origin: center;
+  animation: rotorDiscPulse .32s linear infinite;
+}
+
+#heliCursor .rotor-blade {
+  position: absolute;
+  left: 10px;
+  top: 11px;
+  width: 90px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, rgba(239,252,255,.95) 22%, rgba(125,211,252,.76) 50%, rgba(239,252,255,.95) 78%, transparent 100%);
+  box-shadow: 0 0 16px rgba(125,211,252,.8);
+  z-index: 6;
+  transform-origin: center;
+  animation: rotorBladeSpin .20s linear infinite;
+}
+
+#heliCursor .rotor-blade-b {
+  animation-delay: -.10s;
+}
+
+#heliCursor .tail-rotor {
+  position: absolute;
+  left: 104px;
+  top: 33px;
+  width: 23px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #effcff, transparent);
+  box-shadow: 0 0 9px rgba(125,211,252,.75);
+  z-index: 7;
+  transform-origin: center;
+  animation: tailRotorSpin .16s linear infinite;
+}
+
+#heliCursor .tail-rotor-b {
+  animation-delay: -.08s;
+}
+
+#heliCursor .heli-trace {
+  position: absolute !important;
+  left: -10px !important;
+  top: 48px !important;
+  width: 34px !important;
+  height: 10px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, rgba(125,211,252,.30), transparent) !important;
+  filter: blur(4px) !important;
+  opacity: .75 !important;
+  z-index: 1 !important;
+}
+
+#heliCursor.clicking .rotor-blade {
+  animation-duration: .075s !important;
+  box-shadow: 0 0 24px rgba(125,211,252,1);
+}
+
+#heliCursor.clicking .rotor-disc {
+  opacity: .95;
+  filter: blur(.1px);
+}
+
+#heliCursor.clicking .tail-rotor {
+  animation-duration: .07s !important;
+}
+
+@keyframes rotorBladeSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes tailRotorSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotorDiscPulse {
+  0%, 100% { transform: scaleX(1); opacity: .68; }
+  50% { transform: scaleX(1.08); opacity: .92; }
+}
+
+@media (pointer: coarse), (max-width: 760px) {
+  #heliCursor { display: none !important; }
+}
+
+</style>
 </head>
 <body>
 
   <!-- Camada visual tecnológica: cursor helicóptero e nuvens interativas -->
   <div id="skyFx" aria-hidden="true">
+    <div class="atmo-grid"></div>
+    <div class="horizon-glow"></div>
     <div class="tech-orb orb-1"></div>
     <div class="tech-orb orb-2"></div>
+    <div class="tech-orb orb-3"></div>
+    <div class="flight-line line-a"></div>
+    <div class="flight-line line-b"></div>
+    <div class="flight-line line-c"></div>
     <div class="cloud cloud-a"><span></span></div>
     <div class="cloud cloud-b"><span></span></div>
     <div class="cloud cloud-c"><span></span></div>
     <div class="cloud cloud-d"><span></span></div>
-    <div class="flight-line line-a"></div>
-    <div class="flight-line line-b"></div>
+    <div class="cloud cloud-e"><span></span></div>
+    <div class="cloud cloud-f"><span></span></div>
+    <div class="cloud cloud-g"><span></span></div>
+    <div class="cloud cloud-h"><span></span></div>
+    <div class="cloud cloud-i"><span></span></div>
+    <div class="cloud cloud-j"><span></span></div>
   </div>
   <div id="heliCursor" aria-hidden="true">
-    <span class="heli-body">🚁</span>
-    <span class="heli-rotor"></span>
+    <div class="heli-machine">
+      <span class="rotor-disc rotor-main"></span>
+      <span class="rotor-blade rotor-blade-a"></span>
+      <span class="rotor-blade rotor-blade-b"></span>
+      <svg viewBox="0 0 180 100" role="presentation" aria-hidden="true" class="heli-svg">
+        <defs>
+          <linearGradient id="heliBlueBody" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f5fdff"/>
+            <stop offset="38%" stop-color="#7dd3fc"/>
+            <stop offset="72%" stop-color="#1283bd"/>
+            <stop offset="100%" stop-color="#063755"/>
+          </linearGradient>
+          <linearGradient id="heliWindow" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="55%" stop-color="#b9ecff"/>
+            <stop offset="100%" stop-color="#2aa7dc"/>
+          </linearGradient>
+          <filter id="heliGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#03121f" flood-opacity=".55"/>
+          </filter>
+        </defs>
+
+        <g class="heli-aircraft" filter="url(#heliGlow)">
+          <!-- rotor mast -->
+          <path d="M72 27 L72 39" stroke="#dff8ff" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="72" cy="27" r="5" fill="#eafaff"/>
+
+          <!-- cauda longa para não parecer barco -->
+          <path d="M105 48 L154 33" stroke="#c9f1ff" stroke-width="9" stroke-linecap="round"/>
+          <path d="M109 55 L155 44" stroke="#0d6f9f" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+          <path d="M152 28 L169 22 L164 38 Z" fill="#7dd3fc" stroke="#e6fbff" stroke-width="2"/>
+          <path d="M158 43 L174 52 L156 57 Z" fill="#0d7eb7" stroke="#d8f7ff" stroke-width="2"/>
+
+          <!-- corpo do helicóptero -->
+          <path d="M22 48
+                   C24 31 41 22 66 22
+                   L82 22
+                   C103 22 119 35 122 52
+                   C125 70 111 82 89 82
+                   L54 82
+                   C34 82 20 68 22 48Z"
+                fill="url(#heliBlueBody)" stroke="#e8fbff" stroke-width="3"/>
+
+          <!-- nariz e vidro -->
+          <path d="M36 37
+                   C43 28 56 27 68 29
+                   L65 51
+                   L31 51
+                   C31 45 33 40 36 37Z"
+                fill="url(#heliWindow)" stroke="#effcff" stroke-width="2" opacity=".96"/>
+          <path d="M72 29
+                   C90 30 104 40 110 54
+                   L72 54Z"
+                fill="#aee8ff" stroke="#effcff" stroke-width="2" opacity=".74"/>
+          <path d="M48 31 L45 51" stroke="#064b72" stroke-width="2" opacity=".45"/>
+          <path d="M72 29 L72 55" stroke="#064b72" stroke-width="2" opacity=".35"/>
+
+          <!-- detalhe lateral -->
+          <path d="M57 65 C70 70 94 70 111 60" fill="none" stroke="#e8fbff" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+          <circle cx="87" cy="63" r="5" fill="#042b42" opacity=".72"/>
+          <circle cx="100" cy="61" r="3.5" fill="#e8fbff" opacity=".78"/>
+
+          <!-- trem de pouso/skids -->
+          <path d="M37 86 L118 86" stroke="#e8fbff" stroke-width="5" stroke-linecap="round"/>
+          <path d="M52 80 L44 86" stroke="#e8fbff" stroke-width="4" stroke-linecap="round"/>
+          <path d="M99 80 L107 86" stroke="#e8fbff" stroke-width="4" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <span class="tail-rotor tail-rotor-a"></span>
+      <span class="tail-rotor tail-rotor-b"></span>
+      <span class="heli-trace"></span>
+    </div>
   </div>
   <div id="toast-container"></div>
 
@@ -736,16 +1295,36 @@
     </aside>
 
     <main class="main">
-      <div class="topbar">
-        <div>
-          <div id="pageKicker" class="page-kicker">Dashboard</div>
+      <div class="topbar hero-panel">
+        <div class="hero-copy">
+          <div class="hero-kicker-row">
+            <div id="pageKicker" class="page-kicker">Dashboard</div>
+            <div class="hero-badge">Aero Tech Experience</div>
+          </div>
           <h1 id="pageTitle" class="page-title">Painel Operacional de Suporte Técnico</h1>
           <p id="pageSub" class="page-sub">Visão geral dos chamados, demandas diárias e estoque de TI.</p>
+          <div class="hero-meta">
+            <div class="hero-chip"><span class="hero-chip-dot"></span> Operação monitorada em tempo real</div>
+            <div class="hero-chip"><span class="hero-chip-dot"></span> Chamados, demandas e ativos no mesmo painel</div>
+            <div class="hero-chip"><span class="hero-chip-dot"></span> Experiência visual inspirada em cockpit digital</div>
+          </div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-          <button class="btn" onclick="quickNewChamado()">+ Chamado</button>
-          <button class="btn" onclick="quickNewDemanda()">+ Demanda</button>
-          <button class="btn" onclick="quickNewEstoque()">+ Ativo</button>
+        <div class="hero-side">
+          <div class="hero-radar">
+            <div class="hero-radar-ring ring-1"></div>
+            <div class="hero-radar-ring ring-2"></div>
+            <div class="hero-radar-ring ring-3"></div>
+            <div class="hero-radar-sweep"></div>
+            <div class="hero-radar-dot dot-1"></div>
+            <div class="hero-radar-dot dot-2"></div>
+            <div class="hero-radar-dot dot-3"></div>
+            <div class="hero-radar-center"></div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-hero" onclick="quickNewChamado()">+ Chamado</button>
+            <button class="btn btn-hero" onclick="quickNewDemanda()">+ Demanda</button>
+            <button class="btn btn-hero" onclick="quickNewEstoque()">+ Ativo</button>
+          </div>
         </div>
       </div>
 
