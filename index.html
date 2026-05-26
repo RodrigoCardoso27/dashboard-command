@@ -1113,6 +1113,19 @@
   #heliCursor { display: none !important; }
 }
 
+
+/* ====== V4.2 CURSOR 100% HELICÓPTERO ====== */
+@media (hover: hover) and (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+
+  html, body, button, a, input, select, textarea, label, option,
+  .btn, .nav-item, .theme-btn, [onclick], [role="button"] {
+    cursor: none !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1275,15 +1288,15 @@
       </div>
 
       <div class="section-title">Operação</div>
-      <div class="nav-item active" onclick="switchView('dashboard', event)">📊 Dashboard</div>
-      <div class="nav-item" onclick="switchView('chamados', event)">🎫 Chamados / Atendimentos</div>
-      <div class="nav-item" onclick="switchView('demandas', event)">🗓️ Demandas Diárias</div>
-      <div class="nav-item" onclick="switchView('estoque', event)">💻 Estoque TI</div>
+      <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard', event)">📊 Dashboard</div>
+      <div class="nav-item" data-view="chamados" onclick="switchView('chamados', event)">🎫 Chamados / Atendimentos</div>
+      <div class="nav-item" data-view="demandas" onclick="switchView('demandas', event)">🗓️ Demandas Diárias</div>
+      <div class="nav-item" data-view="estoque" onclick="switchView('estoque', event)">💻 Estoque TI</div>
 
       <div class="section-title">Gestão</div>
-      <div class="nav-item" onclick="switchView('relatorios', event)">📑 Relatórios</div>
-      <div class="nav-item only-admin" onclick="switchView('usuarios', event)">👥 Usuários</div>
-      <div class="nav-item" onclick="switchView('config', event)">⚙️ Configurações</div>
+      <div class="nav-item" data-view="relatorios" onclick="switchView('relatorios', event)">📑 Relatórios</div>
+      <div class="nav-item only-admin" data-view="usuarios" onclick="switchView('usuarios', event)">👥 Usuários</div>
+      <div class="nav-item" data-view="config" onclick="switchView('config', event)">⚙️ Configurações</div>
 
       <div class="sidebar-user">
         <div class="user-box">
@@ -1668,10 +1681,21 @@
 
     escutarTudo();
     if (isAdmin()) carregarUsuariosAgora(false);
-    switchView('dashboard');
+
+    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','relatorios','usuarios','config'];
+    let viewSalva = localStorage.getItem('omniActiveViewV2') || 'dashboard';
+
+    if (!viewsPermitidas.includes(viewSalva)) viewSalva = 'dashboard';
+    if (viewSalva === 'usuarios' && !isAdmin()) viewSalva = 'dashboard';
+
+    switchView(viewSalva, null, true);
   }
 
-  function logout() { localStorage.removeItem('usuarioOmniV2'); location.reload(); }
+  function logout() {
+    localStorage.removeItem('usuarioOmniV2');
+    localStorage.removeItem('omniActiveViewV2');
+    location.reload();
+  }
 
   window.onload = () => {
     const salvo = localStorage.getItem('usuarioOmniV2');
@@ -1681,16 +1705,32 @@
     }
   };
 
-  function switchView(view, event) {
+  function switchView(view, event, skipSave = false) {
+    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','relatorios','usuarios','config'];
+    if (!viewsPermitidas.includes(view)) view = 'dashboard';
+    if (view === 'usuarios' && !isAdmin()) view = 'dashboard';
+
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
     const target = document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1));
     if (target) target.classList.add('active');
+
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+
+    if (event && event.currentTarget) {
+      event.currentTarget.classList.add('active');
+    } else {
+      const nav = document.querySelector(`.nav-item[data-view="${view}"]`);
+      if (nav) nav.classList.add('active');
+    }
+
     const title = TITULOS[view] || TITULOS.dashboard;
     document.getElementById('pageKicker').innerText = title[0];
     document.getElementById('pageTitle').innerText = title[1];
     document.getElementById('pageSub').innerText = title[2];
+
+    if (!skipSave) localStorage.setItem('omniActiveViewV2', view);
+
     if (view === 'relatorios') renderRelatorios();
     if (view === 'usuarios') renderUsuarios();
   }
