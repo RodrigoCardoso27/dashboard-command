@@ -674,10 +674,10 @@
           <div class="grid grid-4">
             <div><label>Nome completo</label><input id="usNome" placeholder="Nome do analista"></div>
             <div><label>Login</label><input id="usLogin" placeholder="sem espaços"></div>
-            <div><label>Senha</label><input id="usSenha" type="password" placeholder="Senha inicial"></div>
+            <div><label>Senha</label><input id="usSenha" type="password" placeholder="Mín. 8: letras, números e símbolo" oninput="validarSenhaUsuarioVisual()"><div id="senhaRegraUsuario" class="subnote" style="margin-top:6px; font-size:.72rem;">Obrigatório: mínimo 8 caracteres, letras, números e símbolo.</div></div>
             <div><label>Perfil</label><select id="usRole"><option>Analista Pleno</option><option>Analista N1</option><option>Consulta</option><option>Gestor</option><option value="admin">Admin</option></select></div>
           </div>
-          <button class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarUsuario()">Salvar usuário</button>
+          <button id="btnSalvarUsuario" class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarUsuario()">Salvar usuário</button>
         </div>
         <div class="card"><div class="card-header"><div class="card-title">Usuários cadastrados</div></div><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbUsuarios"></tbody></table></div></div>
       </section>
@@ -691,7 +691,7 @@
             <button class="btn" onclick="setTheme('light')">☀️ Tema claro</button>
             <button class="btn btn-warning" onclick="corrigirAdminFirebase()">🛠 Recriar admin padrão</button>
           </div>
-          <p class="subnote" style="margin-top:18px;">Admin padrão: usuário <b>admin</b> e senha <b>Admin123</b>. Depois recomendo alterar a senha pelo painel de usuários.</p>
+          <p class="subnote" style="margin-top:18px;">Admin padrão: usuário <b>admin</b> e senha <b>Admin@123</b>. Depois recomendo alterar a senha pelo painel de usuários.</p>
         </div>
       </section>
     </main>
@@ -751,6 +751,34 @@
   function getHora() { return new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
   function normalizarLogin(login) { return String(login || '').trim().toLowerCase().replace(/\./g, ','); }
   function desnormalizarLogin(login) { return String(login || '').replace(/,/g, '.'); }
+
+  function validarSenhaForte(senha) {
+    const s = String(senha || '');
+    return s.length >= 8 && /[A-Za-zÀ-ÿ]/.test(s) && /\d/.test(s) && /[^A-Za-zÀ-ÿ0-9]/.test(s);
+  }
+
+  function validarSenhaUsuarioVisual() {
+    const input = document.getElementById('usSenha');
+    const regra = document.getElementById('senhaRegraUsuario');
+    if (!input || !regra) return;
+
+    if (!input.value) {
+      regra.innerText = 'Obrigatório: mínimo 8 caracteres, letras, números e símbolo.';
+      regra.style.color = 'var(--muted)';
+      input.style.borderColor = 'var(--border)';
+      return;
+    }
+
+    if (validarSenhaForte(input.value)) {
+      regra.innerText = 'Senha válida.';
+      regra.style.color = 'var(--brand2)';
+      input.style.borderColor = 'var(--brand2)';
+    } else {
+      regra.innerText = 'Senha fraca. Use letras, números e pelo menos 1 símbolo. Ex: Omni@2026';
+      regra.style.color = 'var(--danger)';
+      input.style.borderColor = 'var(--danger)';
+    }
+  }
   function isAdmin() { return logado && String(logado.role).toLowerCase() === 'admin'; }
   function canManage() { return logado && ['admin','gestor','analista pleno'].includes(String(logado.role).toLowerCase()); }
   function escapeHTML(v) { return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -809,13 +837,13 @@
   }
 
   async function corrigirAdminFirebase() {
-    if (!confirm('Isso vai remover usuários antigos ADMIN/Admin/administrador e recriar usuarios/admin com senha Admin123. Continuar?')) return;
+    if (!confirm('Isso vai remover usuários antigos ADMIN/Admin/administrador e recriar usuarios/admin com senha Admin@123. Continuar?')) return;
     try {
       const updates = {};
       ['ADMIN','Admin','Administrador','administrador'].forEach(k => updates['usuarios/' + k] = null);
       updates['usuarios/admin'] = {
         nomeCompleto: 'Administrador',
-        senha: 'Admin123',
+        senha: 'Admin@123',
         role: 'admin',
         ativo: true,
         atualizadoEm: new Date().toISOString()
@@ -1092,17 +1120,68 @@
 
   // ====== USUÁRIOS ======
   async function salvarUsuario() {
-    if (!isAdmin()) return showToast('Apenas admin pode criar usuários.', 'error');
-    const nome = document.getElementById('usNome').value.trim();
-    const login = document.getElementById('usLogin').value.trim();
-    const senha = document.getElementById('usSenha').value.trim();
-    const role = document.getElementById('usRole').value;
-    if (!nome || !login || !senha) return showToast('Preencha nome, login e senha.', 'error');
-    if (/\s/.test(login)) return showToast('Login não pode ter espaços.', 'error');
-    const key = normalizarLogin(login);
-    await db.ref('usuarios/' + key).set({ nomeCompleto: nome, senha, role, ativo: true, atualizadoEm: new Date().toISOString() });
-    ['usNome','usLogin','usSenha'].forEach(id => document.getElementById(id).value = '');
-    showToast('Usuário salvo.');
+    const btn = document.getElementById('btnSalvarUsuario');
+
+    try {
+      if (!logado) return showToast('Faça login novamente antes de criar usuários.', 'error');
+      if (!isAdmin()) return showToast('Apenas admin pode criar usuários.', 'error');
+
+      const nome = document.getElementById('usNome').value.trim();
+      const login = document.getElementById('usLogin').value.trim();
+      const senha = document.getElementById('usSenha').value.trim();
+      const role = document.getElementById('usRole').value;
+
+      if (!nome || !login || !senha) return showToast('Preencha nome, login e senha.', 'error');
+      if (!validarSenhaForte(senha)) {
+        validarSenhaUsuarioVisual();
+        return showToast('A senha precisa ter no mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.', 'error');
+      }
+      if (/\s/.test(login)) return showToast('Login não pode ter espaços.', 'error');
+
+      const key = normalizarLogin(login);
+      if (!key) return showToast('Login inválido.', 'error');
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Salvando usuário...';
+      }
+
+      const refUsuario = db.ref('usuarios/' + key);
+      const existente = await refUsuario.once('value');
+
+      if (existente.exists()) {
+        const confirmar = confirm('Já existe um usuário com esse login. Deseja substituir os dados dele?');
+        if (!confirmar) return;
+      }
+
+      await refUsuario.set({
+        nomeCompleto: nome,
+        senha: String(senha),
+        role: role,
+        ativo: true,
+        criadoPor: logado.nome,
+        criadoPorLogin: logado.login,
+        criadoEm: existente.exists() && existente.val()?.criadoEm ? existente.val().criadoEm : new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      });
+
+      ['usNome','usLogin','usSenha'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('usRole').value = 'Analista Pleno';
+      validarSenhaUsuarioVisual();
+
+      showToast('Usuário criado/atualizado com sucesso.');
+      renderUsuarios();
+    } catch (error) {
+      console.error('Erro ao salvar usuário:', error);
+      const msg = error && error.message ? error.message : String(error);
+      showToast('Erro ao salvar usuário: ' + msg, 'error');
+      alert('Erro ao salvar usuário: ' + msg);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = 'Salvar usuário';
+      }
+    }
   }
 
   function renderUsuarios() {
@@ -1111,8 +1190,27 @@
     tb.innerHTML = cacheUsuarios.map(u => `<tr><td><b>${escapeHTML(u.nomeCompleto || u.id)}</b></td><td>${escapeHTML(desnormalizarLogin(u.id))}</td><td><span class="pill pill-blue">${escapeHTML(u.role)}</span></td><td><span class="pill ${u.ativo === false ? 'pill-bad' : 'pill-ok'}">${u.ativo === false ? 'Inativo' : 'Ativo'}</span></td><td><div class="actions"><button class="btn btn-sm" onclick="toggleUsuario('${u.id}', ${u.ativo === false ? 'true' : 'false'})">${u.ativo === false ? 'Ativar' : 'Inativar'}</button><button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">Excluir</button></div></td></tr>`).join('');
   }
 
-  async function toggleUsuario(id, ativo) { await db.ref('usuarios/' + id).update({ ativo, atualizadoEm: new Date().toISOString() }); showToast('Status do usuário atualizado.'); }
-  async function excluirUsuario(id) { if (id === 'admin') return showToast('O admin principal não pode ser excluído.', 'warning'); if (!confirm('Excluir usuário?')) return; await db.ref('usuarios/' + id).remove(); showToast('Usuário excluído.'); }
+  async function toggleUsuario(id, ativo) {
+    try {
+      await db.ref('usuarios/' + id).update({ ativo, atualizadoEm: new Date().toISOString() });
+      showToast('Status do usuário atualizado.');
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      showToast('Erro ao alterar status: ' + error.message, 'error');
+    }
+  }
+
+  async function excluirUsuario(id) {
+    if (id === 'admin') return showToast('O admin principal não pode ser excluído.', 'warning');
+    if (!confirm('Excluir usuário?')) return;
+    try {
+      await db.ref('usuarios/' + id).remove();
+      showToast('Usuário excluído.');
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error);
+      showToast('Erro ao excluir usuário: ' + error.message, 'error');
+    }
+  }
 
   // ====== DASHBOARD / RELATÓRIOS ======
   function renderDashboard() {
