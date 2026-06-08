@@ -1586,6 +1586,146 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
 #heliCursor.clicking .cursor-hangar { animation: hangarPulse .30s ease; }
 @keyframes hangarPulse { 50% { transform: scale(1.05); } }
 
+
+/* ====== OMNI INSIGHTS ====== */
+.insights-hero-card {
+  background:
+    radial-gradient(520px 260px at 86% 18%, rgba(97,230,173,.14), transparent 72%),
+    radial-gradient(420px 220px at 16% 20%, rgba(56,189,248,.13), transparent 70%),
+    linear-gradient(145deg, rgba(255,255,255,.11), rgba(255,255,255,.045));
+}
+
+.insights-score-wrap {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.insights-score-ring {
+  width: 154px;
+  height: 154px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+  background:
+    radial-gradient(circle at center, rgba(8,18,33,.88) 0 56%, transparent 57%),
+    conic-gradient(var(--success) calc(var(--score, 0) * 1%), rgba(255,255,255,.08) 0);
+  border: 1px solid rgba(148,210,255,.20);
+  box-shadow: inset 0 0 26px rgba(56,189,248,.09), 0 22px 50px rgba(0,0,0,.28);
+}
+
+.insights-score-value {
+  font-size: 2.45rem;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+}
+
+.insights-score-label {
+  position: absolute;
+  bottom: 42px;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.insights-health-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -.5px;
+  margin-bottom: 8px;
+}
+
+.insights-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.insight-mini {
+  border: 1px solid rgba(148,210,255,.15);
+  background: rgba(8,18,33,.24);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.insight-mini span {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.insight-mini small {
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+}
+
+.insight-panel {
+  min-height: 330px;
+}
+
+.insight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.insight-item {
+  border: 1px solid rgba(148,210,255,.14);
+  background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.025));
+  border-radius: 16px;
+  padding: 13px 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.insight-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--brand);
+  opacity: .85;
+}
+
+.insight-item.danger::before { background: var(--danger); }
+.insight-item.warn::before { background: var(--warning); }
+.insight-item.ok::before { background: var(--success); }
+.insight-item.info::before { background: var(--brand); }
+
+.insight-item strong {
+  display: block;
+  font-size: .88rem;
+  margin-bottom: 5px;
+}
+
+.insight-item span {
+  color: var(--muted);
+  font-size: .79rem;
+  line-height: 1.42;
+}
+
+.insight-empty {
+  border: 1px dashed rgba(148,210,255,.18);
+  color: var(--muted);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  font-size: .84rem;
+}
+
+@media (max-width: 900px) {
+  .insights-score-wrap { grid-template-columns: 1fr; }
+  .insights-mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 </style>
 </head>
 <body>
@@ -1754,6 +1894,7 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
       <div class="nav-item" data-view="estoque" onclick="switchView('estoque', event)">💻 Estoque TI</div>
 
       <div class="section-title">Gestão</div>
+      <div class="nav-item" data-view="insights" onclick="switchView('insights', event)">🤖 Omni Insights</div>
       <div class="nav-item" data-view="relatorios" onclick="switchView('relatorios', event)">📑 Relatórios</div>
       <div class="nav-item only-admin" data-view="usuarios" onclick="switchView('usuarios', event)">👥 Usuários</div>
       <div class="nav-item" data-view="config" onclick="switchView('config', event)">⚙️ Configurações</div>
@@ -1920,6 +2061,76 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
         </div>
       </section>
 
+
+      <!-- OMNI INSIGHTS -->
+      <section id="viewInsights" class="view">
+        <div class="card insights-hero-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🤖 Omni Insights</div>
+              <div class="subnote">IA simples interna: analisa os registros do Firebase e sugere melhorias operacionais sem custo de API.</div>
+            </div>
+            <button class="btn btn-primary" style="width:auto;" onclick="renderOmniInsights()">🔄 Atualizar análise</button>
+          </div>
+
+          <div class="insights-score-wrap">
+            <div class="insights-score-ring">
+              <div id="insightScore" class="insights-score-value">0</div>
+              <div class="insights-score-label">score</div>
+            </div>
+            <div class="insights-score-copy">
+              <div id="insightHealthTitle" class="insights-health-title">Carregando análise...</div>
+              <p id="insightResumoExecutivo" class="subnote">Assim que os dados forem carregados, o sistema vai avaliar chamados, demandas e estoque.</p>
+              <div class="insights-mini-grid">
+                <div class="insight-mini"><span id="insightTotalChamados">0</span><small>Chamados</small></div>
+                <div class="insight-mini"><span id="insightTotalDemandas">0</span><small>Demandas</small></div>
+                <div class="insight-mini"><span id="insightPendencias">0</span><small>Pendências</small></div>
+                <div class="insight-mini"><span id="insightCriticos">0</span><small>Críticos</small></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="card insight-panel">
+            <div class="card-header"><div class="card-title">🚨 Alertas inteligentes</div></div>
+            <div id="insightAlertas" class="insight-list"></div>
+          </div>
+
+          <div class="card insight-panel">
+            <div class="card-header"><div class="card-title">💡 Melhorias sugeridas</div></div>
+            <div id="insightSugestoes" class="insight-list"></div>
+          </div>
+
+          <div class="card insight-panel">
+            <div class="card-header"><div class="card-title">✅ Ações recomendadas</div></div>
+            <div id="insightAcoes" class="insight-list"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 Principais gargalos</div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Tipo</th><th>Maior ocorrência</th><th>Volume</th><th>Leitura da IA</th></tr></thead>
+                <tbody id="insightGargalos"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">🧾 Qualidade dos registros</div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Indicador</th><th>Resultado</th><th>Feedback</th></tr></thead>
+                <tbody id="insightQualidade"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- RELATÓRIOS -->
       <section id="viewRelatorios" class="view">
         <div class="card">
@@ -2076,6 +2287,7 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
     chamados: ['Chamados', 'Chamados / Atendimentos', 'Registre incidentes, solicitações, atendimentos e tratativas técnicas.'],
     demandas: ['Demandas', 'Demandas Diárias', 'Controle atividades sem chamado, rotinas administrativas e acompanhamentos.'],
     estoque: ['Estoque TI', 'Controle de Estoque e Ativos', 'Gerencie equipamentos, patrimônios, seriais, usuários e localização.'],
+    insights: ['Omni Insights', 'IA de Melhoria Contínua', 'Análise automática dos registros, gargalos, pendências e oportunidades de melhoria.'],
     relatorios: ['Relatórios', 'Relatórios e Indicadores', 'Exporte dados e acompanhe a produtividade do suporte.'],
     usuarios: ['Usuários', 'Gestão de Analistas', 'Administre acessos, perfis e status dos usuários.'],
     config: ['Configurações', 'Configurações do Sistema', 'Ajustes visuais e ações de manutenção.']
@@ -2475,7 +2687,7 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
     escutarTudo();
     if (isAdmin()) carregarUsuariosAgora(false);
 
-    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','relatorios','usuarios','config'];
+    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','insights','relatorios','usuarios','config'];
     let viewSalva = localStorage.getItem('omniActiveViewV2') || 'dashboard';
 
     if (!viewsPermitidas.includes(viewSalva)) viewSalva = 'dashboard';
@@ -2499,7 +2711,7 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
   };
 
   function switchView(view, event, skipSave = false) {
-    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','relatorios','usuarios','config'];
+    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','insights','relatorios','usuarios','config'];
     if (!viewsPermitidas.includes(view)) view = 'dashboard';
     if (view === 'usuarios' && !isAdmin()) view = 'dashboard';
 
@@ -2524,6 +2736,7 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
 
     if (!skipSave) localStorage.setItem('omniActiveViewV2', view);
 
+    if (view === 'insights') renderOmniInsights();
     if (view === 'relatorios') renderRelatorios();
     if (view === 'usuarios') renderUsuarios();
     if (view === 'config') atualizarCursorCards(normalizarCursorModel(localStorage.getItem(getCursorStorageKey()) || document.body.getAttribute('data-cursor-model') || DEFAULT_CURSOR_MODEL));
@@ -2540,17 +2753,17 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
     db.ref('chamados_ti').on('value', snap => {
       cacheChamados = [];
       snap.forEach(item => cacheChamados.push({ id: item.key, ...item.val() }));
-      renderChamados(); renderDashboard();
+      renderChamados(); renderDashboard(); renderOmniInsights();
     });
     db.ref('demandas_ti').on('value', snap => {
       cacheDemandas = [];
       snap.forEach(item => cacheDemandas.push({ id: item.key, ...item.val() }));
-      renderDemandas(); renderDashboard();
+      renderDemandas(); renderDashboard(); renderOmniInsights();
     });
     db.ref('estoque_ti').on('value', snap => {
       cacheEstoque = [];
       snap.forEach(item => cacheEstoque.push({ id: item.key, ...item.val() }));
-      renderEstoque(); renderDashboard();
+      renderEstoque(); renderDashboard(); renderOmniInsights();
     });
     db.ref('usuarios').on('value', snap => {
       cacheUsuarios = [];
@@ -2912,6 +3125,179 @@ body[data-cursor-model="hangar"] #heliCursor { width: 88px !important; height: 8
       showToast('Erro ao excluir usuário: ' + error.message, 'error');
     }
   }
+
+
+  // ====== OMNI INSIGHTS - IA SIMPLES INTERNA ======
+  function parseDateOnly(data) {
+    if (!data) return null;
+    const d = new Date(String(data) + 'T00:00:00');
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function diasEntre(dataA, dataB = getHoje()) {
+    const a = parseDateOnly(dataA);
+    const b = parseDateOnly(dataB);
+    if (!a || !b) return 0;
+    return Math.floor((b - a) / 86400000);
+  }
+
+  function countBy(lista, campo, fallback = 'Não informado') {
+    const mapa = {};
+    lista.forEach(item => {
+      const key = String(item[campo] || fallback).trim() || fallback;
+      mapa[key] = (mapa[key] || 0) + 1;
+    });
+    return mapa;
+  }
+
+  function topFromMap(mapa) {
+    const entries = Object.entries(mapa).sort((a,b) => b[1] - a[1]);
+    return entries[0] || ['Sem dados', 0];
+  }
+
+  function pct(valor, total) {
+    return total > 0 ? Math.round((valor / total) * 100) : 0;
+  }
+
+  function insightItem(titulo, texto, tipo = 'info') {
+    return `<div class="insight-item ${tipo}"><strong>${escapeHTML(titulo)}</strong><span>${escapeHTML(texto)}</span></div>`;
+  }
+
+  function setTextSafe(id, valor) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = valor;
+  }
+
+  function setHtmlSafe(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  function renderOmniInsights() {
+    if (!logado) return;
+
+    const hoje = getHoje();
+    const chamados = cacheChamados.filter(filtrarPorPermissao);
+    const demandas = cacheDemandas.filter(filtrarPorPermissao);
+    const estoque = cacheEstoque;
+
+    const chamados30 = chamados.filter(c => diasEntre(c.data, hoje) <= 30);
+    const demandas30 = demandas.filter(d => diasEntre(d.data, hoje) <= 30);
+
+    const pendentes = chamados.filter(c => {
+      const s = String(c.status || '').toLowerCase();
+      return s.includes('abert') || s.includes('andamento') || s.includes('pend');
+    });
+
+    const pendentesAntigos = pendentes.filter(c => diasEntre(c.data, hoje) >= 3);
+    const demandasAtrasadas = demandas.filter(d => {
+      const s = String(d.status || '').toLowerCase();
+      return d.dataPrevista && d.dataPrevista < hoje && !s.includes('conclu') && !s.includes('cancel');
+    });
+
+    const estoqueCritico = estoque.filter(e => Number(e.quantidade || 0) <= Number(e.minimo || 0));
+    const chamadosSemSolucao = chamados.filter(c => {
+      const s = String(c.status || '').toLowerCase();
+      return (s.includes('resol') || s.includes('conclu')) && !String(c.solucao || '').trim();
+    });
+    const chamadosSemSetor = chamados.filter(c => !c.setor || String(c.setor).toLowerCase().includes('não informado'));
+    const chamadosSemBase = chamados.filter(c => !c.base || String(c.base).toLowerCase().includes('não informado'));
+
+    const catMap = countBy(chamados30, 'categoria');
+    const setorMap = countBy(chamados30, 'setor');
+    const baseMap = countBy(chamados30, 'base');
+    const tipoDemandaMap = countBy(demandas30, 'tipo');
+    const statusMap = countBy(chamados30, 'status');
+
+    const [topCategoria, topCategoriaQtd] = topFromMap(catMap);
+    const [topSetor, topSetorQtd] = topFromMap(setorMap);
+    const [topBase, topBaseQtd] = topFromMap(baseMap);
+    const [topDemanda, topDemandaQtd] = topFromMap(tipoDemandaMap);
+    const [topStatus, topStatusQtd] = topFromMap(statusMap);
+
+    let score = 100;
+    score -= Math.min(25, pendentesAntigos.length * 4);
+    score -= Math.min(20, demandasAtrasadas.length * 5);
+    score -= Math.min(20, estoqueCritico.length * 4);
+    score -= Math.min(15, chamadosSemSolucao.length * 3);
+    score -= Math.min(10, Math.ceil((chamadosSemSetor.length + chamadosSemBase.length) / 2));
+    score = Math.max(0, Math.min(100, score));
+
+    const scoreEl = document.querySelector('.insights-score-ring');
+    if (scoreEl) scoreEl.style.setProperty('--score', score);
+    setTextSafe('insightScore', score);
+
+    let healthTitle = 'Operação saudável';
+    let resumo = 'Os registros não mostram gargalos críticos no momento. Continue mantendo os campos preenchidos e acompanhando pendências.';
+    if (score < 50) {
+      healthTitle = 'Operação exige atenção imediata';
+      resumo = 'A IA identificou pendências antigas, demandas atrasadas ou estoque crítico. Priorize limpeza de backlog e revisão de estoque.';
+    } else if (score < 75) {
+      healthTitle = 'Operação com pontos de melhoria';
+      resumo = 'Existem oportunidades claras de melhoria em pendências, qualidade de preenchimento ou estoque. Vale atuar preventivamente.';
+    }
+
+    setTextSafe('insightHealthTitle', healthTitle);
+    setTextSafe('insightResumoExecutivo', resumo);
+    setTextSafe('insightTotalChamados', chamados.length);
+    setTextSafe('insightTotalDemandas', demandas.length);
+    setTextSafe('insightPendencias', pendentes.length + demandasAtrasadas.length);
+    setTextSafe('insightCriticos', estoqueCritico.length);
+
+    const alertas = [];
+    if (pendentesAntigos.length) alertas.push(insightItem('Chamados parados há 3 dias ou mais', `${pendentesAntigos.length} chamado(s) ainda precisam de acompanhamento. Sugestão: criar rotina diária de follow-up.`, 'danger'));
+    if (demandasAtrasadas.length) alertas.push(insightItem('Demandas atrasadas', `${demandasAtrasadas.length} demanda(s) passaram da data prevista. Sugestão: revisar responsáveis e prioridade.`, 'danger'));
+    if (estoqueCritico.length) alertas.push(insightItem('Estoque crítico', `${estoqueCritico.length} item(ns) estão abaixo ou igual ao mínimo definido. Sugestão: abrir previsão de compra/reposição.`, 'warn'));
+    if (chamadosSemSolucao.length) alertas.push(insightItem('Chamados resolvidos sem solução', `${chamadosSemSolucao.length} chamado(s) resolvido(s) estão sem tratativa preenchida. Isso dificulta relatório e base de conhecimento.`, 'warn'));
+    if (!alertas.length) alertas.push(insightItem('Sem alertas críticos', 'Nenhum alerta relevante encontrado com os dados atuais.', 'ok'));
+    setHtmlSafe('insightAlertas', alertas.join(''));
+
+    const sugestoes = [];
+    if (topCategoriaQtd >= 3) sugestoes.push(insightItem('Criar ação preventiva por categoria', `${topCategoria} concentra ${topCategoriaQtd} chamado(s) nos últimos 30 dias (${pct(topCategoriaQtd, chamados30.length)}%). Crie checklist ou orientação padrão para reduzir recorrência.`, 'info'));
+    if (topSetorQtd >= 3) sugestoes.push(insightItem('Atuar no setor com maior volume', `${topSetor} gerou ${topSetorQtd} chamado(s) recentes. Sugestão: treinamento rápido, comunicado ou revisão de processo para esse setor.`, 'info'));
+    if (topDemandaQtd >= 2) sugestoes.push(insightItem('Padronizar demanda recorrente', `${topDemanda} aparece como demanda frequente. Sugestão: transformar em rotina/checklist semanal.`, 'info'));
+    if ((chamadosSemSetor.length + chamadosSemBase.length) >= 3) sugestoes.push(insightItem('Melhorar preenchimento de base e setor', 'Há registros sem setor/base. Tornar esses campos obrigatórios melhora relatórios e defesa de produtividade.', 'warn'));
+    if (!sugestoes.length) sugestoes.push(insightItem('Base ainda pequena', 'Continue registrando chamados, demandas e estoque. Com mais dados, o Omni Insights gera sugestões mais precisas.', 'ok'));
+    setHtmlSafe('insightSugestoes', sugestoes.join(''));
+
+    const acoes = [];
+    if (pendentesAntigos.length) acoes.push(insightItem('Limpar backlog', 'Filtre chamados pendentes antigos e atualize status ou solução aplicada ainda hoje.', 'danger'));
+    if (estoqueCritico.length) acoes.push(insightItem('Revisar estoque mínimo', 'Valide se o mínimo cadastrado faz sentido e registre solicitação de reposição para itens críticos.', 'warn'));
+    if (topCategoriaQtd >= 3) acoes.push(insightItem('Criar template de solução', `Monte uma resposta padrão para chamados de ${topCategoria}, facilitando registros futuros.`, 'info'));
+    if (demandasAtrasadas.length) acoes.push(insightItem('Reprogramar demandas', 'Atualize datas previstas e prioridades para não perder rastreabilidade.', 'warn'));
+    if (!acoes.length) acoes.push(insightItem('Manter rotina atual', 'Continue registrando solução, setor, base e prioridade. A qualidade dos dados está ajudando o painel.', 'ok'));
+    setHtmlSafe('insightAcoes', acoes.join(''));
+
+    const gargalos = [
+      ['Categoria de chamado', topCategoria, topCategoriaQtd, topCategoriaQtd ? `Representa ${pct(topCategoriaQtd, chamados30.length)}% dos chamados recentes.` : 'Sem chamados recentes.'],
+      ['Setor solicitante', topSetor, topSetorQtd, topSetorQtd ? 'Pode indicar necessidade de orientação ou revisão de processo.' : 'Sem setor recorrente.'],
+      ['Base / unidade', topBase, topBaseQtd, topBaseQtd ? 'Ajuda a identificar local com maior necessidade de suporte.' : 'Sem base recorrente.'],
+      ['Tipo de demanda', topDemanda, topDemandaQtd, topDemandaQtd ? 'Pode virar checklist, rotina ou automação.' : 'Sem demanda recorrente.'],
+      ['Status mais comum', topStatus, topStatusQtd, topStatusQtd ? 'Mostra o comportamento operacional predominante no período.' : 'Sem status recorrente.']
+    ];
+
+    setHtmlSafe('insightGargalos', gargalos.map(g => `<tr>
+      <td>${escapeHTML(g[0])}</td>
+      <td><b>${escapeHTML(g[1])}</b></td>
+      <td>${escapeHTML(g[2])}</td>
+      <td>${escapeHTML(g[3])}</td>
+    </tr>`).join(''));
+
+    const qualidade = [
+      ['Solução em chamados resolvidos', `${Math.max(0, chamados.filter(c => String(c.status||'').toLowerCase().includes('resol')).length - chamadosSemSolucao.length)} ok / ${chamadosSemSolucao.length} sem solução`, chamadosSemSolucao.length ? 'Melhorar preenchimento da solução aplicada.' : 'Boa rastreabilidade das tratativas.'],
+      ['Setor preenchido', `${chamados.length - chamadosSemSetor.length} ok / ${chamadosSemSetor.length} sem setor`, chamadosSemSetor.length ? 'Preencher setor ajuda a mapear áreas mais impactadas.' : 'Setores bem preenchidos.'],
+      ['Base preenchida', `${chamados.length - chamadosSemBase.length} ok / ${chamadosSemBase.length} sem base`, chamadosSemBase.length ? 'Base/unidade melhora análise geográfica do suporte.' : 'Bases bem preenchidas.'],
+      ['Pendências antigas', `${pendentesAntigos.length}`, pendentesAntigos.length ? 'Acompanhar pendências com rotina de follow-up.' : 'Sem pendências antigas relevantes.'],
+      ['Estoque abaixo do mínimo', `${estoqueCritico.length}`, estoqueCritico.length ? 'Revisar compras, reposição ou remanejamento.' : 'Estoque sem alerta crítico.']
+    ];
+
+    setHtmlSafe('insightQualidade', qualidade.map(q => `<tr>
+      <td><b>${escapeHTML(q[0])}</b></td>
+      <td>${escapeHTML(q[1])}</td>
+      <td>${escapeHTML(q[2])}</td>
+    </tr>`).join(''));
+  }
+
 
   // ====== DASHBOARD / RELATÓRIOS ======
   function renderDashboard() {
