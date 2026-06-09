@@ -2148,6 +2148,81 @@ body[data-theme="light"] canvas {
   background: color-mix(in srgb, var(--brand) 55%, var(--line));
 }
 
+
+/* ====== MOVIMENTAÇÕES DE EQUIPAMENTOS ====== */
+.movement-hero {
+  background:
+    radial-gradient(480px 260px at 84% 14%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 72%),
+    radial-gradient(420px 240px at 12% 18%, color-mix(in srgb, var(--success) 10%, transparent), transparent 70%),
+    linear-gradient(145deg, var(--surface-strong), var(--surface-soft)) !important;
+}
+
+.movement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.movement-box {
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(260px 140px at 90% 12%, color-mix(in srgb, var(--brand) 12%, transparent), transparent 70%),
+    linear-gradient(145deg, var(--surface-strong), var(--surface-soft));
+  border-radius: 22px;
+  padding: 16px;
+}
+
+.movement-box-title {
+  font-weight: 900;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+}
+
+.check-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--field-bg);
+  border-radius: 13px;
+  padding: 9px 10px;
+  font-size: .78rem;
+  font-weight: 800;
+  color: var(--text) !important;
+}
+
+.check-grid input {
+  width: auto !important;
+  accent-color: var(--brand);
+}
+
+.mov-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: .68rem;
+  font-weight: 900;
+  border: 1px solid var(--line);
+  background: var(--chip-bg);
+}
+
+.mov-badge.omni { color: var(--brand); }
+.mov-badge.alg { color: var(--warning); }
+.mov-badge.none { color: var(--muted); }
+
+@media (max-width: 1000px) {
+  .movement-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -2314,6 +2389,7 @@ body[data-theme="light"] canvas {
       <div class="nav-item" data-view="chamados" onclick="switchView('chamados', event)">🎫 Chamados / Atendimentos</div>
       <div class="nav-item" data-view="demandas" onclick="switchView('demandas', event)">🗓️ Demandas Diárias</div>
       <div class="nav-item" data-view="estoque" onclick="switchView('estoque', event)">💻 Estoque TI</div>
+      <div class="nav-item" data-view="movimentacoes" onclick="switchView('movimentacoes', event)">🔄 Movimentações</div>
 
       <div class="section-title">Gestão</div>
       <div class="nav-item" data-view="insights" onclick="switchView('insights', event)">🤖 Omni Insights</div>
@@ -2483,6 +2559,158 @@ body[data-theme="light"] canvas {
         </div>
       </section>
 
+
+
+      <!-- MOVIMENTAÇÕES DE EQUIPAMENTOS -->
+      <section id="viewMovimentacoes" class="view">
+        <div class="card movement-hero">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🔄 Movimentações de Equipamentos</div>
+              <div class="subnote">Controle empréstimos, trocas e devoluções de notebooks OMNI e ALG/APNETWORKS com histórico automático.</div>
+            </div>
+            <button class="btn btn-primary" style="width:auto;" onclick="limparMovimentacao()">+ Nova movimentação</button>
+          </div>
+
+          <div class="grid grid-4">
+            <div>
+              <label>Tipo de movimentação</label>
+              <select id="mvTipo" onchange="ajustarFormularioMovimentacao()">
+                <option value="Emprestimo">Empréstimo</option>
+                <option value="Troca">Troca</option>
+                <option value="Devolucao">Devolução</option>
+              </select>
+            </div>
+            <div><label>Colaborador</label><input id="mvColaborador" placeholder="Nome completo"></div>
+            <div><label>Setor</label><input id="mvSetor" placeholder="Setor / área"></div>
+            <div><label>Base / Unidade</label><input id="mvBase" placeholder="Ex: Barra / Centro"></div>
+          </div>
+
+          <div class="grid grid-4" style="margin-top:14px;">
+            <div><label>E-mail ou matrícula</label><input id="mvContato" placeholder="Opcional"></div>
+            <div>
+              <label>Motivo</label>
+              <select id="mvMotivo"></select>
+            </div>
+            <div id="mvMotivoOutroWrap"><label>Motivo detalhado / outro</label><input id="mvMotivoOutro" placeholder="Descreva quando necessário"></div>
+            <div>
+              <label>Termo assinado?</label>
+              <select id="mvTermo"><option>Não informado</option><option>Sim</option><option>Não</option><option>Não se aplica</option></select>
+            </div>
+          </div>
+
+          <div class="movement-grid">
+            <div class="movement-box" id="boxEntregue">
+              <div class="movement-box-title">📤 Equipamento entregue ao colaborador</div>
+              <div class="grid grid-2">
+                <div><label>Patrimônio entregue</label><input id="mvPatrimonioEntregue" list="listaPatrimonios" placeholder="OMNI0000 ou ALG0000" oninput="preencherInfoPatrimonio('entregue')"></div>
+                <div><label>Serial entregue</label><input id="mvSerialEntregue" placeholder="Serial number"></div>
+                <div><label>Modelo entregue</label><input id="mvModeloEntregue" placeholder="Marca/modelo"></div>
+                <div><label>Origem</label><input id="mvOrigemEntregue" placeholder="OMNI / APNETWORKS" readonly></div>
+              </div>
+              <div style="margin-top:12px;">
+                <label>Acessórios entregues</label>
+                <div class="check-grid" id="mvAcessoriosEntregues">
+                  <label><input type="checkbox" value="Notebook" checked> Notebook</label>
+                  <label><input type="checkbox" value="Carregador"> Carregador</label>
+                  <label><input type="checkbox" value="Mouse"> Mouse</label>
+                  <label><input type="checkbox" value="Teclado"> Teclado</label>
+                  <label><input type="checkbox" value="Mochila"> Mochila</label>
+                  <label><input type="checkbox" value="Headset"> Headset</label>
+                  <label><input type="checkbox" value="Dock station"> Dock station</label>
+                  <label><input type="checkbox" value="Cabo HDMI"> Cabo HDMI</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="movement-box" id="boxDevolvido">
+              <div class="movement-box-title">📥 Equipamento devolvido pelo colaborador</div>
+              <div class="grid grid-2">
+                <div><label>Patrimônio devolvido</label><input id="mvPatrimonioDevolvido" list="listaPatrimonios" placeholder="OMNI0000 ou ALG0000" oninput="preencherInfoPatrimonio('devolvido')"></div>
+                <div><label>Serial devolvido</label><input id="mvSerialDevolvido" placeholder="Serial number"></div>
+                <div><label>Modelo devolvido</label><input id="mvModeloDevolvido" placeholder="Marca/modelo"></div>
+                <div>
+                  <label>Status após devolução</label>
+                  <select id="mvStatusDevolvido">
+                    <option>Disponível</option>
+                    <option>Manutenção</option>
+                    <option>Baixado</option>
+                    <option>Emprestado</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top:12px;">
+                <label>Acessórios devolvidos</label>
+                <div class="check-grid" id="mvAcessoriosDevolvidos">
+                  <label><input type="checkbox" value="Notebook" checked> Notebook</label>
+                  <label><input type="checkbox" value="Carregador"> Carregador</label>
+                  <label><input type="checkbox" value="Mouse"> Mouse</label>
+                  <label><input type="checkbox" value="Teclado"> Teclado</label>
+                  <label><input type="checkbox" value="Mochila"> Mochila</label>
+                  <label><input type="checkbox" value="Headset"> Headset</label>
+                  <label><input type="checkbox" value="Dock station"> Dock station</label>
+                  <label><input type="checkbox" value="Cabo HDMI"> Cabo HDMI</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-3" style="margin-top:14px;">
+            <div>
+              <label>Condição da máquina devolvida</label>
+              <select id="mvCondicao">
+                <option>Não se aplica</option>
+                <option>Boa</option>
+                <option>Com marcas de uso</option>
+                <option>Com defeito</option>
+                <option>Quebrada</option>
+                <option>Não liga</option>
+                <option>Faltando acessórios</option>
+              </select>
+            </div>
+            <div><label>Data prevista de devolução</label><input id="mvDataPrevista" type="date"></div>
+            <div><label>Responsável</label><input id="mvResponsavel" placeholder="Responsável pela movimentação"></div>
+          </div>
+
+          <div style="margin-top:14px;"><label>Observação</label><textarea id="mvObs" placeholder="Ex: devolveu notebook antigo por lentidão e recebeu outro com carregador e mochila..."></textarea></div>
+
+          <datalist id="listaPatrimonios"></datalist>
+
+          <button class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarMovimentacao()">Salvar movimentação e atualizar estoque</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Histórico de movimentações</div>
+              <div class="subnote">Busque por colaborador, patrimônio, serial, motivo, OMNI, ALG ou APNETWORKS.</div>
+            </div>
+            <button class="btn btn-sm" onclick="exportarMovimentacoes()">⬇ Excel</button>
+          </div>
+          <div class="grid grid-4" style="margin-bottom:14px;">
+            <input id="filtroMovimentacao" placeholder="Buscar colaborador, patrimônio, motivo..." oninput="renderMovimentacoes()">
+            <select id="filtroTipoMovimentacao" onchange="renderMovimentacoes()">
+              <option value="">Todos tipos</option>
+              <option>Emprestimo</option>
+              <option>Troca</option>
+              <option>Devolucao</option>
+            </select>
+            <select id="filtroOrigemMovimentacao" onchange="renderMovimentacoes()">
+              <option value="">Todas origens</option>
+              <option>OMNI</option>
+              <option>ALG / APNETWORKS</option>
+              <option>Não identificado</option>
+            </select>
+            <button class="btn" onclick="renderMovimentacoes()">Atualizar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Data</th><th>Tipo</th><th>Colaborador</th><th>Entregue</th><th>Devolvido</th><th>Motivo</th><th>Acessórios</th><th>Responsável</th><th>Ação</th></tr></thead>
+              <tbody id="tbMovimentacoes"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       <!-- OMNI INSIGHTS -->
       <section id="viewInsights" class="view">
@@ -2700,6 +2928,7 @@ body[data-theme="light"] canvas {
   let cacheChamados = [];
   let cacheDemandas = [];
   let cacheEstoque = [];
+  let cacheMovimentacoes = [];
   let cacheUsuarios = [];
   let chartStatus = null;
   let chartCategoria = null;
@@ -2709,6 +2938,7 @@ body[data-theme="light"] canvas {
     chamados: ['Chamados', 'Chamados / Atendimentos', 'Registre incidentes, solicitações, atendimentos e tratativas técnicas.'],
     demandas: ['Demandas', 'Demandas Diárias', 'Controle atividades sem chamado, rotinas administrativas e acompanhamentos.'],
     estoque: ['Estoque TI', 'Controle de Estoque e Ativos', 'Gerencie equipamentos, patrimônios, seriais, usuários e localização.'],
+    movimentacoes: ['Movimentações', 'Empréstimos, Trocas e Devoluções', 'Controle histórico de notebooks, acessórios, patrimônio OMNI e ALG/APNETWORKS.'],
     insights: ['Omni Insights', 'IA de Melhoria Contínua', 'Análise automática dos registros, gargalos, pendências e oportunidades de melhoria.'],
     relatorios: ['Relatórios', 'Relatórios e Indicadores', 'Exporte dados e acompanhe a produtividade do suporte.'],
     usuarios: ['Usuários', 'Gestão de Analistas', 'Administre acessos, perfis e status dos usuários.'],
@@ -3109,7 +3339,7 @@ body[data-theme="light"] canvas {
     escutarTudo();
     if (isAdmin()) carregarUsuariosAgora(false);
 
-    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','insights','relatorios','usuarios','config'];
+    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','movimentacoes','insights','relatorios','usuarios','config'];
     let viewSalva = localStorage.getItem('omniActiveViewV2') || 'dashboard';
 
     if (!viewsPermitidas.includes(viewSalva)) viewSalva = 'dashboard';
@@ -3133,7 +3363,7 @@ body[data-theme="light"] canvas {
   };
 
   function switchView(view, event, skipSave = false) {
-    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','insights','relatorios','usuarios','config'];
+    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','movimentacoes','insights','relatorios','usuarios','config'];
     if (!viewsPermitidas.includes(view)) view = 'dashboard';
     if (view === 'usuarios' && !isAdmin()) view = 'dashboard';
 
@@ -3158,6 +3388,7 @@ body[data-theme="light"] canvas {
 
     if (!skipSave) localStorage.setItem('omniActiveViewV2', view);
 
+    if (view === 'movimentacoes') { ajustarFormularioMovimentacao(); atualizarDatalistPatrimonios(); renderMovimentacoes(); }
     if (view === 'insights') renderOmniInsights();
     if (view === 'relatorios') renderRelatorios();
     if (view === 'usuarios') renderUsuarios();
@@ -3195,7 +3426,15 @@ body[data-theme="light"] canvas {
     db.ref('estoque_ti').on('value', snap => {
       cacheEstoque = [];
       snap.forEach(item => cacheEstoque.push({ id: item.key, ...item.val() }));
-      renderEstoque(); renderDashboard(); renderOmniInsights();
+      renderEstoque(); renderDashboard(); renderOmniInsights(); atualizarDatalistPatrimonios();
+    });
+    db.ref('movimentacoes_ti').on('value', snap => {
+      cacheMovimentacoes = [];
+      snap.forEach(item => cacheMovimentacoes.push({ id: item.key, ...item.val() }));
+      cacheMovimentacoes.sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
+      renderMovimentacoes();
+      renderOmniInsights();
+      atualizarDatalistPatrimonios();
     });
     db.ref('usuarios').on('value', snap => {
       cacheUsuarios = [];
@@ -3350,6 +3589,270 @@ body[data-theme="light"] canvas {
     await db.ref('demandas_ti/' + id).update({ titulo: document.getElementById('edDmTitulo').value.trim(), status: document.getElementById('edDmStatus').value, prioridade: document.getElementById('edDmPrioridade').value, dataPrevista: document.getElementById('edDmPrev').value, descricao: document.getElementById('edDmDesc').value.trim(), atualizadoEm: new Date().toISOString(), atualizadoPor: logado.nome });
     closeModal(); showToast('Demanda atualizada.');
   }
+
+
+  // ====== MOVIMENTAÇÕES DE EQUIPAMENTOS ======
+  const MOTIVOS_MOVIMENTACAO = {
+    Emprestimo: ['Novo colaborador', 'Empréstimo temporário', 'Substituição provisória', 'Home office', 'Projeto específico', 'Outro'],
+    Troca: ['Lentidão', 'Tela quebrada', 'Teclado com defeito', 'Bateria ruim', 'Não liga', 'Travamentos', 'Problema no carregador', 'Problema de rede/Wi-Fi', 'Upgrade de equipamento', 'Troca preventiva', 'Outro'],
+    Devolucao: ['Desligamento', 'Fim de contrato', 'Troca de função', 'Equipamento não será mais utilizado', 'Devolução temporária', 'Substituição por outro equipamento', 'Outro']
+  };
+
+  function normalizarPatrimonio(p) {
+    return String(p || '').trim().toUpperCase();
+  }
+
+  function origemPorPatrimonio(patrimonio) {
+    const p = normalizarPatrimonio(patrimonio);
+    if (p.startsWith('OMNI')) return { tipo: 'OMNI', origem: 'Empresa / patrimônio próprio OMNI', classe: 'omni' };
+    if (p.startsWith('ALG')) return { tipo: 'ALG / APNETWORKS', origem: 'Alugado / APNETWORKS', classe: 'alg' };
+    return { tipo: 'Não identificado', origem: 'Não identificado', classe: 'none' };
+  }
+
+  function origemBadge(patrimonio) {
+    const o = origemPorPatrimonio(patrimonio);
+    return `<span class="mov-badge ${o.classe}">${escapeHTML(o.tipo)}</span>`;
+  }
+
+  function patrimonioKey(p) {
+    return normalizarPatrimonio(p).replace(/\s+/g, '');
+  }
+
+  function encontrarAtivoPorPatrimonio(patrimonio) {
+    const key = patrimonioKey(patrimonio);
+    if (!key) return null;
+    return cacheEstoque.find(e => patrimonioKey(e.patrimonio) === key) || null;
+  }
+
+  function getCheckedValues(containerId) {
+    return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)).map(i => i.value);
+  }
+
+  function setCheckedValues(containerId, values = []) {
+    const set = new Set(values);
+    document.querySelectorAll(`#${containerId} input[type="checkbox"]`).forEach(i => i.checked = set.has(i.value));
+  }
+
+  function atualizarDatalistPatrimonios() {
+    const dl = document.getElementById('listaPatrimonios');
+    if (!dl) return;
+    const options = cacheEstoque
+      .filter(e => e.patrimonio)
+      .sort((a,b) => String(a.patrimonio || '').localeCompare(String(b.patrimonio || '')))
+      .map(e => `<option value="${escapeHTML(e.patrimonio)}">${escapeHTML(`${e.item || 'Ativo'} ${e.modelo || ''} ${e.serial || ''} ${e.usuario ? ' - ' + e.usuario : ''}`)}</option>`)
+      .join('');
+    dl.innerHTML = options;
+  }
+
+  function preencherInfoPatrimonio(tipo) {
+    const prefix = tipo === 'entregue' ? 'Entregue' : 'Devolvido';
+    const patrimonio = document.getElementById('mvPatrimonio' + prefix)?.value || '';
+    const ativo = encontrarAtivoPorPatrimonio(patrimonio);
+    const origem = origemPorPatrimonio(patrimonio);
+
+    const serialEl = document.getElementById('mvSerial' + prefix);
+    const modeloEl = document.getElementById('mvModelo' + prefix);
+
+    if (ativo) {
+      if (serialEl && !serialEl.value) serialEl.value = ativo.serial || '';
+      if (modeloEl && !modeloEl.value) modeloEl.value = ativo.modelo || ativo.item || '';
+      if (tipo === 'devolvido') {
+        const colab = document.getElementById('mvColaborador');
+        const setor = document.getElementById('mvSetor');
+        const base = document.getElementById('mvBase');
+        if (colab && !colab.value && ativo.usuario) colab.value = ativo.usuario;
+        if (setor && !setor.value && ativo.setor) setor.value = ativo.setor;
+        if (base && !base.value && ativo.localizacao) base.value = ativo.localizacao;
+      }
+    }
+
+    if (tipo === 'entregue') {
+      const origemEl = document.getElementById('mvOrigemEntregue');
+      if (origemEl) origemEl.value = origem.origem;
+    }
+  }
+
+  function ajustarFormularioMovimentacao() {
+    const tipo = document.getElementById('mvTipo')?.value || 'Emprestimo';
+    const motivo = document.getElementById('mvMotivo');
+    if (motivo) {
+      motivo.innerHTML = (MOTIVOS_MOVIMENTACAO[tipo] || MOTIVOS_MOVIMENTACAO.Emprestimo).map(m => `<option>${m}</option>`).join('');
+    }
+
+    const entregue = document.getElementById('boxEntregue');
+    const devolvido = document.getElementById('boxDevolvido');
+    const condicao = document.getElementById('mvCondicao');
+    const dataPrevista = document.getElementById('mvDataPrevista');
+
+    if (entregue) entregue.style.display = tipo === 'Devolucao' ? 'none' : '';
+    if (devolvido) devolvido.style.display = tipo === 'Emprestimo' ? 'none' : '';
+    if (condicao) condicao.value = tipo === 'Emprestimo' ? 'Não se aplica' : condicao.value;
+    if (dataPrevista) dataPrevista.disabled = tipo !== 'Emprestimo';
+
+    const resp = document.getElementById('mvResponsavel');
+    if (resp && !resp.value && logado?.nome) resp.value = logado.nome;
+  }
+
+  function limparMovimentacao() {
+    ['mvColaborador','mvSetor','mvBase','mvContato','mvMotivoOutro','mvPatrimonioEntregue','mvSerialEntregue','mvModeloEntregue','mvOrigemEntregue','mvPatrimonioDevolvido','mvSerialDevolvido','mvModeloDevolvido','mvObs'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    const tipo = document.getElementById('mvTipo');
+    if (tipo) tipo.value = 'Emprestimo';
+    const termo = document.getElementById('mvTermo');
+    if (termo) termo.value = 'Não informado';
+    const cond = document.getElementById('mvCondicao');
+    if (cond) cond.value = 'Não se aplica';
+    const statusDev = document.getElementById('mvStatusDevolvido');
+    if (statusDev) statusDev.value = 'Disponível';
+    const resp = document.getElementById('mvResponsavel');
+    if (resp) resp.value = logado?.nome || '';
+    document.querySelectorAll('#mvAcessoriosEntregues input[type="checkbox"], #mvAcessoriosDevolvidos input[type="checkbox"]').forEach(i => i.checked = i.value === 'Notebook');
+    ajustarFormularioMovimentacao();
+  }
+
+  async function salvarMovimentacao() {
+    const tipo = document.getElementById('mvTipo').value;
+    const colaborador = document.getElementById('mvColaborador').value.trim();
+    const patrimonioEntregue = normalizarPatrimonio(document.getElementById('mvPatrimonioEntregue').value);
+    const patrimonioDevolvido = normalizarPatrimonio(document.getElementById('mvPatrimonioDevolvido').value);
+
+    if (!colaborador) return showToast('Informe o colaborador.', 'error');
+    if (tipo !== 'Devolucao' && !patrimonioEntregue) return showToast('Informe o patrimônio entregue.', 'error');
+    if (tipo !== 'Emprestimo' && !patrimonioDevolvido) return showToast('Informe o patrimônio devolvido.', 'error');
+
+    const motivoBase = document.getElementById('mvMotivo').value;
+    const motivoOutro = document.getElementById('mvMotivoOutro').value.trim();
+    const motivo = motivoBase === 'Outro' && motivoOutro ? motivoOutro : (motivoOutro ? `${motivoBase} - ${motivoOutro}` : motivoBase);
+
+    const data = {
+      tipo,
+      colaborador,
+      setor: document.getElementById('mvSetor').value.trim() || 'Não informado',
+      base: document.getElementById('mvBase').value.trim() || 'Não informado',
+      contato: document.getElementById('mvContato').value.trim(),
+      motivo,
+      termoAssinado: document.getElementById('mvTermo').value,
+      patrimonioEntregue,
+      serialEntregue: document.getElementById('mvSerialEntregue').value.trim(),
+      modeloEntregue: document.getElementById('mvModeloEntregue').value.trim(),
+      origemEntregue: origemPorPatrimonio(patrimonioEntregue).tipo,
+      acessoriosEntregues: tipo === 'Devolucao' ? [] : getCheckedValues('mvAcessoriosEntregues'),
+      patrimonioDevolvido,
+      serialDevolvido: document.getElementById('mvSerialDevolvido').value.trim(),
+      modeloDevolvido: document.getElementById('mvModeloDevolvido').value.trim(),
+      origemDevolvido: origemPorPatrimonio(patrimonioDevolvido).tipo,
+      acessoriosDevolvidos: tipo === 'Emprestimo' ? [] : getCheckedValues('mvAcessoriosDevolvidos'),
+      statusAposDevolucao: document.getElementById('mvStatusDevolvido').value,
+      condicaoDevolvida: document.getElementById('mvCondicao').value,
+      dataPrevistaDevolucao: document.getElementById('mvDataPrevista').value,
+      observacao: document.getElementById('mvObs').value.trim(),
+      responsavel: document.getElementById('mvResponsavel').value.trim() || logado.nome,
+      responsavelLogin: logado.login,
+      data: getHoje(),
+      hora: getHora(),
+      mes: getHoje().slice(0,7),
+      criadoEm: new Date().toISOString()
+    };
+
+    try {
+      const updates = {};
+      const movKey = db.ref('movimentacoes_ti').push().key;
+      updates['movimentacoes_ti/' + movKey] = data;
+
+      const ativoEntregue = encontrarAtivoPorPatrimonio(patrimonioEntregue);
+      if (ativoEntregue && tipo !== 'Devolucao') {
+        updates['estoque_ti/' + ativoEntregue.id + '/status'] = tipo === 'Emprestimo' ? 'Emprestado' : 'Em uso';
+        updates['estoque_ti/' + ativoEntregue.id + '/usuario'] = colaborador;
+        updates['estoque_ti/' + ativoEntregue.id + '/setor'] = data.setor;
+        updates['estoque_ti/' + ativoEntregue.id + '/localizacao'] = data.base;
+        updates['estoque_ti/' + ativoEntregue.id + '/ultimaMovimentacao'] = tipo;
+        updates['estoque_ti/' + ativoEntregue.id + '/ultimoMovimentoId'] = movKey;
+        updates['estoque_ti/' + ativoEntregue.id + '/atualizadoEm'] = new Date().toISOString();
+      }
+
+      const ativoDevolvido = encontrarAtivoPorPatrimonio(patrimonioDevolvido);
+      if (ativoDevolvido && tipo !== 'Emprestimo') {
+        updates['estoque_ti/' + ativoDevolvido.id + '/status'] = data.statusAposDevolucao;
+        updates['estoque_ti/' + ativoDevolvido.id + '/usuario'] = '';
+        updates['estoque_ti/' + ativoDevolvido.id + '/setor'] = '';
+        updates['estoque_ti/' + ativoDevolvido.id + '/localizacao'] = data.statusAposDevolucao === 'Manutenção' ? 'Manutenção TI' : 'Estoque TI';
+        updates['estoque_ti/' + ativoDevolvido.id + '/ultimaMovimentacao'] = tipo;
+        updates['estoque_ti/' + ativoDevolvido.id + '/ultimoMovimentoId'] = movKey;
+        updates['estoque_ti/' + ativoDevolvido.id + '/atualizadoEm'] = new Date().toISOString();
+      }
+
+      await db.ref().update(updates);
+
+      let avisos = [];
+      if (tipo !== 'Devolucao' && !ativoEntregue) avisos.push(`Patrimônio entregue ${patrimonioEntregue} não estava cadastrado no estoque.`);
+      if (tipo !== 'Emprestimo' && !ativoDevolvido) avisos.push(`Patrimônio devolvido ${patrimonioDevolvido} não estava cadastrado no estoque.`);
+
+      limparMovimentacao();
+      showToast(avisos.length ? 'Movimentação salva. Atenção: ' + avisos.join(' ') : 'Movimentação salva e estoque atualizado.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao salvar movimentação: ' + error.message, 'error');
+    }
+  }
+
+  function renderMovimentacoes() {
+    const tb = document.getElementById('tbMovimentacoes'); if (!tb) return;
+    const termo = texto(document.getElementById('filtroMovimentacao')?.value || '');
+    const tipo = document.getElementById('filtroTipoMovimentacao')?.value || '';
+    const origem = document.getElementById('filtroOrigemMovimentacao')?.value || '';
+
+    let lista = cacheMovimentacoes.filter(m => {
+      if (tipo && m.tipo !== tipo) return false;
+      const origemMatch = [m.origemEntregue, m.origemDevolvido].includes(origem);
+      if (origem && !origemMatch) return false;
+      const baseTexto = `${m.tipo} ${m.colaborador} ${m.setor} ${m.base} ${m.motivo} ${m.patrimonioEntregue} ${m.patrimonioDevolvido} ${m.serialEntregue} ${m.serialDevolvido} ${m.responsavel}`;
+      return !termo || texto(baseTexto).includes(termo);
+    });
+
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);">Nenhuma movimentação encontrada.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = lista.map(m => {
+      const entregue = m.patrimonioEntregue ? `${origemBadge(m.patrimonioEntregue)}<br><b>${escapeHTML(m.patrimonioEntregue)}</b><br><span class="subnote">${escapeHTML(m.modeloEntregue || m.serialEntregue || '')}</span>` : '-';
+      const devolvido = m.patrimonioDevolvido ? `${origemBadge(m.patrimonioDevolvido)}<br><b>${escapeHTML(m.patrimonioDevolvido)}</b><br><span class="subnote">${escapeHTML(m.modeloDevolvido || m.serialDevolvido || '')}</span>` : '-';
+      const acessorios = [
+        m.acessoriosEntregues?.length ? `Entregue: ${m.acessoriosEntregues.join(', ')}` : '',
+        m.acessoriosDevolvidos?.length ? `Devolvido: ${m.acessoriosDevolvidos.join(', ')}` : ''
+      ].filter(Boolean).join('<br>') || '-';
+
+      return `<tr>
+        <td>${escapeHTML(m.data || '')}<br><span class="subnote">${escapeHTML(m.hora || '')}</span></td>
+        <td><span class="pill ${pillStatus(m.tipo)}">${escapeHTML(m.tipo)}</span></td>
+        <td><b>${escapeHTML(m.colaborador || '-')}</b><br><span class="subnote">${escapeHTML(m.setor || '')} • ${escapeHTML(m.base || '')}</span></td>
+        <td>${entregue}</td>
+        <td>${devolvido}</td>
+        <td><b>${escapeHTML(m.motivo || '-')}</b><br><span class="subnote">${escapeHTML(m.condicaoDevolvida || '')}</span></td>
+        <td><span class="subnote">${acessorios}</span></td>
+        <td>${escapeHTML(m.responsavel || '-')}</td>
+        <td><div class="actions"><button class="btn btn-sm" onclick="verMovimentacao('${m.id}')">Ver</button><button class="btn btn-danger btn-sm" onclick="excluirRegistro('movimentacoes_ti','${m.id}')">Excluir</button></div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function verMovimentacao(id) {
+    const m = cacheMovimentacoes.find(x => x.id === id); if (!m) return;
+    openModal('Detalhes da movimentação', `${m.tipo} - ${m.colaborador}`, `
+      <div class="grid grid-2">
+        <div><label>Colaborador</label><input value="${escapeHTML(m.colaborador || '')}" readonly></div>
+        <div><label>Motivo</label><input value="${escapeHTML(m.motivo || '')}" readonly></div>
+        <div><label>Patrimônio entregue</label><input value="${escapeHTML(m.patrimonioEntregue || '-')}" readonly></div>
+        <div><label>Patrimônio devolvido</label><input value="${escapeHTML(m.patrimonioDevolvido || '-')}" readonly></div>
+        <div><label>Acessórios entregues</label><textarea readonly>${escapeHTML((m.acessoriosEntregues || []).join(', ') || '-')}</textarea></div>
+        <div><label>Acessórios devolvidos</label><textarea readonly>${escapeHTML((m.acessoriosDevolvidos || []).join(', ') || '-')}</textarea></div>
+      </div>
+      <div style="margin-top:14px;"><label>Observação</label><textarea readonly>${escapeHTML(m.observacao || '')}</textarea></div>
+    `);
+  }
+
 
   // ====== ESTOQUE ======
   async function salvarEstoque() {
@@ -3612,6 +4115,8 @@ body[data-theme="light"] canvas {
     const chamados = cacheChamados.filter(filtrarPorPermissao);
     const demandas = cacheDemandas.filter(filtrarPorPermissao);
     const estoque = cacheEstoque;
+    const movimentacoes = cacheMovimentacoes || [];
+    const movimentacoes30 = movimentacoes.filter(m => diasEntre(m.data, hoje) <= 30);
 
     const chamados30 = chamados.filter(c => diasEntre(c.data, hoje) <= 30);
     const demandas30 = demandas.filter(d => diasEntre(d.data, hoje) <= 30);
@@ -3685,6 +4190,8 @@ body[data-theme="light"] canvas {
     setHtmlSafe('insightAlertas', alertas.join(''));
 
     const sugestoes = [];
+    const trocasLentidao = movimentacoes30.filter(m => m.tipo === 'Troca' && texto(m.motivo || '').includes('lentidao')).length;
+    if (trocasLentidao >= 2) sugestoes.push(insightItem('Trocas recorrentes por lentidão', `${trocasLentidao} troca(s) por lentidão nos últimos 30 dias. Sugestão: validar imagem padrão, disco, memória e perfil de uso antes de trocar equipamentos.`, 'warn'));
     if (topCategoriaQtd >= 3) sugestoes.push(insightItem('Criar ação preventiva por categoria', `${topCategoria} concentra ${topCategoriaQtd} chamado(s) nos últimos 30 dias (${pct(topCategoriaQtd, chamados30.length)}%). Crie checklist ou orientação padrão para reduzir recorrência.`, 'info'));
     if (topSetorQtd >= 3) sugestoes.push(insightItem('Atuar no setor com maior volume', `${topSetor} gerou ${topSetorQtd} chamado(s) recentes. Sugestão: treinamento rápido, comunicado ou revisão de processo para esse setor.`, 'info'));
     if (topDemandaQtd >= 2) sugestoes.push(insightItem('Padronizar demanda recorrente', `${topDemanda} aparece como demanda frequente. Sugestão: transformar em rotina/checklist semanal.`, 'info'));
@@ -3790,6 +4297,16 @@ body[data-theme="light"] canvas {
   }
   function exportarChamados() { exportarExcel('Chamados_TI_Omni', cacheChamados.filter(filtrarPorPermissao).map(c => ({Data:c.data, Hora:c.hora, Numero:c.numero, Tipo:c.tipo, Prioridade:c.prioridade, Status:c.status, Solicitante:c.solicitante, Setor:c.setor, Base:c.base, Categoria:c.categoria, Descricao:c.descricao, Solucao:c.solucao, Analista:c.analista}))); }
   function exportarDemandas() { exportarExcel('Demandas_TI_Omni', cacheDemandas.filter(filtrarPorPermissao).map(d => ({Data:d.data, Prevista:d.dataPrevista, Titulo:d.titulo, Tipo:d.tipo, Prioridade:d.prioridade, Status:d.status, Setor:d.setor, Base:d.base, Descricao:d.descricao, Responsavel:d.responsavel}))); }
+  function exportarMovimentacoes() {
+    exportarExcel('Movimentacoes_Equipamentos_Omni', cacheMovimentacoes.map(m => ({
+      Data:m.data, Hora:m.hora, Tipo:m.tipo, Colaborador:m.colaborador, Setor:m.setor, Base:m.base, Contato:m.contato,
+      Motivo:m.motivo, Termo:m.termoAssinado,
+      PatrimonioEntregue:m.patrimonioEntregue, OrigemEntregue:m.origemEntregue, SerialEntregue:m.serialEntregue, ModeloEntregue:m.modeloEntregue, AcessoriosEntregues:(m.acessoriosEntregues||[]).join(', '),
+      PatrimonioDevolvido:m.patrimonioDevolvido, OrigemDevolvido:m.origemDevolvido, SerialDevolvido:m.serialDevolvido, ModeloDevolvido:m.modeloDevolvido, AcessoriosDevolvidos:(m.acessoriosDevolvidos||[]).join(', '),
+      StatusAposDevolucao:m.statusAposDevolucao, Condicao:m.condicaoDevolvida, Responsavel:m.responsavel, Observacao:m.observacao
+    })));
+  }
+
   function exportarEstoque() { exportarExcel('Estoque_TI_Omni', cacheEstoque.map(e => ({Item:e.item, Categoria:e.categoria, Modelo:e.modelo, Quantidade:e.quantidade, Minimo:e.minimo, Patrimonio:e.patrimonio, Serial:e.serial, Status:e.status, Usuario:e.usuario, Setor:e.setor, Localizacao:e.localizacao, Observacao:e.observacao}))); }
 
   // ====== AÇÕES GERAIS ======
@@ -3797,6 +4314,7 @@ body[data-theme="light"] canvas {
   function quickNewChamado() { switchView('chamados'); setTimeout(() => document.getElementById('chNumero')?.focus(), 100); }
   function quickNewDemanda() { switchView('demandas'); setTimeout(() => document.getElementById('dmTitulo')?.focus(), 100); }
   function quickNewEstoque() { switchView('estoque'); setTimeout(() => document.getElementById('etItem')?.focus(), 100); }
+  function quickNewMovimentacao() { switchView('movimentacoes'); setTimeout(() => document.getElementById('mvColaborador')?.focus(), 100); }
 
   // ====== EFEITOS VISUAIS AERO TECH ======
   (function initAeroTechFx() {
