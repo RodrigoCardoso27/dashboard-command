@@ -3408,6 +3408,65 @@ input[list="listaPatrimoniosDisponiveis"] {
   }
 }
 
+
+/* ====== V5.5 IDIOMAS MAIS SUAVES + TRADUÇÃO GLOBAL ====== */
+.language-switch {
+  display: none !important;
+}
+
+.language-switch-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -8px 0 18px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--read-panel, #111F33) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--read-border, rgba(220,236,247,.22)) 80%, transparent);
+  box-shadow: none !important;
+}
+
+.language-switch-inline .language-label {
+  color: var(--read-muted, #C0CAD6);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+}
+
+.language-switch-inline button {
+  width: 31px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: .14s ease;
+}
+
+.language-switch-inline button:hover {
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 20%, transparent);
+}
+
+.language-switch-inline button.active {
+  background: color-mix(in srgb, var(--brand2) 14%, transparent);
+  border-color: color-mix(in srgb, var(--brand2) 28%, transparent);
+}
+
+.flag-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  filter: saturate(.96);
+}
+
+body[data-theme="light"] .language-switch-inline {
+  background: #F5F8FC;
+}
+
 </style>
 </head>
 <body>
@@ -3507,13 +3566,7 @@ input[list="listaPatrimoniosDisponiveis"] {
       <span class="heli-trace"></span>
     </div>
   </div>
-    <div id="languageSwitch" class="language-switch" aria-label="Selecionar idioma">
-    <button type="button" data-lang="pt" onclick="setLanguage('pt')" title="Português">🇧🇷</button>
-    <button type="button" data-lang="en" onclick="setLanguage('en')" title="English">🇺🇸</button>
-    <button type="button" data-lang="es" onclick="setLanguage('es')" title="Español">🇪🇸</button>
-  </div>
-
-<div id="toast-container"></div>
+  <div id="toast-container"></div>
 
   <!-- MODAL GENÉRICO -->
   <div id="modal" class="modal-overlay">
@@ -3574,6 +3627,13 @@ input[list="listaPatrimoniosDisponiveis"] {
       <div class="logo-box">
         <div class="brand-symbol omni-wing-mark" style="width:44px;height:44px;border-radius:14px;" aria-hidden="true"></div>
         <div class="brand-name">Omni TI<span>Service Desk Interno</span></div>
+      </div>
+
+      <div id="languageSwitch" class="language-switch-inline" aria-label="Selecionar idioma">
+        <span class="language-label">Idioma</span>
+        <button type="button" data-lang="pt" onclick="setLanguage('pt')" title="Português"><span class="flag-icon">🇧🇷</span></button>
+        <button type="button" data-lang="en" onclick="setLanguage('en')" title="English"><span class="flag-icon">🇺🇸</span></button>
+        <button type="button" data-lang="es" onclick="setLanguage('es')" title="Español"><span class="flag-icon">🇪🇸</span></button>
       </div>
 
       <div class="section-title">Operação</div>
@@ -4343,23 +4403,54 @@ input[list="listaPatrimoniosDisponiveis"] {
   // ====== IDIOMAS ======
   const I18N = {
     en: {
+      'Idioma': 'Language',
+      'Português': 'Portuguese',
+      'English': 'English',
+      'Español': 'Spanish',
+
       'Acesso ao painel': 'Panel access',
       'Controle pessoal de chamados, demandas diárias, estoque de TI e relatórios operacionais.': 'Personal control of tickets, daily tasks, IT inventory and operational reports.',
+      'Omni Service Desk TI': 'Omni Service Desk IT',
+      'Operações • Segurança • Suporte': 'Operations • Safety • Support',
+      'Omni Táxi Aéreo • TI': 'Omni Air Taxi • IT',
+      'Operação, suporte e controle em um só lugar.': 'Operation, support and control in one place.',
+      'Sistema visual inspirado na identidade institucional da Omni, com foco em segurança, qualidade, rastreabilidade e produtividade diária.': 'Visual system inspired by Omni corporate identity, focused on safety, quality, traceability and daily productivity.',
+      'Chamados': 'Tickets',
+      'Demandas': 'Tasks',
+      'Estoque': 'Inventory',
+      'Incidentes e solicitações': 'Incidents and requests',
+      'Rotinas e atividades': 'Routines and activities',
+      'Patrimônio e controle': 'Assets and control',
+
       'Usuário': 'User',
       'Senha': 'Password',
       'Digite sua senha': 'Enter your password',
       'Entrar no sistema': 'Sign in',
       'Esqueci minha senha': 'Forgot my password',
+      'Firebase verificando...': 'Firebase checking...',
       'Operação': 'Operation',
+      'Gestão': 'Management',
       'Dashboard': 'Dashboard',
-      'Chamados / Atendimentos': 'Tickets / Service records',
-      'Demandas Diárias': 'Daily tasks',
+      'Chamados / Atendimentos': 'Tickets / Service Records',
+      'Demandas Diárias': 'Daily Tasks',
       'Estoque TI': 'IT Inventory',
       'Movimentações': 'Movements',
-      'Gestão': 'Management',
       'Relatórios': 'Reports',
       'Usuários': 'Users',
       'Configurações': 'Settings',
+      'Encerrar sessão': 'Sign out',
+      'Service Desk Interno': 'Internal Service Desk',
+      'Suporte Técnico Pleno': 'Technical Support',
+
+      'Painel Operacional de Suporte Técnico': 'Technical Support Operations Panel',
+      'Visão geral dos chamados, demandas diárias e estoque de TI.': 'Overview of tickets, daily tasks and IT inventory.',
+      'Operação monitorada em tempo real': 'Real-time monitored operation',
+      'Chamados, demandas e ativos no mesmo painel': 'Tickets, tasks and assets in one panel',
+      'Visual corporativo inspirado na identidade Omni': 'Corporate visual inspired by Omni identity',
+      'Novo Chamado': 'New Ticket',
+      'Nova Demanda': 'New Task',
+      'Novo Ativo': 'New Asset',
+
       'Cadastrar item de estoque / ativo': 'Register inventory item / asset',
       'Controle de notebooks, monitores, periféricos, celulares, chips e demais itens de TI.': 'Control notebooks, monitors, peripherals, phones, SIM cards and other IT items.',
       'Item': 'Item',
@@ -4376,11 +4467,25 @@ input[list="listaPatrimoniosDisponiveis"] {
       'Observação': 'Note',
       'Salvar item / ativo': 'Save item / asset',
       'Inventário de TI': 'IT Inventory',
+      'Carregando itens...': 'Loading items...',
+      'Todos status': 'All statuses',
       'Atualizar': 'Refresh',
       'Editar': 'Edit',
       'Excluir': 'Delete',
+      'Ação': 'Action',
+      'Disponível': 'Available',
+      'Em uso': 'In use',
+      'Emprestado': 'Loaned',
+      'Manutenção': 'Maintenance',
+      'Baixado': 'Retired',
+
       'Movimentações de Equipamentos': 'Equipment Movements',
+      'Controle empréstimos, trocas e devoluções de notebooks OMNI e ALG/APNETWORKS com histórico automático.': 'Control loans, exchanges and returns of OMNI and ALG/APNETWORKS notebooks with automatic history.',
+      'Nova movimentação': 'New movement',
       'Tipo de movimentação': 'Movement type',
+      'Empréstimo': 'Loan',
+      'Troca': 'Exchange',
+      'Devolução': 'Return',
       'Colaborador': 'Employee',
       'Setor': 'Department',
       'Base / Unidade': 'Base / Unit',
@@ -4388,53 +4493,159 @@ input[list="listaPatrimoniosDisponiveis"] {
       'Motivo': 'Reason',
       'Motivo detalhado / outro': 'Detailed reason / other',
       'Termo assinado?': 'Signed term?',
+      'Não informado': 'Not informed',
+      'Sim': 'Yes',
+      'Não': 'No',
+      'Não se aplica': 'Not applicable',
       'Equipamento entregue ao colaborador': 'Equipment delivered to employee',
       'Equipamento devolvido pelo colaborador': 'Equipment returned by employee',
+      'Patrimônio entregue': 'Delivered asset tag',
+      'Patrimônio devolvido': 'Returned asset tag',
+      'Serial entregue': 'Delivered serial',
+      'Serial devolvido': 'Returned serial',
+      'Modelo entregue': 'Delivered model',
+      'Modelo devolvido': 'Returned model',
+      'Origem': 'Origin',
       'Acessórios entregues': 'Delivered accessories',
       'Acessórios devolvidos': 'Returned accessories',
       'Condição da máquina devolvida': 'Returned device condition',
+      'Status após devolução': 'Status after return',
       'Data prevista de devolução': 'Expected return date',
       'Responsável': 'Responsible',
       'Salvar movimentação e atualizar estoque': 'Save movement and update inventory',
       'Histórico de movimentações': 'Movement history',
+      'Busque por colaborador, patrimônio, serial, motivo, OMNI, ALG ou APNETWORKS.': 'Search by employee, asset tag, serial, reason, OMNI, ALG or APNETWORKS.',
+      'Todos tipos': 'All types',
+      'Todas origens': 'All origins',
+      'Não identificado': 'Unidentified',
+      'Data': 'Date',
+      'Tipo': 'Type',
+      'Entregue': 'Delivered',
+      'Devolvido': 'Returned',
+      'Acessórios': 'Accessories',
+
       'Omni Insights': 'Omni Insights',
       'IA de Melhoria Contínua': 'Continuous Improvement AI',
-      'Configurações do Sistema': 'System Settings',
-      'Tema do painel': 'Panel theme',
-      'Tema escuro': 'Dark theme',
-      'Tema claro': 'Light theme',
-      'Cursor do colaborador': 'Employee cursor',
-      'Português': 'Portuguese',
-      'Inglês': 'English',
-      'Espanhol': 'Spanish',
-      'Troca de senha obrigatória': 'Mandatory password change',
-      'Nova senha': 'New password',
-      'Confirmar nova senha': 'Confirm new password',
-      'Salvar nova senha e entrar': 'Save new password and enter',
+      'Análise automática dos registros, gargalos, pendências e oportunidades de melhoria.': 'Automatic analysis of records, bottlenecks, pending items and improvement opportunities.',
+      'Alertas inteligentes': 'Smart alerts',
+      'Melhorias sugeridas': 'Suggested improvements',
+      'Ações recomendadas': 'Recommended actions',
+      'Principais gargalos': 'Main bottlenecks',
+      'Qualidade dos registros': 'Record quality',
+
+      'Relatórios e exportações': 'Reports and exports',
+      'Exporte suas bases para Excel ou consulte indicadores rápidos.': 'Export your databases to Excel or check quick indicators.',
+      'Exportar chamados': 'Export tickets',
+      'Exportar demandas': 'Export tasks',
+      'Exportar estoque': 'Export inventory',
+      'Resumo por analista': 'Summary by analyst',
+      'Resumo de estoque': 'Inventory summary',
+      'Analista': 'Analyst',
+      'Resolvidos': 'Resolved',
+      'Quantidade': 'Quantity',
+
+      'Gestão de usuários': 'User management',
+      'Crie analistas e defina perfil de acesso.': 'Create analysts and set access profiles.',
+      'Nome completo': 'Full name',
+      'Login': 'Login',
+      'Senha provisória': 'Temporary password',
+      'Perfil': 'Profile',
+      'E-mail': 'Email',
+      'Telefone / WhatsApp': 'Phone / WhatsApp',
+      'Segurança': 'Security',
+      'Exigir troca de senha no primeiro acesso': 'Require password change on first access',
+      'Salvar usuário': 'Save user',
+      'Usuários cadastrados': 'Registered users',
+      'Lista sincronizada com o Firebase.': 'List synced with Firebase.',
+      'Sincronizar lista': 'Sync list',
+      'Nome': 'Name',
+      'Contato': 'Contact',
       'Resetar senha': 'Reset password',
       'Forçar troca': 'Force change',
       'Troca pendente': 'Change pending',
       'Ativo': 'Active',
-      'Inativo': 'Inactive'
+      'Inativo': 'Inactive',
+      'Protegido': 'Protected',
+
+      'Configurações do Sistema': 'System Settings',
+      'Ajustes visuais e ações de manutenção.': 'Visual preferences and maintenance actions.',
+      'Preferências visuais salvas individualmente por usuário conectado.': 'Visual preferences saved individually per connected user.',
+      'Tema do painel': 'Panel theme',
+      'Escolha o visual geral do sistema.': 'Choose the general system appearance.',
+      'Tema escuro': 'Dark theme',
+      'Tema claro': 'Light theme',
+      'Cursor do colaborador': 'Employee cursor',
+      'A escolha fica salva na conta conectada.': 'The choice is saved to the connected account.',
+      'Seta Omni': 'Omni Arrow',
+      'Padrão do sistema': 'System default',
+      'Avião Lite': 'Lite Plane',
+      'Voo executivo': 'Executive flight',
+      'Padrão Windows': 'Windows Default',
+      'Cursor normal': 'Normal cursor',
+      'Manutenção administrativa': 'Administrative maintenance',
+      'Use apenas em caso de perda do usuário administrador padrão.': 'Use only if the default administrator user is lost.',
+      'Recriar admin padrão': 'Recreate default admin',
+
+      'Troca de senha obrigatória': 'Mandatory password change',
+      'Por segurança, crie uma nova senha para continuar.': 'For security, create a new password to continue.',
+      'Primeiro acesso ou senha provisória detectada.': 'First access or temporary password detected.',
+      'Você precisa cadastrar uma nova senha forte antes de usar o painel.': 'You must set a new strong password before using the panel.',
+      'Nova senha': 'New password',
+      'Confirmar nova senha': 'Confirm new password',
+      'Salvar nova senha e entrar': 'Save new password and enter',
+      'Recuperação de senha': 'Password recovery',
+      'Solicite ao administrador a redefinição da sua senha.': 'Ask the administrator to reset your password.',
+      'Fechar': 'Close'
     },
     es: {
+      'Idioma': 'Idioma',
+      'Português': 'Portugués',
+      'English': 'Inglés',
+      'Español': 'Español',
+
       'Acesso ao painel': 'Acceso al panel',
       'Controle pessoal de chamados, demandas diárias, estoque de TI e relatórios operacionais.': 'Control personal de tickets, tareas diarias, inventario de TI e informes operativos.',
+      'Omni Service Desk TI': 'Omni Service Desk TI',
+      'Operações • Segurança • Suporte': 'Operaciones • Seguridad • Soporte',
+      'Omni Táxi Aéreo • TI': 'Omni Taxi Aéreo • TI',
+      'Operação, suporte e controle em um só lugar.': 'Operación, soporte y control en un solo lugar.',
+      'Sistema visual inspirado na identidade institucional da Omni, com foco em segurança, qualidade, rastreabilidade e produtividade diária.': 'Sistema visual inspirado en la identidad institucional de Omni, con foco en seguridad, calidad, trazabilidad y productividad diaria.',
+      'Chamados': 'Tickets',
+      'Demandas': 'Tareas',
+      'Estoque': 'Inventario',
+      'Incidentes e solicitações': 'Incidentes y solicitudes',
+      'Rotinas e atividades': 'Rutinas y actividades',
+      'Patrimônio e controle': 'Patrimonio y control',
+
       'Usuário': 'Usuario',
       'Senha': 'Contraseña',
       'Digite sua senha': 'Ingrese su contraseña',
       'Entrar no sistema': 'Entrar al sistema',
       'Esqueci minha senha': 'Olvidé mi contraseña',
+      'Firebase verificando...': 'Firebase verificando...',
       'Operação': 'Operación',
+      'Gestão': 'Gestión',
       'Dashboard': 'Panel',
       'Chamados / Atendimentos': 'Tickets / Atenciones',
-      'Demandas Diárias': 'Tareas diarias',
+      'Demandas Diárias': 'Tareas Diarias',
       'Estoque TI': 'Inventario TI',
       'Movimentações': 'Movimientos',
-      'Gestão': 'Gestión',
       'Relatórios': 'Informes',
       'Usuários': 'Usuarios',
       'Configurações': 'Configuración',
+      'Encerrar sessão': 'Cerrar sesión',
+      'Service Desk Interno': 'Service Desk Interno',
+      'Suporte Técnico Pleno': 'Soporte Técnico',
+
+      'Painel Operacional de Suporte Técnico': 'Panel Operativo de Soporte Técnico',
+      'Visão geral dos chamados, demandas diárias e estoque de TI.': 'Vista general de tickets, tareas diarias e inventario de TI.',
+      'Operação monitorada em tempo real': 'Operación monitoreada en tiempo real',
+      'Chamados, demandas e ativos no mesmo painel': 'Tickets, tareas y activos en el mismo panel',
+      'Visual corporativo inspirado na identidade Omni': 'Visual corporativo inspirado en la identidad Omni',
+      'Novo Chamado': 'Nuevo Ticket',
+      'Nova Demanda': 'Nueva Tarea',
+      'Novo Ativo': 'Nuevo Activo',
+
       'Cadastrar item de estoque / ativo': 'Registrar ítem de inventario / activo',
       'Controle de notebooks, monitores, periféricos, celulares, chips e demais itens de TI.': 'Control de notebooks, monitores, periféricos, celulares, chips y otros ítems de TI.',
       'Item': 'Ítem',
@@ -4451,11 +4662,25 @@ input[list="listaPatrimoniosDisponiveis"] {
       'Observação': 'Observación',
       'Salvar item / ativo': 'Guardar ítem / activo',
       'Inventário de TI': 'Inventario de TI',
+      'Carregando itens...': 'Cargando ítems...',
+      'Todos status': 'Todos los estados',
       'Atualizar': 'Actualizar',
       'Editar': 'Editar',
       'Excluir': 'Eliminar',
+      'Ação': 'Acción',
+      'Disponível': 'Disponible',
+      'Em uso': 'En uso',
+      'Emprestado': 'Prestado',
+      'Manutenção': 'Mantenimiento',
+      'Baixado': 'Dado de baja',
+
       'Movimentações de Equipamentos': 'Movimientos de Equipos',
+      'Controle empréstimos, trocas e devoluções de notebooks OMNI e ALG/APNETWORKS com histórico automático.': 'Control de préstamos, cambios y devoluciones de notebooks OMNI y ALG/APNETWORKS con historial automático.',
+      'Nova movimentação': 'Nuevo movimiento',
       'Tipo de movimentação': 'Tipo de movimiento',
+      'Empréstimo': 'Préstamo',
+      'Troca': 'Cambio',
+      'Devolução': 'Devolución',
       'Colaborador': 'Colaborador',
       'Setor': 'Sector',
       'Base / Unidade': 'Base / Unidad',
@@ -4463,34 +4688,108 @@ input[list="listaPatrimoniosDisponiveis"] {
       'Motivo': 'Motivo',
       'Motivo detalhado / outro': 'Motivo detallado / otro',
       'Termo assinado?': '¿Documento firmado?',
+      'Não informado': 'No informado',
+      'Sim': 'Sí',
+      'Não': 'No',
+      'Não se aplica': 'No aplica',
       'Equipamento entregue ao colaborador': 'Equipo entregado al colaborador',
       'Equipamento devolvido pelo colaborador': 'Equipo devuelto por el colaborador',
+      'Patrimônio entregue': 'Patrimonio entregado',
+      'Patrimônio devolvido': 'Patrimonio devuelto',
+      'Serial entregue': 'Serial entregado',
+      'Serial devolvido': 'Serial devuelto',
+      'Modelo entregue': 'Modelo entregado',
+      'Modelo devolvido': 'Modelo devuelto',
+      'Origem': 'Origen',
       'Acessórios entregues': 'Accesorios entregados',
       'Acessórios devolvidos': 'Accesorios devueltos',
       'Condição da máquina devolvida': 'Condición del equipo devuelto',
+      'Status após devolução': 'Estado después de devolución',
       'Data prevista de devolução': 'Fecha prevista de devolución',
       'Responsável': 'Responsable',
       'Salvar movimentação e atualizar estoque': 'Guardar movimiento y actualizar inventario',
       'Histórico de movimentações': 'Historial de movimientos',
+      'Busque por colaborador, patrimônio, serial, motivo, OMNI, ALG ou APNETWORKS.': 'Busque por colaborador, patrimonio, serial, motivo, OMNI, ALG o APNETWORKS.',
+      'Todos tipos': 'Todos los tipos',
+      'Todas origens': 'Todos los orígenes',
+      'Não identificado': 'No identificado',
+      'Data': 'Fecha',
+      'Tipo': 'Tipo',
+      'Entregue': 'Entregado',
+      'Devolvido': 'Devuelto',
+      'Acessórios': 'Accesorios',
+
       'Omni Insights': 'Omni Insights',
       'IA de Melhoria Contínua': 'IA de Mejora Continua',
-      'Configurações do Sistema': 'Configuración del Sistema',
-      'Tema do painel': 'Tema del panel',
-      'Tema escuro': 'Tema oscuro',
-      'Tema claro': 'Tema claro',
-      'Cursor do colaborador': 'Cursor del colaborador',
-      'Português': 'Portugués',
-      'Inglês': 'Inglés',
-      'Espanhol': 'Español',
-      'Troca de senha obrigatória': 'Cambio de contraseña obligatorio',
-      'Nova senha': 'Nueva contraseña',
-      'Confirmar nova senha': 'Confirmar nueva contraseña',
-      'Salvar nova senha e entrar': 'Guardar nueva contraseña y entrar',
+      'Análise automática dos registros, gargalos, pendências e oportunidades de melhoria.': 'Análisis automático de registros, cuellos de botella, pendientes y oportunidades de mejora.',
+      'Alertas inteligentes': 'Alertas inteligentes',
+      'Melhorias sugeridas': 'Mejoras sugeridas',
+      'Ações recomendadas': 'Acciones recomendadas',
+      'Principais gargalos': 'Principales cuellos de botella',
+      'Qualidade dos registros': 'Calidad de los registros',
+
+      'Relatórios e exportações': 'Informes y exportaciones',
+      'Exporte suas bases para Excel ou consulte indicadores rápidos.': 'Exporte sus bases a Excel o consulte indicadores rápidos.',
+      'Exportar chamados': 'Exportar tickets',
+      'Exportar demandas': 'Exportar tareas',
+      'Exportar estoque': 'Exportar inventario',
+      'Resumo por analista': 'Resumen por analista',
+      'Resumo de estoque': 'Resumen de inventario',
+      'Analista': 'Analista',
+      'Resolvidos': 'Resueltos',
+
+      'Gestão de usuários': 'Gestión de usuarios',
+      'Crie analistas e defina perfil de acesso.': 'Cree analistas y defina perfil de acceso.',
+      'Nome completo': 'Nombre completo',
+      'Login': 'Login',
+      'Senha provisória': 'Contraseña temporal',
+      'Perfil': 'Perfil',
+      'E-mail': 'Correo',
+      'Telefone / WhatsApp': 'Teléfono / WhatsApp',
+      'Segurança': 'Seguridad',
+      'Exigir troca de senha no primeiro acesso': 'Exigir cambio de contraseña en el primer acceso',
+      'Salvar usuário': 'Guardar usuario',
+      'Usuários cadastrados': 'Usuarios registrados',
+      'Lista sincronizada com o Firebase.': 'Lista sincronizada con Firebase.',
+      'Sincronizar lista': 'Sincronizar lista',
+      'Nome': 'Nombre',
+      'Contato': 'Contacto',
       'Resetar senha': 'Restablecer contraseña',
       'Forçar troca': 'Forzar cambio',
       'Troca pendente': 'Cambio pendiente',
       'Ativo': 'Activo',
-      'Inativo': 'Inactivo'
+      'Inativo': 'Inactivo',
+      'Protegido': 'Protegido',
+
+      'Configurações do Sistema': 'Configuración del Sistema',
+      'Ajustes visuais e ações de manutenção.': 'Ajustes visuales y acciones de mantenimiento.',
+      'Preferências visuais salvas individualmente por usuário conectado.': 'Preferencias visuales guardadas individualmente por usuario conectado.',
+      'Tema do painel': 'Tema del panel',
+      'Escolha o visual geral do sistema.': 'Elija el visual general del sistema.',
+      'Tema escuro': 'Tema oscuro',
+      'Tema claro': 'Tema claro',
+      'Cursor do colaborador': 'Cursor del colaborador',
+      'A escolha fica salva na conta conectada.': 'La elección queda guardada en la cuenta conectada.',
+      'Seta Omni': 'Flecha Omni',
+      'Padrão do sistema': 'Predeterminado del sistema',
+      'Avião Lite': 'Avión Lite',
+      'Voo executivo': 'Vuelo ejecutivo',
+      'Padrão Windows': 'Predeterminado Windows',
+      'Cursor normal': 'Cursor normal',
+      'Manutenção administrativa': 'Mantenimiento administrativo',
+      'Use apenas em caso de perda do usuário administrador padrão.': 'Use solo en caso de pérdida del usuario administrador predeterminado.',
+      'Recriar admin padrão': 'Recrear admin predeterminado',
+
+      'Troca de senha obrigatória': 'Cambio de contraseña obligatorio',
+      'Por segurança, crie uma nova senha para continuar.': 'Por seguridad, cree una nueva contraseña para continuar.',
+      'Primeiro acesso ou senha provisória detectada.': 'Primer acceso o contraseña temporal detectada.',
+      'Você precisa cadastrar uma nova senha forte antes de usar o painel.': 'Debe registrar una nueva contraseña fuerte antes de usar el panel.',
+      'Nova senha': 'Nueva contraseña',
+      'Confirmar nova senha': 'Confirmar nueva contraseña',
+      'Salvar nova senha e entrar': 'Guardar nueva contraseña y entrar',
+      'Recuperação de senha': 'Recuperación de contraseña',
+      'Solicite ao administrador a redefinição da sua senha.': 'Solicite al administrador el restablecimiento de su contraseña.',
+      'Fechar': 'Cerrar'
     }
   };
 
@@ -4506,7 +4805,9 @@ input[list="listaPatrimoniosDisponiveis"] {
       'Setor / área': 'Department / area',
       'Descreva quando necessário': 'Describe when necessary',
       'Serial number': 'Serial number',
-      'Marca/modelo': 'Brand/model'
+      'Marca/modelo': 'Brand/model',
+      'OMNI0000 ou ALG0000': 'OMNI0000 or ALG0000',
+      'email@empresa.com': 'email@company.com'
     },
     es: {
       'Ex: admin': 'Ej: admin',
@@ -4519,7 +4820,9 @@ input[list="listaPatrimoniosDisponiveis"] {
       'Setor / área': 'Sector / área',
       'Descreva quando necessário': 'Describa cuando sea necesario',
       'Serial number': 'Número de serie',
-      'Marca/modelo': 'Marca/modelo'
+      'Marca/modelo': 'Marca/modelo',
+      'OMNI0000 ou ALG0000': 'OMNI0000 o ALG0000',
+      'email@empresa.com': 'correo@empresa.com'
     }
   };
 
@@ -4527,10 +4830,30 @@ input[list="listaPatrimoniosDisponiveis"] {
     return localStorage.getItem('omniLangV1') || 'pt';
   }
 
+  function splitEmojiPrefix(value) {
+    const str = String(value || '');
+    const m = str.match(/^([\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F\s]+)(.*)$/u);
+    return m ? [m[1], m[2].trim()] : ['', str.trim()];
+  }
+
   function translateString(value, lang) {
     if (!value || lang === 'pt') return value;
-    const clean = String(value).trim();
-    return I18N[lang]?.[clean] || value;
+    const raw = String(value);
+    const clean = raw.trim().replace(/\s+/g, ' ');
+    if (I18N[lang]?.[clean]) return raw.replace(clean, I18N[lang][clean]);
+
+    const [prefix, rest] = splitEmojiPrefix(clean);
+    if (rest && I18N[lang]?.[rest]) return raw.replace(clean, `${prefix}${I18N[lang][rest]}`.trim());
+
+    return value;
+  }
+
+  function shouldSkipI18nNode(parent) {
+    if (!parent) return true;
+    const tag = parent.tagName;
+    if (['SCRIPT','STYLE','TEXTAREA','INPUT','OPTION','CODE'].includes(tag)) return true;
+    if (parent.closest && parent.closest('[data-no-i18n="true"]')) return true;
+    return false;
   }
 
   function applyLanguage(lang = getLanguage()) {
@@ -4538,12 +4861,23 @@ input[list="listaPatrimoniosDisponiveis"] {
     document.documentElement.lang = lang === 'pt' ? 'pt-br' : lang;
     document.querySelectorAll('#languageSwitch button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
 
-    document.querySelectorAll('body *:not(script):not(style):not(input):not(textarea):not(option)').forEach(el => {
-      if (el.children.length) return;
-      const raw = el.dataset.i18nOriginal || el.textContent.trim();
-      if (!raw) return;
-      if (!el.dataset.i18nOriginal) el.dataset.i18nOriginal = raw;
-      el.textContent = translateString(el.dataset.i18nOriginal, lang);
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (shouldSkipI18nNode(node.parentElement)) return NodeFilter.FILTER_REJECT;
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(node => {
+      if (!node.parentElement.dataset.i18nOriginalText) {
+        node.parentElement.dataset.i18nOriginalText = node.nodeValue;
+      }
+      const original = node.parentElement.dataset.i18nOriginalText;
+      node.nodeValue = translateString(original, lang);
     });
 
     document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
@@ -4551,6 +4885,13 @@ input[list="listaPatrimoniosDisponiveis"] {
       if (!raw) return;
       if (!el.dataset.i18nPlaceholderOriginal) el.dataset.i18nPlaceholderOriginal = raw;
       el.setAttribute('placeholder', lang === 'pt' ? el.dataset.i18nPlaceholderOriginal : (PLACEHOLDER_I18N[lang]?.[el.dataset.i18nPlaceholderOriginal] || el.dataset.i18nPlaceholderOriginal));
+    });
+
+    document.querySelectorAll('button[title]').forEach(el => {
+      const raw = el.dataset.i18nTitleOriginal || el.getAttribute('title');
+      if (!raw) return;
+      if (!el.dataset.i18nTitleOriginal) el.dataset.i18nTitleOriginal = raw;
+      el.setAttribute('title', translateString(el.dataset.i18nTitleOriginal, lang));
     });
   }
 
@@ -4560,13 +4901,15 @@ input[list="listaPatrimoniosDisponiveis"] {
   }
 
   let omniI18nObserverStarted = false;
+  let omniI18nTimer = null;
   function startI18nObserver() {
     if (omniI18nObserverStarted) return;
     omniI18nObserverStarted = true;
     const obs = new MutationObserver(() => {
-      if (getLanguage() !== 'pt') setTimeout(() => applyLanguage(getLanguage()), 0);
+      clearTimeout(omniI18nTimer);
+      omniI18nTimer = setTimeout(() => applyLanguage(getLanguage()), 40);
     });
-    obs.observe(document.body, { childList: true, subtree: true });
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
 
 
