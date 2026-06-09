@@ -3542,6 +3542,140 @@ body[data-theme="light"] .language-switch-hero {
   }
 }
 
+
+/* ====== V5.7 BANDEIRAS REAIS EM CSS ======
+   Corrige Windows/Chrome mostrando BR, US e ES no lugar das bandeiras emoji.
+*/
+.language-switch-hero {
+  padding: 7px 10px !important;
+  gap: 9px !important;
+}
+
+.language-switch-hero button {
+  width: 38px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+}
+
+.flag-icon {
+  display: none !important;
+}
+
+.flag-css {
+  width: 24px;
+  height: 16px;
+  display: block;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.28), 0 2px 5px rgba(0,0,0,.22);
+  background: #ddd;
+}
+
+/* Brasil */
+.flag-br {
+  background: #159447;
+}
+
+.flag-br::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 14px;
+  height: 12px;
+  background: #F6D04D;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.flag-br::after {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #173C8C;
+}
+
+/* EUA */
+.flag-us {
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #B22234 0 1.23px,
+      #B22234 1.23px 2.46px,
+      #FFFFFF 2.46px 3.69px,
+      #FFFFFF 3.69px 4.92px
+    );
+}
+
+.flag-us::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 11px;
+  height: 8.8px;
+  background: #3C3B6E;
+}
+
+.flag-us::after {
+  content: '✦';
+  position: absolute;
+  left: 2px;
+  top: 0px;
+  color: #fff;
+  font-size: 5px;
+  line-height: 1;
+  text-shadow:
+    4px 0 0 #fff,
+    8px 0 0 #fff,
+    0 3px 0 #fff,
+    4px 3px 0 #fff,
+    8px 3px 0 #fff;
+}
+
+/* Espanha */
+.flag-es {
+  background: linear-gradient(to bottom, #AA151B 0 25%, #F1BF00 25% 75%, #AA151B 75% 100%);
+}
+
+.flag-es::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 3px;
+  height: 6px;
+  border-radius: 1px;
+  background: #C60B1E;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.35);
+}
+
+.flag-es::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  width: 2px;
+  height: 4px;
+  border-radius: 1px;
+  background: #F8E08E;
+}
+
+.language-switch-hero button.active .flag-css {
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.42),
+    0 0 0 3px color-mix(in srgb, var(--brand2) 28%, transparent),
+    0 4px 10px rgba(0,0,0,.24);
+}
+
+.language-switch-hero button:hover .flag-css {
+  transform: translateY(-1px);
+}
+
 </style>
 </head>
 <body>
@@ -3728,9 +3862,15 @@ body[data-theme="light"] .language-switch-hero {
     <main class="main">
       <div class="topbar hero-panel">
         <div id="languageSwitch" class="language-switch-hero" aria-label="Selecionar idioma">
-          <button type="button" data-lang="pt" onclick="setLanguage('pt')" title="Português"><span class="flag-icon">🇧🇷</span></button>
-          <button type="button" data-lang="en" onclick="setLanguage('en')" title="English"><span class="flag-icon">🇺🇸</span></button>
-          <button type="button" data-lang="es" onclick="setLanguage('es')" title="Español"><span class="flag-icon">🇪🇸</span></button>
+          <button type="button" data-lang="pt" onclick="setLanguage('pt')" title="Português" aria-label="Português">
+            <span class="flag-css flag-br" aria-hidden="true"></span>
+          </button>
+          <button type="button" data-lang="en" onclick="setLanguage('en')" title="English" aria-label="English">
+            <span class="flag-css flag-us" aria-hidden="true"></span>
+          </button>
+          <button type="button" data-lang="es" onclick="setLanguage('es')" title="Español" aria-label="Español">
+            <span class="flag-css flag-es" aria-hidden="true"></span>
+          </button>
         </div>
         <div class="hero-copy">
           <div class="hero-kicker-row">
