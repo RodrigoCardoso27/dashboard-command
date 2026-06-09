@@ -2508,6 +2508,411 @@ body[data-theme="light"] .kpi-card:hover {
   }
 }
 
+
+/* ====== V5.0 TEMA CORPORATIVO OMNI BRASIL ======
+   Base visual: azul institucional, branco, cinza técnico, aviação offshore/onshore,
+   segurança operacional, QSMS e linhas de voo mais discretas.
+*/
+:root,
+body[data-theme="dark"] {
+  --omni-blue: #071B8C;
+  --omni-blue-2: #102AA8;
+  --omni-cyan: #0678AE;
+  --omni-sky: #DCECF7;
+  --omni-ink: #111827;
+  --omni-navy: #071426;
+  --omni-gray: #6F7A86;
+  --omni-silver: #E6ECF2;
+  --omni-white: #FFFFFF;
+
+  --bg: #071426;
+  --bg2: #0B1F36;
+  --panel: rgba(255,255,255,.082);
+  --panel2: rgba(255,255,255,.125);
+  --text: #F7FAFC;
+  --muted: #B7C2CF;
+  --line: rgba(220,236,247,.16);
+  --brand: #0A72B8;
+  --brand2: #071B8C;
+  --success: #15966D;
+  --warning: #D99216;
+  --danger: #D84848;
+  --purple: #4059B8;
+  --shadow: 0 18px 54px rgba(3, 10, 24, .36);
+
+  --app-bg-1: #06111F;
+  --app-bg-2: #0A1D33;
+  --surface: rgba(255,255,255,.078);
+  --surface-strong: rgba(255,255,255,.12);
+  --surface-soft: rgba(255,255,255,.046);
+  --field-bg: rgba(255,255,255,.055);
+  --field-focus: rgba(255,255,255,.088);
+  --table-hover: rgba(10,114,184,.075);
+  --sidebar-bg: rgba(6,18,34,.84);
+  --glass-border: rgba(220,236,247,.17);
+  --chip-bg: rgba(255,255,255,.06);
+}
+
+body[data-theme="light"] {
+  --bg: #F3F7FB;
+  --bg2: #FFFFFF;
+  --panel: rgba(255,255,255,.90);
+  --panel2: rgba(255,255,255,.98);
+  --text: #132033;
+  --muted: #5E6D7E;
+  --line: rgba(7,27,140,.12);
+  --brand: #0678AE;
+  --brand2: #071B8C;
+  --success: #13795B;
+  --warning: #B97105;
+  --danger: #C23A3A;
+  --purple: #071B8C;
+  --shadow: 0 16px 44px rgba(19, 32, 51, .10);
+
+  --app-bg-1: #F3F7FB;
+  --app-bg-2: #FFFFFF;
+  --surface: rgba(255,255,255,.84);
+  --surface-strong: rgba(255,255,255,.98);
+  --surface-soft: rgba(246,250,253,.88);
+  --field-bg: rgba(255,255,255,.92);
+  --field-focus: #FFFFFF;
+  --table-hover: rgba(7,27,140,.045);
+  --sidebar-bg: rgba(255,255,255,.91);
+  --glass-border: rgba(7,27,140,.12);
+  --chip-bg: rgba(255,255,255,.78);
+}
+
+body {
+  background:
+    radial-gradient(900px 460px at 95% 0%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 64%),
+    radial-gradient(720px 420px at 0% 100%, color-mix(in srgb, var(--brand2) 14%, transparent), transparent 68%),
+    linear-gradient(135deg, var(--app-bg-1), var(--app-bg-2)) !important;
+}
+
+/* Marca/wing Omni simplificada */
+.omni-wing-mark {
+  position: relative !important;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--brand2), var(--brand)) !important;
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--brand2) 22%, transparent) !important;
+}
+
+.omni-wing-mark::before,
+.omni-wing-mark::after {
+  content: '' !important;
+  position: absolute !important;
+  display: block !important;
+  background: #fff !important;
+  transform: skewX(-24deg);
+  border-radius: 999px 8px 8px 999px;
+  opacity: .97;
+}
+
+.omni-wing-mark::before {
+  width: 28px;
+  height: 8px;
+  left: 10px;
+  top: 15px;
+  box-shadow: -6px 9px 0 rgba(255,255,255,.92), -12px 18px 0 rgba(255,255,255,.84);
+}
+
+.omni-wing-mark::after {
+  width: 12px;
+  height: 8px;
+  right: 7px;
+  top: 15px;
+  opacity: .30;
+}
+
+/* Estrutura mais próxima de portal corporativo: branco/azul, menos neon */
+.sidebar {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--sidebar-bg) 96%, transparent), color-mix(in srgb, var(--sidebar-bg) 76%, transparent)) !important;
+  border-right: 1px solid var(--line) !important;
+}
+
+body[data-theme="light"] .sidebar {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(246,250,253,.92)) !important;
+  box-shadow: 12px 0 34px rgba(7,27,140,.055) !important;
+}
+
+.logo-box,
+.user-box,
+.config-panel,
+.login-card,
+.air-card,
+.card,
+.kpi-card,
+.topbar {
+  background:
+    linear-gradient(145deg, var(--surface-strong), var(--surface-soft)) !important;
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+body[data-theme="light"] .logo-box,
+body[data-theme="light"] .user-box,
+body[data-theme="light"] .config-panel,
+body[data-theme="light"] .login-card,
+body[data-theme="light"] .air-card,
+body[data-theme="light"] .card,
+body[data-theme="light"] .kpi-card,
+body[data-theme="light"] .topbar {
+  box-shadow: 0 14px 34px rgba(7,27,140,.07), inset 0 1px 0 rgba(255,255,255,.90) !important;
+}
+
+/* Topo com inspiração no site: área limpa, azul institucional, linhas aéreas discretas */
+.topbar.hero-panel {
+  background:
+    radial-gradient(500px 260px at 92% 18%, color-mix(in srgb, var(--brand) 12%, transparent), transparent 70%),
+    linear-gradient(135deg, var(--surface-strong), var(--surface-soft)) !important;
+  border-top: 4px solid var(--brand2) !important;
+  border-radius: 22px !important;
+}
+
+.topbar.hero-panel::after {
+  content: '';
+  position: absolute;
+  right: -50px;
+  bottom: -58px;
+  width: 270px;
+  height: 270px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+  box-shadow:
+    0 0 0 22px color-mix(in srgb, var(--brand) 5%, transparent),
+    0 0 0 48px color-mix(in srgb, var(--brand2) 4%, transparent);
+  pointer-events: none;
+  opacity: .70;
+}
+
+.hero-badge {
+  background: color-mix(in srgb, var(--brand2) 12%, transparent) !important;
+  color: var(--brand2) !important;
+  border-color: color-mix(in srgb, var(--brand2) 18%, transparent) !important;
+}
+
+body[data-theme="dark"] .hero-badge {
+  color: #DCECF7 !important;
+  background: rgba(7,27,140,.32) !important;
+}
+
+.page-kicker,
+.section-title {
+  color: var(--brand2) !important;
+  letter-spacing: 1.3px !important;
+}
+
+body[data-theme="dark"] .page-kicker,
+body[data-theme="dark"] .section-title {
+  color: #7EC8EA !important;
+}
+
+.page-title {
+  color: var(--text) !important;
+  letter-spacing: -.8px !important;
+}
+
+.page-sub,
+.hero-chip,
+.subnote,
+.kpi-desc,
+.kpi-label {
+  color: var(--muted) !important;
+}
+
+.hero-chip {
+  background: color-mix(in srgb, var(--chip-bg) 92%, transparent) !important;
+  border-color: var(--line) !important;
+}
+
+/* Menu corporativo com indicador azul lateral */
+.nav-item {
+  border-radius: 12px !important;
+  color: var(--muted) !important;
+  font-weight: 850 !important;
+}
+
+.nav-item:hover {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--brand2) 8%, transparent), transparent 78%) !important;
+  color: var(--text) !important;
+  transform: translateX(1px) !important;
+  border-color: color-mix(in srgb, var(--brand2) 12%, transparent) !important;
+}
+
+.nav-item.active {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--brand2) 16%, transparent), color-mix(in srgb, var(--brand) 7%, transparent)) !important;
+  color: var(--brand2) !important;
+  border-color: color-mix(in srgb, var(--brand2) 22%, transparent) !important;
+  box-shadow: inset 4px 0 0 var(--brand2), 0 10px 20px rgba(7,27,140,.08) !important;
+}
+
+body[data-theme="dark"] .nav-item.active {
+  color: #FFFFFF !important;
+}
+
+/* Cards e KPI com faixa institucional discreta */
+.card,
+.kpi-card {
+  border-radius: 20px !important;
+}
+
+.card-header {
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  padding-bottom: 12px;
+}
+
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--brand2), var(--brand));
+  opacity: .88;
+}
+
+.kpi-icon {
+  background: color-mix(in srgb, var(--brand2) 12%, transparent) !important;
+  color: var(--brand2) !important;
+  border: 1px solid color-mix(in srgb, var(--brand2) 12%, transparent);
+}
+
+body[data-theme="dark"] .kpi-icon {
+  color: #DCECF7 !important;
+}
+
+/* Botões e campos: visual interno corporativo */
+.btn-primary,
+.btn-success {
+  background: linear-gradient(135deg, var(--brand2), var(--brand)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #13795B, #0A72B8) !important;
+}
+
+.btn {
+  border-radius: 12px !important;
+}
+
+input,
+select,
+textarea {
+  border-radius: 12px !important;
+  background: var(--field-bg) !important;
+  border-color: var(--line) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--brand2) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand2) 12%, transparent) !important;
+}
+
+/* Tabelas mais claras e padrão portal */
+.table-wrap {
+  border-radius: 16px;
+}
+
+th {
+  color: var(--brand2) !important;
+  background: color-mix(in srgb, var(--brand2) 5%, transparent);
+}
+
+body[data-theme="dark"] th {
+  color: #9CD7EF !important;
+}
+
+/* Pills no padrão azul/cinza */
+.pill-blue,
+.pill-purple {
+  color: var(--brand2) !important;
+  background: color-mix(in srgb, var(--brand2) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--brand2) 20%, transparent) !important;
+}
+
+body[data-theme="dark"] .pill-blue,
+body[data-theme="dark"] .pill-purple {
+  color: #A7D9F0 !important;
+}
+
+/* Insights e movimentações mantendo a mesma linguagem */
+.insights-hero-card,
+.movement-hero {
+  background:
+    radial-gradient(520px 260px at 92% 12%, color-mix(in srgb, var(--brand) 11%, transparent), transparent 72%),
+    linear-gradient(145deg, var(--surface-strong), var(--surface-soft)) !important;
+  border-top: 4px solid var(--brand2) !important;
+}
+
+.movement-box,
+.insight-item,
+.cursor-card,
+.insight-mini {
+  background: linear-gradient(145deg, var(--surface-strong), var(--surface-soft)) !important;
+  border-color: var(--line) !important;
+}
+
+/* Fundos técnicos mais leves, menos gamer/neon */
+#skyFx {
+  opacity: .22 !important;
+  filter: saturate(.72) brightness(1.05) !important;
+}
+
+.cloud,
+.flight-line,
+.tech-orb,
+.horizon-glow {
+  opacity: .22 !important;
+}
+
+body[data-theme="light"] #skyFx {
+  opacity: .18 !important;
+}
+
+/* Login como portal Omni */
+#loginScreen {
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--app-bg-1) 98%, transparent) 0%, color-mix(in srgb, var(--app-bg-1) 94%, transparent) 44%, color-mix(in srgb, var(--app-bg-2) 78%, transparent) 100%),
+    radial-gradient(620px 420px at 78% 28%, color-mix(in srgb, var(--brand2) 18%, transparent), transparent 66%) !important;
+}
+
+body[data-theme="light"] #loginScreen {
+  background:
+    linear-gradient(115deg, rgba(243,247,251,.98), rgba(255,255,255,.92)),
+    radial-gradient(620px 420px at 78% 28%, rgba(7,27,140,.10), transparent 66%) !important;
+}
+
+/* Cursor cards dentro do novo padrão */
+.cursor-card.active {
+  border-color: color-mix(in srgb, var(--brand2) 42%, var(--line)) !important;
+  box-shadow: inset 4px 0 0 var(--brand2), 0 10px 24px rgba(7,27,140,.08) !important;
+}
+
+.cursor-card.active::after {
+  color: var(--brand2) !important;
+  background: color-mix(in srgb, var(--brand2) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--brand2) 16%, transparent) !important;
+}
+
+body[data-theme="dark"] .cursor-card.active::after {
+  color: #DCECF7 !important;
+}
+
 </style>
 </head>
 <body>
@@ -2628,8 +3033,8 @@ body[data-theme="light"] .kpi-card:hover {
     <div class="login-panel">
       <div class="login-card">
         <div class="brand-mark">
-          <div class="brand-symbol">✈</div>
-          <div class="brand-name">Omni Service Desk TI<span>Painel Operacional</span></div>
+          <div class="brand-symbol omni-wing-mark" aria-hidden="true"></div>
+          <div class="brand-name">Omni Service Desk TI<span>Operações • Segurança • Suporte</span></div>
         </div>
         <h1 class="login-title">Acesso ao painel</h1>
         <p class="login-sub">Controle pessoal de chamados, demandas diárias, estoque de TI e relatórios operacionais.</p>
@@ -2665,8 +3070,8 @@ body[data-theme="light"] .kpi-card:hover {
   <section id="appShell" class="hidden">
     <aside class="sidebar">
       <div class="logo-box">
-        <div class="brand-symbol" style="width:44px;height:44px;border-radius:14px;">✈</div>
-        <div class="brand-name">Omni TI<span>Suporte Técnico Pleno</span></div>
+        <div class="brand-symbol omni-wing-mark" style="width:44px;height:44px;border-radius:14px;" aria-hidden="true"></div>
+        <div class="brand-name">Omni TI<span>Service Desk Interno</span></div>
       </div>
 
       <div class="section-title">Operação</div>
@@ -2696,14 +3101,14 @@ body[data-theme="light"] .kpi-card:hover {
         <div class="hero-copy">
           <div class="hero-kicker-row">
             <div id="pageKicker" class="page-kicker">Dashboard</div>
-            <div class="hero-badge">Aero Tech Experience</div>
+            <div class="hero-badge">Omni Corporate Flight</div>
           </div>
           <h1 id="pageTitle" class="page-title">Painel Operacional de Suporte Técnico</h1>
           <p id="pageSub" class="page-sub">Visão geral dos chamados, demandas diárias e estoque de TI.</p>
           <div class="hero-meta">
             <div class="hero-chip"><span class="hero-chip-dot"></span> Operação monitorada em tempo real</div>
             <div class="hero-chip"><span class="hero-chip-dot"></span> Chamados, demandas e ativos no mesmo painel</div>
-            <div class="hero-chip"><span class="hero-chip-dot"></span> Experiência visual inspirada em cockpit digital</div>
+            <div class="hero-chip"><span class="hero-chip-dot"></span> Visual corporativo inspirado na identidade Omni</div>
           </div>
         </div>
         <div class="hero-side">
