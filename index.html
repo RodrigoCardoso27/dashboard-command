@@ -3798,6 +3798,37 @@ body[data-theme="light"] .language-switch-hero {
   }
 }
 
+
+/* ====== V6.0 VALIDAÇÃO VISÍVEL NA TROCA DE SENHA ====== */
+.password-rule-alert {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--danger) 38%, var(--read-border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--read-panel));
+  color: var(--read-text);
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.password-rule-alert.ok {
+  border-color: color-mix(in srgb, var(--success) 38%, var(--read-border));
+  background: color-mix(in srgb, var(--success) 10%, var(--read-panel));
+}
+
+.password-rule-alert.hidden {
+  display: none !important;
+}
+
+.input-error {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent) !important;
+}
+
+#toast-container {
+  z-index: 1000002 !important;
+}
+
 </style>
 </head>
 <body>
@@ -4609,6 +4640,60 @@ body[data-theme="light"] .language-switch-hero {
   function normalizarLogin(login) { return String(login || '').trim().toLowerCase().replace(/\./g, ','); }
   function desnormalizarLogin(login) { return String(login || '').replace(/,/g, '.'); }
 
+
+  function detalhesSenhaForte(senha) {
+    const s = String(senha || '');
+    const faltando = [];
+
+    if (s.length < 8) faltando.push('mínimo de 8 caracteres');
+    if (!/[A-Za-zÀ-ÿ]/.test(s)) faltando.push('pelo menos 1 letra');
+    if (!/\d/.test(s)) faltando.push('pelo menos 1 número');
+    if (!/[^A-Za-zÀ-ÿ0-9]/.test(s)) faltando.push('pelo menos 1 símbolo, como @, #, $, %, !, *');
+
+    return {
+      valido: faltando.length === 0,
+      faltando,
+      mensagem: faltando.length
+        ? 'A senha precisa ser alfanumérica e conter: ' + faltando.join(', ') + '.'
+        : 'Senha válida: contém letras, números e símbolo.'
+    };
+  }
+
+  function mostrarErroTrocaSenha(mensagem, ok = false) {
+    const box = document.getElementById('senhaObrigatoriaErro');
+    if (!box) return;
+
+    box.classList.remove('hidden');
+    box.classList.toggle('ok', ok);
+    box.innerText = mensagem;
+
+    const s1 = document.getElementById('novaSenhaObrigatoria');
+    const s2 = document.getElementById('confirmaSenhaObrigatoria');
+
+    if (s1) s1.classList.toggle('input-error', !ok);
+    if (s2 && s2.value) s2.classList.toggle('input-error', !ok || s1?.value !== s2.value);
+  }
+
+  function validarTrocaSenhaAoDigitar() {
+    const s1 = document.getElementById('novaSenhaObrigatoria')?.value || '';
+    const s2 = document.getElementById('confirmaSenhaObrigatoria')?.value || '';
+    const box = document.getElementById('senhaObrigatoriaErro');
+
+    if (!box) return;
+    if (!s1 && !s2) {
+      box.classList.add('hidden');
+      document.getElementById('novaSenhaObrigatoria')?.classList.remove('input-error');
+      document.getElementById('confirmaSenhaObrigatoria')?.classList.remove('input-error');
+      return;
+    }
+
+    const det = detalhesSenhaForte(s1);
+    if (!det.valido) return mostrarErroTrocaSenha(det.mensagem, false);
+    if (s2 && s1 !== s2) return mostrarErroTrocaSenha('As senhas não conferem.', false);
+
+    mostrarErroTrocaSenha('Senha válida: contém letras, números e símbolo.', true);
+  }
+
   function validarSenhaForte(senha) {
     const s = String(senha || '');
     return s.length >= 8 && /[A-Za-zÀ-ÿ]/.test(s) && /\d/.test(s) && /[^A-Za-zÀ-ÿ0-9]/.test(s);
@@ -4965,6 +5050,8 @@ body[data-theme="light"] .language-switch-hero {
       'Senha provisória': 'Temporary password',
       'Gerar senha': 'Generate password',
       'Obrigatório: mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.': 'Required: minimum 8 characters, with letters, numbers and at least 1 symbol.',
+      'A senha precisa ser alfanumérica e conter: ': 'The password must be alphanumeric and contain: ',
+      'As senhas não conferem.': 'Passwords do not match.',
       'Senha válida: contém letras, números e símbolo.': 'Valid password: contains letters, numbers and a symbol.',
       'Perfil': 'Profile',
       'E-mail': 'Email',
@@ -5180,6 +5267,8 @@ body[data-theme="light"] .language-switch-hero {
       'Senha provisória': 'Contraseña temporal',
       'Gerar senha': 'Generar contraseña',
       'Obrigatório: mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.': 'Obligatorio: mínimo 8 caracteres, con letras, números y al menos 1 símbolo.',
+      'A senha precisa ser alfanumérica e conter: ': 'La contraseña debe ser alfanumérica y contener: ',
+      'As senhas não conferem.': 'Las contraseñas no coinciden.',
       'Senha válida: contém letras, números e símbolo.': 'Contraseña válida: contiene letras, números y símbolo.',
       'Perfil': 'Perfil',
       'E-mail': 'Correo',
@@ -5450,9 +5539,10 @@ body[data-theme="light"] .language-switch-hero {
         <p class="subnote" style="margin-top:8px;">Você precisa cadastrar uma nova senha forte antes de usar o painel.</p>
       </div>
       <div class="grid grid-2">
-        <div><label>Nova senha</label><input id="novaSenhaObrigatoria" type="password" placeholder="Mín. 8: letras, números e símbolo"></div>
-        <div><label>Confirmar nova senha</label><input id="confirmaSenhaObrigatoria" type="password" placeholder="Repita a nova senha" onkeypress="if(event.key === 'Enter') salvarMinhaNovaSenhaObrigatoria()"></div>
+        <div><label>Nova senha</label><input id="novaSenhaObrigatoria" type="password" placeholder="Mín. 8: letras, números e símbolo" oninput="validarTrocaSenhaAoDigitar()" onkeypress="if(event.key === 'Enter') salvarMinhaNovaSenhaObrigatoria()"></div>
+        <div><label>Confirmar nova senha</label><input id="confirmaSenhaObrigatoria" type="password" placeholder="Repita a nova senha" oninput="validarTrocaSenhaAoDigitar()" onkeypress="if(event.key === 'Enter') salvarMinhaNovaSenhaObrigatoria()"></div>
       </div>
+      <div id="senhaObrigatoriaErro" class="password-rule-alert hidden"></div>
       <button class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarMinhaNovaSenhaObrigatoria()">Salvar nova senha e entrar</button>
     `, { required: true });
   }
@@ -5461,8 +5551,20 @@ body[data-theme="light"] .language-switch-hero {
     const s1 = document.getElementById('novaSenhaObrigatoria')?.value || '';
     const s2 = document.getElementById('confirmaSenhaObrigatoria')?.value || '';
 
-    if (!validarSenhaForte(s1)) return showToast('A nova senha precisa ter no mínimo 8 caracteres, com letras, números e símbolo.', 'error');
-    if (s1 !== s2) return showToast('As senhas não conferem.', 'error');
+    const det = detalhesSenhaForte(s1);
+    if (!det.valido) {
+      mostrarErroTrocaSenha(det.mensagem, false);
+      showToast(det.mensagem, 'error');
+      document.getElementById('novaSenhaObrigatoria')?.focus();
+      return;
+    }
+
+    if (s1 !== s2) {
+      mostrarErroTrocaSenha('As senhas não conferem.', false);
+      showToast('As senhas não conferem.', 'error');
+      document.getElementById('confirmaSenhaObrigatoria')?.focus();
+      return;
+    }
 
     try {
       await db.ref('usuarios/' + logado.login).update({
