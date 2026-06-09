@@ -3289,6 +3289,30 @@ body.modal-open {
   vertical-align: middle !important;
 }
 
+
+/* ====== V5.3 REGRAS DE HISTÓRICO PARA TROCA/DEVOLUÇÃO ====== */
+.movement-rule-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--read-border));
+  background: color-mix(in srgb, var(--brand) 8%, var(--read-panel));
+  color: var(--read-muted) !important;
+  font-weight: 800;
+}
+
+.movement-rule-box strong {
+  color: var(--read-text);
+}
+
+input[list="listaPatrimoniosEmPosse"] {
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--read-border-strong)) !important;
+}
+
+input[list="listaPatrimoniosDisponiveis"] {
+  border-color: color-mix(in srgb, var(--success) 18%, var(--read-border-strong)) !important;
+}
+
 </style>
 </head>
 <body>
@@ -3675,7 +3699,7 @@ body.modal-open {
             <div class="movement-box" id="boxEntregue">
               <div class="movement-box-title">📤 Equipamento entregue ao colaborador</div>
               <div class="grid grid-2">
-                <div><label>Patrimônio entregue</label><input id="mvPatrimonioEntregue" list="listaPatrimonios" placeholder="OMNI0000 ou ALG0000" oninput="preencherInfoPatrimonio('entregue')"></div>
+                <div><label>Patrimônio entregue</label><input id="mvPatrimonioEntregue" list="listaPatrimoniosDisponiveis" placeholder="OMNI0000 ou ALG0000" oninput="preencherInfoPatrimonio('entregue')"></div>
                 <div><label>Serial entregue</label><input id="mvSerialEntregue" placeholder="Serial number"></div>
                 <div><label>Modelo entregue</label><input id="mvModeloEntregue" placeholder="Marca/modelo"></div>
                 <div><label>Origem</label><input id="mvOrigemEntregue" placeholder="OMNI / APNETWORKS" readonly></div>
@@ -3698,7 +3722,7 @@ body.modal-open {
             <div class="movement-box" id="boxDevolvido">
               <div class="movement-box-title">📥 Equipamento devolvido pelo colaborador</div>
               <div class="grid grid-2">
-                <div><label>Patrimônio devolvido</label><input id="mvPatrimonioDevolvido" list="listaPatrimonios" placeholder="OMNI0000 ou ALG0000" oninput="preencherInfoPatrimonio('devolvido')"></div>
+                <div><label>Patrimônio devolvido</label><input id="mvPatrimonioDevolvido" list="listaPatrimoniosEmPosse" placeholder="OMNI0000 ou ALG0000" oninput="preencherInfoPatrimonio('devolvido')"></div>
                 <div><label>Serial devolvido</label><input id="mvSerialDevolvido" placeholder="Serial number"></div>
                 <div><label>Modelo devolvido</label><input id="mvModeloDevolvido" placeholder="Marca/modelo"></div>
                 <div>
@@ -3746,8 +3770,12 @@ body.modal-open {
 
           <div style="margin-top:14px;"><label>Observação</label><textarea id="mvObs" placeholder="Ex: devolveu notebook antigo por lentidão e recebeu outro com carregador e mochila..."></textarea></div>
 
-          <datalist id="listaPatrimonios"></datalist>
+          <datalist id="listaPatrimoniosDisponiveis"></datalist>
+          <datalist id="listaPatrimoniosEmPosse"></datalist>
 
+          <div id="mvRegraHistorico" class="subnote movement-rule-box">
+            Regra: troca e devolução só podem ser feitas para patrimônios que já possuem empréstimo/troca ativa no histórico de movimentações.
+          </div>
           <button class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarMovimentacao()">Salvar movimentação e atualizar estoque</button>
         </div>
 
@@ -4552,15 +4580,103 @@ body.modal-open {
     document.querySelectorAll(`#${containerId} input[type="checkbox"]`).forEach(i => i.checked = set.has(i.value));
   }
 
+  function getMovimentacoesOrdenadasAsc() {
+    return [...(cacheMovimentacoes || [])].sort((a,b) => String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')));
+  }
+
+  function getPossesAtivas() {
+    const posses = {};
+
+    getMovimentacoesOrdenadasAsc().forEach(m => {
+      const tipo = String(m.tipo || '');
+
+      if (tipo === 'Emprestimo') {
+        const entregue = patrimonioKey(m.patrimonioEntregue);
+        if (entregue) {
+          posses[entregue] = {
+            patrimonio: normalizarPatrimonio(m.patrimonioEntregue),
+            colaborador: m.colaborador || '',
+            setor: m.setor || '',
+            base: m.base || '',
+            contato: m.contato || '',
+            movimentoId: m.id,
+            tipoOrigem: m.tipo,
+            data: m.data || '',
+            modelo: m.modeloEntregue || '',
+            serial: m.serialEntregue || '',
+            acessorios: m.acessoriosEntregues || []
+          };
+        }
+      }
+
+      if (tipo === 'Troca') {
+        const devolvido = patrimonioKey(m.patrimonioDevolvido);
+        if (devolvido) delete posses[devolvido];
+
+        const entregue = patrimonioKey(m.patrimonioEntregue);
+        if (entregue) {
+          posses[entregue] = {
+            patrimonio: normalizarPatrimonio(m.patrimonioEntregue),
+            colaborador: m.colaborador || '',
+            setor: m.setor || '',
+            base: m.base || '',
+            contato: m.contato || '',
+            movimentoId: m.id,
+            tipoOrigem: m.tipo,
+            data: m.data || '',
+            modelo: m.modeloEntregue || '',
+            serial: m.serialEntregue || '',
+            acessorios: m.acessoriosEntregues || []
+          };
+        }
+      }
+
+      if (tipo === 'Devolucao') {
+        const devolvido = patrimonioKey(m.patrimonioDevolvido);
+        if (devolvido) delete posses[devolvido];
+      }
+    });
+
+    return posses;
+  }
+
+  function getPosseAtivaPorPatrimonio(patrimonio) {
+    return getPossesAtivas()[patrimonioKey(patrimonio)] || null;
+  }
+
+  function patrimonioTemPosseAtiva(patrimonio) {
+    return !!getPosseAtivaPorPatrimonio(patrimonio);
+  }
+
+  function isAtivoDisponivelParaEntrega(e) {
+    if (!e || !e.patrimonio) return false;
+    if (patrimonioTemPosseAtiva(e.patrimonio)) return false;
+
+    const st = texto(e.status || '');
+    if (!st) return true;
+
+    return st.includes('disponivel') || st.includes('estoque') || st.includes('baixado') === false && !st.includes('uso') && !st.includes('emprest') && !st.includes('manuten');
+  }
+
   function atualizarDatalistPatrimonios() {
-    const dl = document.getElementById('listaPatrimonios');
-    if (!dl) return;
-    const options = cacheEstoque
-      .filter(e => e.patrimonio)
-      .sort((a,b) => String(a.patrimonio || '').localeCompare(String(b.patrimonio || '')))
-      .map(e => `<option value="${escapeHTML(e.patrimonio)}">${escapeHTML(`${e.item || 'Ativo'} ${e.modelo || ''} ${e.serial || ''} ${e.usuario ? ' - ' + e.usuario : ''}`)}</option>`)
-      .join('');
-    dl.innerHTML = options;
+    const dlDisponiveis = document.getElementById('listaPatrimoniosDisponiveis');
+    const dlEmPosse = document.getElementById('listaPatrimoniosEmPosse');
+    const posses = getPossesAtivas();
+
+    if (dlDisponiveis) {
+      dlDisponiveis.innerHTML = cacheEstoque
+        .filter(isAtivoDisponivelParaEntrega)
+        .sort((a,b) => String(a.patrimonio || '').localeCompare(String(b.patrimonio || ''), 'pt-BR'))
+        .map(e => `<option value="${escapeHTML(e.patrimonio)}">${escapeHTML(`${e.item || 'Ativo'} ${e.modelo || ''} ${e.serial || ''} • Disponível`)}</option>`)
+        .join('');
+    }
+
+    if (dlEmPosse) {
+      dlEmPosse.innerHTML = Object.values(posses)
+        .sort((a,b) => String(a.patrimonio || '').localeCompare(String(b.patrimonio || ''), 'pt-BR'))
+        .map(p => `<option value="${escapeHTML(p.patrimonio)}">${escapeHTML(`${p.colaborador || 'Colaborador'} • ${p.setor || ''} • ${p.base || ''}`)}</option>`)
+        .join('');
+    }
   }
 
   function preencherInfoPatrimonio(tipo) {
@@ -4572,22 +4688,43 @@ body.modal-open {
     const serialEl = document.getElementById('mvSerial' + prefix);
     const modeloEl = document.getElementById('mvModelo' + prefix);
 
-    if (ativo) {
-      if (serialEl && !serialEl.value) serialEl.value = ativo.serial || '';
-      if (modeloEl && !modeloEl.value) modeloEl.value = ativo.modelo || ativo.item || '';
-      if (tipo === 'devolvido') {
+    if (tipo === 'devolvido') {
+      const posse = getPosseAtivaPorPatrimonio(patrimonio);
+
+      if (posse) {
         const colab = document.getElementById('mvColaborador');
         const setor = document.getElementById('mvSetor');
         const base = document.getElementById('mvBase');
-        if (colab && !colab.value && ativo.usuario) colab.value = ativo.usuario;
-        if (setor && !setor.value && ativo.setor) setor.value = ativo.setor;
-        if (base && !base.value && ativo.localizacao) base.value = ativo.localizacao;
+        const contato = document.getElementById('mvContato');
+
+        if (colab) colab.value = posse.colaborador || colab.value;
+        if (setor) setor.value = posse.setor || setor.value;
+        if (base) base.value = posse.base || base.value;
+        if (contato) contato.value = posse.contato || contato.value;
+
+        if (serialEl && !serialEl.value) serialEl.value = posse.serial || ativo?.serial || '';
+        if (modeloEl && !modeloEl.value) modeloEl.value = posse.modelo || ativo?.modelo || ativo?.item || '';
+
+        if (posse.acessorios?.length) setCheckedValues('mvAcessoriosDevolvidos', posse.acessorios);
+      } else if (patrimonio.trim()) {
+        const regra = document.getElementById('mvRegraHistorico');
+        if (regra) regra.innerHTML = `<strong>Atenção:</strong> ${escapeHTML(normalizarPatrimonio(patrimonio))} não está em posse ativa no histórico. Para trocar/devolver, registre primeiro o empréstimo inicial.`;
       }
+    }
+
+    if (ativo) {
+      if (serialEl && !serialEl.value) serialEl.value = ativo.serial || '';
+      if (modeloEl && !modeloEl.value) modeloEl.value = ativo.modelo || ativo.item || '';
     }
 
     if (tipo === 'entregue') {
       const origemEl = document.getElementById('mvOrigemEntregue');
       if (origemEl) origemEl.value = origem.origem;
+
+      const regra = document.getElementById('mvRegraHistorico');
+      if (regra && patrimonioTemPosseAtiva(patrimonio)) {
+        regra.innerHTML = `<strong>Atenção:</strong> ${escapeHTML(normalizarPatrimonio(patrimonio))} já está vinculado a uma posse ativa. Escolha um equipamento disponível.`;
+      }
     }
   }
 
@@ -4607,6 +4744,17 @@ body.modal-open {
     if (devolvido) devolvido.style.display = tipo === 'Emprestimo' ? 'none' : '';
     if (condicao) condicao.value = tipo === 'Emprestimo' ? 'Não se aplica' : condicao.value;
     if (dataPrevista) dataPrevista.disabled = tipo !== 'Emprestimo';
+
+    const regra = document.getElementById('mvRegraHistorico');
+    if (regra) {
+      if (tipo === 'Emprestimo') {
+        regra.innerHTML = 'Empréstimo: escolha um patrimônio disponível no estoque. Esse registro cria a posse ativa no histórico.';
+      } else if (tipo === 'Troca') {
+        regra.innerHTML = 'Troca: a máquina devolvida precisa existir como posse ativa no histórico. A nova máquina deve estar disponível.';
+      } else {
+        regra.innerHTML = 'Devolução: só é permitida para patrimônio que esteja em posse ativa no histórico de movimentações.';
+      }
+    }
 
     const resp = document.getElementById('mvResponsavel');
     if (resp && !resp.value && logado?.nome) resp.value = logado.nome;
@@ -4640,6 +4788,29 @@ body.modal-open {
     if (!colaborador) return showToast('Informe o colaborador.', 'error');
     if (tipo !== 'Devolucao' && !patrimonioEntregue) return showToast('Informe o patrimônio entregue.', 'error');
     if (tipo !== 'Emprestimo' && !patrimonioDevolvido) return showToast('Informe o patrimônio devolvido.', 'error');
+
+    if (tipo !== 'Emprestimo') {
+      const posseDevolvida = getPosseAtivaPorPatrimonio(patrimonioDevolvido);
+      if (!posseDevolvida) {
+        return showToast(`Não é possível ${tipo === 'Troca' ? 'trocar' : 'devolver'} ${patrimonioDevolvido}. Esse patrimônio não possui empréstimo/troca ativa no histórico. Registre o empréstimo inicial primeiro.`, 'error');
+      }
+    }
+
+    if (tipo !== 'Devolucao') {
+      if (patrimonioTemPosseAtiva(patrimonioEntregue)) {
+        return showToast(`Não é possível entregar ${patrimonioEntregue}. Esse patrimônio já está vinculado a uma posse ativa no histórico.`, 'error');
+      }
+
+      const ativoEntregar = encontrarAtivoPorPatrimonio(patrimonioEntregue);
+      if (!ativoEntregar) {
+        return showToast(`Patrimônio entregue ${patrimonioEntregue} não está cadastrado no estoque. Cadastre no Estoque TI antes de movimentar.`, 'error');
+      }
+
+      const statusEntrega = texto(ativoEntregar.status || '');
+      if (statusEntrega.includes('uso') || statusEntrega.includes('emprest') || statusEntrega.includes('manuten')) {
+        return showToast(`Patrimônio ${patrimonioEntregue} não está disponível para entrega. Status atual: ${ativoEntregar.status || 'não informado'}.`, 'error');
+      }
+    }
 
     const motivoBase = document.getElementById('mvMotivo').value;
     const motivoOutro = document.getElementById('mvMotivoOutro').value.trim();
@@ -4704,12 +4875,8 @@ body.modal-open {
 
       await db.ref().update(updates);
 
-      let avisos = [];
-      if (tipo !== 'Devolucao' && !ativoEntregue) avisos.push(`Patrimônio entregue ${patrimonioEntregue} não estava cadastrado no estoque.`);
-      if (tipo !== 'Emprestimo' && !ativoDevolvido) avisos.push(`Patrimônio devolvido ${patrimonioDevolvido} não estava cadastrado no estoque.`);
-
       limparMovimentacao();
-      showToast(avisos.length ? 'Movimentação salva. Atenção: ' + avisos.join(' ') : 'Movimentação salva e estoque atualizado.');
+      showToast('Movimentação salva, histórico atualizado e estoque sincronizado.');
     } catch (error) {
       console.error(error);
       showToast('Erro ao salvar movimentação: ' + error.message, 'error');
