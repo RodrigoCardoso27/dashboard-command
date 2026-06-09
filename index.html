@@ -3313,6 +3313,101 @@ input[list="listaPatrimoniosDisponiveis"] {
   border-color: color-mix(in srgb, var(--success) 18%, var(--read-border-strong)) !important;
 }
 
+
+/* ====== V5.4 SEGURANÇA + IDIOMAS ====== */
+.language-switch {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  z-index: 1000000;
+  display: inline-flex;
+  gap: 6px;
+  padding: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--read-panel, #111F33) 88%, transparent);
+  border: 1px solid var(--read-border, rgba(220,236,247,.22));
+  box-shadow: 0 12px 28px rgba(0,0,0,.20);
+}
+
+.language-switch button {
+  width: 34px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 1.05rem;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  transition: .16s ease;
+}
+
+.language-switch button:hover,
+.language-switch button.active {
+  background: color-mix(in srgb, var(--brand) 18%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 32%, transparent);
+}
+
+.security-check {
+  min-height: 46px;
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--read-field, #182A40);
+  border: 1px solid var(--read-border-strong, rgba(220,236,247,.34));
+  color: var(--read-text, #F7FAFC) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  margin: 0 !important;
+}
+
+.security-check input {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  padding: 0 !important;
+  accent-color: var(--brand2);
+}
+
+.password-force-card {
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--read-border));
+  background: color-mix(in srgb, var(--warning) 9%, var(--read-panel));
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.password-reset-output {
+  border: 1px dashed color-mix(in srgb, var(--brand) 45%, var(--read-border));
+  background: color-mix(in srgb, var(--brand) 7%, var(--read-panel));
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 14px;
+}
+
+.password-reset-output code {
+  display: inline-block;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: var(--read-field, #182A40);
+  color: var(--read-text, #fff);
+  font-weight: 900;
+  letter-spacing: .5px;
+}
+
+.modal-required #btnModalClose {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .language-switch {
+    top: 10px;
+    right: 10px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3412,7 +3507,13 @@ input[list="listaPatrimoniosDisponiveis"] {
       <span class="heli-trace"></span>
     </div>
   </div>
-  <div id="toast-container"></div>
+    <div id="languageSwitch" class="language-switch" aria-label="Selecionar idioma">
+    <button type="button" data-lang="pt" onclick="setLanguage('pt')" title="Português">🇧🇷</button>
+    <button type="button" data-lang="en" onclick="setLanguage('en')" title="English">🇺🇸</button>
+    <button type="button" data-lang="es" onclick="setLanguage('es')" title="Español">🇪🇸</button>
+  </div>
+
+<div id="toast-container"></div>
 
   <!-- MODAL GENÉRICO -->
   <div id="modal" class="modal-overlay">
@@ -3422,7 +3523,7 @@ input[list="listaPatrimoniosDisponiveis"] {
           <div id="modalTitle" class="card-title">Editar</div>
           <div id="modalSubtitle" class="subnote">Atualize as informações abaixo.</div>
         </div>
-        <button class="btn btn-sm" onclick="closeModal()">✕ Fechar</button>
+        <button id="btnModalClose" class="btn btn-sm" onclick="closeModal()">✕ Fechar</button>
       </div>
       <div id="modalContent"></div>
     </div>
@@ -3448,6 +3549,7 @@ input[list="listaPatrimoniosDisponiveis"] {
           <input id="lPass" type="password" placeholder="Digite sua senha" autocomplete="current-password" onkeypress="if(event.key === 'Enter') autenticar()" />
         </div>
         <button class="btn btn-primary btn-block" onclick="autenticar()">Entrar no sistema</button>
+        <button class="btn btn-block" style="margin-top:10px;" onclick="abrirEsqueciSenha()">Esqueci minha senha</button>
         <div id="firebaseStatus" class="connection-pill">⚪ Firebase verificando...</div>
       </div>
     </div>
@@ -3904,12 +4006,20 @@ input[list="listaPatrimoniosDisponiveis"] {
           <div class="grid grid-4">
             <div><label>Nome completo</label><input id="usNome" placeholder="Nome do analista"></div>
             <div><label>Login</label><input id="usLogin" placeholder="sem espaços"></div>
-            <div><label>Senha</label><input id="usSenha" type="password" placeholder="Mín. 8: letras, números e símbolo" oninput="validarSenhaUsuarioVisual()"><div id="senhaRegraUsuario" class="subnote" style="margin-top:6px; font-size:.72rem;">Obrigatório: mínimo 8 caracteres, letras, números e símbolo.</div></div>
+            <div><label>Senha provisória</label><input id="usSenha" type="password" placeholder="Mín. 8: letras, números e símbolo" oninput="validarSenhaUsuarioVisual()"><div id="senhaRegraUsuario" class="subnote" style="margin-top:6px; font-size:.72rem;">Obrigatório: mínimo 8 caracteres, letras, números e símbolo.</div></div>
             <div><label>Perfil</label><select id="usRole"><option>Analista Pleno</option><option>Analista N1</option><option>Consulta</option><option>Gestor</option><option value="admin">Admin</option></select></div>
+          </div>
+          <div class="grid grid-3" style="margin-top:14px;">
+            <div><label>E-mail</label><input id="usEmail" type="email" placeholder="email@empresa.com"></div>
+            <div><label>Telefone / WhatsApp</label><input id="usTelefone" placeholder="Ex: 5521999999999"></div>
+            <div>
+              <label>Segurança</label>
+              <label class="security-check"><input id="usExigirTroca" type="checkbox" checked> Exigir troca de senha no primeiro acesso</label>
+            </div>
           </div>
           <button id="btnSalvarUsuario" class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarUsuario()">Salvar usuário</button>
         </div>
-        <div class="card"><div class="card-header"><div><div class="card-title">Usuários cadastrados</div><div id="usuariosStatus" class="subnote">Lista sincronizada com o Firebase.</div></div><button class="btn btn-sm" onclick="carregarUsuariosAgora(true)">🔄 Sincronizar lista</button></div><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbUsuarios"></tbody></table></div></div>
+        <div class="card"><div class="card-header"><div><div class="card-title">Usuários cadastrados</div><div id="usuariosStatus" class="subnote">Lista sincronizada com o Firebase.</div></div><button class="btn btn-sm" onclick="carregarUsuariosAgora(true)">🔄 Sincronizar lista</button></div><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Login</th><th>Contato</th><th>Perfil</th><th>Status</th><th>Segurança</th><th>Ação</th></tr></thead><tbody id="tbUsuarios"></tbody></table></div></div>
       </section>
 
       <!-- CONFIG -->
@@ -4198,22 +4308,408 @@ input[list="listaPatrimoniosDisponiveis"] {
   function uid() { return db.ref().push().key; }
 
   function closeModal() {
+    const modal = document.getElementById('modal');
+    if (modal?.classList.contains('modal-required')) return;
     document.getElementById('modal').style.display = 'none';
     document.getElementById('modalContent').innerHTML = '';
+    document.getElementById('modal').classList.remove('modal-required');
     document.body.classList.remove('modal-open');
   }
 
-  function openModal(title, subtitle, html) {
+  function forceCloseModal() {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('modalContent').innerHTML = '';
+    document.getElementById('modal').classList.remove('modal-required');
+    document.body.classList.remove('modal-open');
+  }
+
+  function openModal(title, subtitle, html, options = {}) {
+    const modal = document.getElementById('modal');
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalSubtitle').innerText = subtitle || '';
     document.getElementById('modalContent').innerHTML = html;
-    document.getElementById('modal').style.display = 'flex';
+    modal.style.display = 'flex';
+    modal.classList.toggle('modal-required', !!options.required);
     document.body.classList.add('modal-open');
     setTimeout(() => {
       const box = document.querySelector('#modal .modal-box');
       if (box) box.scrollTop = 0;
+      applyLanguage(getLanguage());
     }, 0);
   }
+
+
+
+  // ====== IDIOMAS ======
+  const I18N = {
+    en: {
+      'Acesso ao painel': 'Panel access',
+      'Controle pessoal de chamados, demandas diárias, estoque de TI e relatórios operacionais.': 'Personal control of tickets, daily tasks, IT inventory and operational reports.',
+      'Usuário': 'User',
+      'Senha': 'Password',
+      'Digite sua senha': 'Enter your password',
+      'Entrar no sistema': 'Sign in',
+      'Esqueci minha senha': 'Forgot my password',
+      'Operação': 'Operation',
+      'Dashboard': 'Dashboard',
+      'Chamados / Atendimentos': 'Tickets / Service records',
+      'Demandas Diárias': 'Daily tasks',
+      'Estoque TI': 'IT Inventory',
+      'Movimentações': 'Movements',
+      'Gestão': 'Management',
+      'Relatórios': 'Reports',
+      'Usuários': 'Users',
+      'Configurações': 'Settings',
+      'Cadastrar item de estoque / ativo': 'Register inventory item / asset',
+      'Controle de notebooks, monitores, periféricos, celulares, chips e demais itens de TI.': 'Control notebooks, monitors, peripherals, phones, SIM cards and other IT items.',
+      'Item': 'Item',
+      'Categoria': 'Category',
+      'Marca / modelo': 'Brand / model',
+      'Quantidade': 'Quantity',
+      'Patrimônio': 'Asset tag',
+      'Serial': 'Serial',
+      'Status': 'Status',
+      'Localização': 'Location',
+      'Usuário vinculado': 'Assigned user',
+      'Setor vinculado': 'Assigned department',
+      'Estoque mínimo': 'Minimum stock',
+      'Observação': 'Note',
+      'Salvar item / ativo': 'Save item / asset',
+      'Inventário de TI': 'IT Inventory',
+      'Atualizar': 'Refresh',
+      'Editar': 'Edit',
+      'Excluir': 'Delete',
+      'Movimentações de Equipamentos': 'Equipment Movements',
+      'Tipo de movimentação': 'Movement type',
+      'Colaborador': 'Employee',
+      'Setor': 'Department',
+      'Base / Unidade': 'Base / Unit',
+      'E-mail ou matrícula': 'Email or employee ID',
+      'Motivo': 'Reason',
+      'Motivo detalhado / outro': 'Detailed reason / other',
+      'Termo assinado?': 'Signed term?',
+      'Equipamento entregue ao colaborador': 'Equipment delivered to employee',
+      'Equipamento devolvido pelo colaborador': 'Equipment returned by employee',
+      'Acessórios entregues': 'Delivered accessories',
+      'Acessórios devolvidos': 'Returned accessories',
+      'Condição da máquina devolvida': 'Returned device condition',
+      'Data prevista de devolução': 'Expected return date',
+      'Responsável': 'Responsible',
+      'Salvar movimentação e atualizar estoque': 'Save movement and update inventory',
+      'Histórico de movimentações': 'Movement history',
+      'Omni Insights': 'Omni Insights',
+      'IA de Melhoria Contínua': 'Continuous Improvement AI',
+      'Configurações do Sistema': 'System Settings',
+      'Tema do painel': 'Panel theme',
+      'Tema escuro': 'Dark theme',
+      'Tema claro': 'Light theme',
+      'Cursor do colaborador': 'Employee cursor',
+      'Português': 'Portuguese',
+      'Inglês': 'English',
+      'Espanhol': 'Spanish',
+      'Troca de senha obrigatória': 'Mandatory password change',
+      'Nova senha': 'New password',
+      'Confirmar nova senha': 'Confirm new password',
+      'Salvar nova senha e entrar': 'Save new password and enter',
+      'Resetar senha': 'Reset password',
+      'Forçar troca': 'Force change',
+      'Troca pendente': 'Change pending',
+      'Ativo': 'Active',
+      'Inativo': 'Inactive'
+    },
+    es: {
+      'Acesso ao painel': 'Acceso al panel',
+      'Controle pessoal de chamados, demandas diárias, estoque de TI e relatórios operacionais.': 'Control personal de tickets, tareas diarias, inventario de TI e informes operativos.',
+      'Usuário': 'Usuario',
+      'Senha': 'Contraseña',
+      'Digite sua senha': 'Ingrese su contraseña',
+      'Entrar no sistema': 'Entrar al sistema',
+      'Esqueci minha senha': 'Olvidé mi contraseña',
+      'Operação': 'Operación',
+      'Dashboard': 'Panel',
+      'Chamados / Atendimentos': 'Tickets / Atenciones',
+      'Demandas Diárias': 'Tareas diarias',
+      'Estoque TI': 'Inventario TI',
+      'Movimentações': 'Movimientos',
+      'Gestão': 'Gestión',
+      'Relatórios': 'Informes',
+      'Usuários': 'Usuarios',
+      'Configurações': 'Configuración',
+      'Cadastrar item de estoque / ativo': 'Registrar ítem de inventario / activo',
+      'Controle de notebooks, monitores, periféricos, celulares, chips e demais itens de TI.': 'Control de notebooks, monitores, periféricos, celulares, chips y otros ítems de TI.',
+      'Item': 'Ítem',
+      'Categoria': 'Categoría',
+      'Marca / modelo': 'Marca / modelo',
+      'Quantidade': 'Cantidad',
+      'Patrimônio': 'Patrimonio',
+      'Serial': 'Serial',
+      'Status': 'Estado',
+      'Localização': 'Ubicación',
+      'Usuário vinculado': 'Usuario asignado',
+      'Setor vinculado': 'Sector asignado',
+      'Estoque mínimo': 'Stock mínimo',
+      'Observação': 'Observación',
+      'Salvar item / ativo': 'Guardar ítem / activo',
+      'Inventário de TI': 'Inventario de TI',
+      'Atualizar': 'Actualizar',
+      'Editar': 'Editar',
+      'Excluir': 'Eliminar',
+      'Movimentações de Equipamentos': 'Movimientos de Equipos',
+      'Tipo de movimentação': 'Tipo de movimiento',
+      'Colaborador': 'Colaborador',
+      'Setor': 'Sector',
+      'Base / Unidade': 'Base / Unidad',
+      'E-mail ou matrícula': 'Correo o matrícula',
+      'Motivo': 'Motivo',
+      'Motivo detalhado / outro': 'Motivo detallado / otro',
+      'Termo assinado?': '¿Documento firmado?',
+      'Equipamento entregue ao colaborador': 'Equipo entregado al colaborador',
+      'Equipamento devolvido pelo colaborador': 'Equipo devuelto por el colaborador',
+      'Acessórios entregues': 'Accesorios entregados',
+      'Acessórios devolvidos': 'Accesorios devueltos',
+      'Condição da máquina devolvida': 'Condición del equipo devuelto',
+      'Data prevista de devolução': 'Fecha prevista de devolución',
+      'Responsável': 'Responsable',
+      'Salvar movimentação e atualizar estoque': 'Guardar movimiento y actualizar inventario',
+      'Histórico de movimentações': 'Historial de movimientos',
+      'Omni Insights': 'Omni Insights',
+      'IA de Melhoria Contínua': 'IA de Mejora Continua',
+      'Configurações do Sistema': 'Configuración del Sistema',
+      'Tema do painel': 'Tema del panel',
+      'Tema escuro': 'Tema oscuro',
+      'Tema claro': 'Tema claro',
+      'Cursor do colaborador': 'Cursor del colaborador',
+      'Português': 'Portugués',
+      'Inglês': 'Inglés',
+      'Espanhol': 'Español',
+      'Troca de senha obrigatória': 'Cambio de contraseña obligatorio',
+      'Nova senha': 'Nueva contraseña',
+      'Confirmar nova senha': 'Confirmar nueva contraseña',
+      'Salvar nova senha e entrar': 'Guardar nueva contraseña y entrar',
+      'Resetar senha': 'Restablecer contraseña',
+      'Forçar troca': 'Forzar cambio',
+      'Troca pendente': 'Cambio pendiente',
+      'Ativo': 'Activo',
+      'Inativo': 'Inactivo'
+    }
+  };
+
+  const PLACEHOLDER_I18N = {
+    en: {
+      'Ex: admin': 'Ex: admin',
+      'Digite sua senha': 'Enter your password',
+      'Ex: Notebook Dell': 'Ex: Dell Notebook',
+      'Opcional': 'Optional',
+      'Informações adicionais...': 'Additional information...',
+      'Buscar item, patrimônio, usuário...': 'Search item, asset tag, user...',
+      'Nome completo': 'Full name',
+      'Setor / área': 'Department / area',
+      'Descreva quando necessário': 'Describe when necessary',
+      'Serial number': 'Serial number',
+      'Marca/modelo': 'Brand/model'
+    },
+    es: {
+      'Ex: admin': 'Ej: admin',
+      'Digite sua senha': 'Ingrese su contraseña',
+      'Ex: Notebook Dell': 'Ej: Notebook Dell',
+      'Opcional': 'Opcional',
+      'Informações adicionais...': 'Información adicional...',
+      'Buscar item, patrimônio, usuário...': 'Buscar ítem, patrimonio, usuario...',
+      'Nome completo': 'Nombre completo',
+      'Setor / área': 'Sector / área',
+      'Descreva quando necessário': 'Describa cuando sea necesario',
+      'Serial number': 'Número de serie',
+      'Marca/modelo': 'Marca/modelo'
+    }
+  };
+
+  function getLanguage() {
+    return localStorage.getItem('omniLangV1') || 'pt';
+  }
+
+  function translateString(value, lang) {
+    if (!value || lang === 'pt') return value;
+    const clean = String(value).trim();
+    return I18N[lang]?.[clean] || value;
+  }
+
+  function applyLanguage(lang = getLanguage()) {
+    lang = ['pt','en','es'].includes(lang) ? lang : 'pt';
+    document.documentElement.lang = lang === 'pt' ? 'pt-br' : lang;
+    document.querySelectorAll('#languageSwitch button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+
+    document.querySelectorAll('body *:not(script):not(style):not(input):not(textarea):not(option)').forEach(el => {
+      if (el.children.length) return;
+      const raw = el.dataset.i18nOriginal || el.textContent.trim();
+      if (!raw) return;
+      if (!el.dataset.i18nOriginal) el.dataset.i18nOriginal = raw;
+      el.textContent = translateString(el.dataset.i18nOriginal, lang);
+    });
+
+    document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+      const raw = el.dataset.i18nPlaceholderOriginal || el.getAttribute('placeholder');
+      if (!raw) return;
+      if (!el.dataset.i18nPlaceholderOriginal) el.dataset.i18nPlaceholderOriginal = raw;
+      el.setAttribute('placeholder', lang === 'pt' ? el.dataset.i18nPlaceholderOriginal : (PLACEHOLDER_I18N[lang]?.[el.dataset.i18nPlaceholderOriginal] || el.dataset.i18nPlaceholderOriginal));
+    });
+  }
+
+  function setLanguage(lang) {
+    localStorage.setItem('omniLangV1', lang);
+    applyLanguage(lang);
+  }
+
+  let omniI18nObserverStarted = false;
+  function startI18nObserver() {
+    if (omniI18nObserverStarted) return;
+    omniI18nObserverStarted = true;
+    const obs = new MutationObserver(() => {
+      if (getLanguage() !== 'pt') setTimeout(() => applyLanguage(getLanguage()), 0);
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+
+  // ====== SEGURANÇA / SENHA ======
+  function gerarSenhaProvisoria() {
+    const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+    const nums = '23456789';
+    const syms = '@#$%!';
+    const all = letras + nums + syms;
+    let s = letras[Math.floor(Math.random()*letras.length)] + nums[Math.floor(Math.random()*nums.length)] + syms[Math.floor(Math.random()*syms.length)];
+    while (s.length < 10) s += all[Math.floor(Math.random()*all.length)];
+    return s.split('').sort(() => Math.random() - .5).join('');
+  }
+
+  function normalizarTelefoneWhatsapp(tel) {
+    return String(tel || '').replace(/\D/g, '');
+  }
+
+  function abrirLinkEmailSenha(email, nome, login, senha) {
+    if (!email) return showToast('Usuário sem e-mail cadastrado.', 'warning');
+    const assunto = encodeURIComponent('Omni Service Desk TI - Senha provisória');
+    const corpo = encodeURIComponent(`Olá ${nome || ''},\n\nSua senha provisória do Omni Service Desk TI foi redefinida.\n\nLogin: ${desnormalizarLogin(login)}\nSenha provisória: ${senha}\n\nNo próximo acesso, o sistema vai pedir para trocar a senha.\n\nAtenciosamente,\nTI Omni`);
+    window.location.href = `mailto:${email}?subject=${assunto}&body=${corpo}`;
+  }
+
+  function abrirLinkWhatsappSenha(telefone, nome, login, senha) {
+    const tel = normalizarTelefoneWhatsapp(telefone);
+    if (!tel) return showToast('Usuário sem telefone/WhatsApp cadastrado.', 'warning');
+    const msg = encodeURIComponent(`Olá ${nome || ''}, sua senha provisória do Omni Service Desk TI foi redefinida.\n\nLogin: ${desnormalizarLogin(login)}\nSenha provisória: ${senha}\n\nNo próximo acesso, o sistema vai pedir para trocar a senha.`);
+    window.open(`https://wa.me/${tel}?text=${msg}`, '_blank');
+  }
+
+  function abrirEsqueciSenha() {
+    openModal('Recuperação de senha', 'Solicite ao administrador a redefinição da sua senha.', `
+      <div class="password-force-card">
+        <b>Por segurança, a senha não é enviada automaticamente pelo sistema atual.</b>
+        <p class="subnote" style="margin-top:8px;">Peça para um administrador acessar Usuários &gt; Resetar senha. O sistema gera uma senha provisória e permite enviar por e-mail ou WhatsApp cadastrado.</p>
+      </div>
+      <div class="grid grid-2">
+        <div><label>Seu login</label><input value="${escapeHTML(document.getElementById('lUser')?.value || '')}" readonly></div>
+        <div><label>Próximo passo</label><input value="Falar com administrador" readonly></div>
+      </div>
+    `);
+  }
+
+  function abrirTrocaSenhaObrigatoria() {
+    openModal('Troca de senha obrigatória', 'Por segurança, crie uma nova senha para continuar.', `
+      <div class="password-force-card">
+        <b>Primeiro acesso ou senha provisória detectada.</b>
+        <p class="subnote" style="margin-top:8px;">Você precisa cadastrar uma nova senha forte antes de usar o painel.</p>
+      </div>
+      <div class="grid grid-2">
+        <div><label>Nova senha</label><input id="novaSenhaObrigatoria" type="password" placeholder="Mín. 8: letras, números e símbolo"></div>
+        <div><label>Confirmar nova senha</label><input id="confirmaSenhaObrigatoria" type="password" placeholder="Repita a nova senha" onkeypress="if(event.key === 'Enter') salvarMinhaNovaSenhaObrigatoria()"></div>
+      </div>
+      <button class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarMinhaNovaSenhaObrigatoria()">Salvar nova senha e entrar</button>
+    `, { required: true });
+  }
+
+  async function salvarMinhaNovaSenhaObrigatoria() {
+    const s1 = document.getElementById('novaSenhaObrigatoria')?.value || '';
+    const s2 = document.getElementById('confirmaSenhaObrigatoria')?.value || '';
+
+    if (!validarSenhaForte(s1)) return showToast('A nova senha precisa ter no mínimo 8 caracteres, com letras, números e símbolo.', 'error');
+    if (s1 !== s2) return showToast('As senhas não conferem.', 'error');
+
+    try {
+      await db.ref('usuarios/' + logado.login).update({
+        senha: String(s1),
+        exigirTrocaSenha: false,
+        trocarSenhaPrimeiroAcesso: false,
+        primeiroAcesso: false,
+        senhaAlteradaEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      });
+
+      logado.exigirTrocaSenha = false;
+      localStorage.setItem('usuarioOmniV2', JSON.stringify(logado));
+      forceCloseModal();
+      showToast('Senha alterada com sucesso.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao alterar senha: ' + error.message, 'error');
+    }
+  }
+
+  async function resetarSenhaUsuario(id) {
+    const u = cacheUsuarios.find(x => x.id === id);
+    if (!u) return showToast('Usuário não encontrado.', 'error');
+    if (!confirm('Gerar senha provisória e exigir troca no próximo acesso?')) return;
+
+    const nova = gerarSenhaProvisoria();
+
+    try {
+      await db.ref('usuarios/' + id).update({
+        senha: nova,
+        exigirTrocaSenha: true,
+        trocarSenhaPrimeiroAcesso: true,
+        primeiroAcesso: true,
+        senhaResetadaEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString(),
+        resetadoPor: logado.nome
+      });
+
+      openModal('Senha provisória gerada', u.nomeCompleto || id, `
+        <div class="password-reset-output">
+          <b>Senha provisória:</b><br>
+          <code>${escapeHTML(nova)}</code>
+          <p class="subnote" style="margin-top:10px;">O usuário será obrigado a trocar essa senha no próximo acesso.</p>
+        </div>
+        <div class="grid grid-3" style="margin-top:14px;">
+          <button class="btn btn-primary" onclick="navigator.clipboard?.writeText('${escapeHTML(nova)}'); showToast('Senha copiada.')">Copiar senha</button>
+          <button class="btn" onclick='abrirLinkEmailSenha(${JSON.stringify(u.email || '')}, ${JSON.stringify(u.nomeCompleto || '')}, ${JSON.stringify(id)}, ${JSON.stringify(nova)})'>Enviar por e-mail</button>
+          <button class="btn" onclick='abrirLinkWhatsappSenha(${JSON.stringify(u.telefone || '')}, ${JSON.stringify(u.nomeCompleto || '')}, ${JSON.stringify(id)}, ${JSON.stringify(nova)})'>Enviar por WhatsApp</button>
+        </div>
+        <p class="subnote" style="margin-top:14px;">Observação: nesta versão HTML/Firebase, o envio abre o aplicativo de e-mail ou WhatsApp do computador. Envio automático real exige backend/servidor.</p>
+      `);
+
+      await carregarUsuariosAgora(false);
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao resetar senha: ' + error.message, 'error');
+    }
+  }
+
+  async function forcarTrocaSenhaUsuario(id) {
+    const u = cacheUsuarios.find(x => x.id === id);
+    if (!u) return showToast('Usuário não encontrado.', 'error');
+    try {
+      await db.ref('usuarios/' + id).update({
+        exigirTrocaSenha: true,
+        trocarSenhaPrimeiroAcesso: true,
+        primeiroAcesso: true,
+        atualizadoEm: new Date().toISOString()
+      });
+      showToast('Troca de senha exigida para o próximo acesso.');
+      await carregarUsuariosAgora(false);
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao forçar troca de senha: ' + error.message, 'error');
+    }
+  }
+
 
   // ====== LOGIN ======
   async function autenticar() {
@@ -4229,7 +4725,12 @@ input[list="listaPatrimoniosDisponiveis"] {
       if (user.ativo === false) return showToast('Usuário inativo. Fale com o administrador.', 'error');
       if (String(senhaInput) !== String(user.senha)) return showToast('Senha incorreta.', 'error');
 
-      logado = { nome: user.nomeCompleto || userInput, login: key, role: user.role || 'Analista Pleno' };
+      logado = {
+        nome: user.nomeCompleto || userInput,
+        login: key,
+        role: user.role || 'Analista Pleno',
+        exigirTrocaSenha: user.exigirTrocaSenha === true || user.trocarSenhaPrimeiroAcesso === true || user.primeiroAcesso === true
+      };
       localStorage.setItem('usuarioOmniV2', JSON.stringify(logado));
       iniciarApp();
     } catch (error) {
@@ -4248,6 +4749,9 @@ input[list="listaPatrimoniosDisponiveis"] {
         senha: 'Admin@123',
         role: 'admin',
         ativo: true,
+        exigirTrocaSenha: false,
+        trocarSenhaPrimeiroAcesso: false,
+        primeiroAcesso: false,
         atualizadoEm: new Date().toISOString()
       };
       await db.ref().update(updates);
@@ -4283,6 +4787,11 @@ input[list="listaPatrimoniosDisponiveis"] {
     if (viewSalva === 'usuarios' && !isAdmin()) viewSalva = 'dashboard';
 
     switchView(viewSalva, null, true);
+    applyLanguage(getLanguage());
+
+    if (logado.exigirTrocaSenha === true) {
+      setTimeout(() => abrirTrocaSenhaObrigatoria(), 250);
+    }
   }
 
   function logout() {
@@ -4292,6 +4801,9 @@ input[list="listaPatrimoniosDisponiveis"] {
   }
 
   window.onload = () => {
+    applyLanguage(getLanguage());
+    startI18nObserver();
+
     const salvo = localStorage.getItem('usuarioOmniV2');
     if (salvo) {
       try { logado = JSON.parse(salvo); iniciarApp(); }
@@ -4324,6 +4836,7 @@ input[list="listaPatrimoniosDisponiveis"] {
     document.getElementById('pageSub').innerText = title[2];
 
     if (!skipSave) localStorage.setItem('omniActiveViewV2', view);
+    setTimeout(() => applyLanguage(getLanguage()), 0);
 
     if (view === 'movimentacoes') { ajustarFormularioMovimentacao(); atualizarDatalistPatrimonios(); renderMovimentacoes(); }
     if (view === 'insights') renderOmniInsights();
@@ -5060,6 +5573,9 @@ input[list="listaPatrimoniosDisponiveis"] {
       const loginDigitado = document.getElementById('usLogin').value.trim();
       const senha = document.getElementById('usSenha').value.trim();
       const role = document.getElementById('usRole').value;
+      const email = document.getElementById('usEmail').value.trim();
+      const telefone = document.getElementById('usTelefone').value.trim();
+      const exigirTroca = document.getElementById('usExigirTroca')?.checked !== false;
 
       if (!nome || !loginDigitado || !senha) return showToast('Preencha nome, login e senha.', 'error');
       if (/\s/.test(loginDigitado)) return showToast('Login não pode ter espaços.', 'error');
@@ -5088,6 +5604,11 @@ input[list="listaPatrimoniosDisponiveis"] {
         senha: String(senha),
         role: role,
         ativo: true,
+        email,
+        telefone,
+        exigirTrocaSenha: exigirTroca,
+        trocarSenhaPrimeiroAcesso: exigirTroca,
+        primeiroAcesso: exigirTroca,
         loginOriginal: loginDigitado,
         criadoPor: logado.nome,
         criadoPorLogin: logado.login,
@@ -5109,7 +5630,8 @@ input[list="listaPatrimoniosDisponiveis"] {
       renderUsuarios();
       await carregarUsuariosAgora(false, key);
 
-      ['usNome','usLogin','usSenha'].forEach(id => document.getElementById(id).value = '');
+      ['usNome','usLogin','usSenha','usEmail','usTelefone'].forEach(id => document.getElementById(id).value = '');
+      const exigir = document.getElementById('usExigirTroca'); if (exigir) exigir.checked = true;
       document.getElementById('usRole').value = 'Analista Pleno';
       validarSenhaUsuarioVisual();
 
@@ -5160,7 +5682,7 @@ input[list="listaPatrimoniosDisponiveis"] {
     if (!tb || !isAdmin()) return;
 
     if (!cacheUsuarios.length) {
-      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">Nenhum usuário cadastrado.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);">Nenhum usuário cadastrado.</td></tr>';
       return;
     }
 
@@ -5169,7 +5691,10 @@ input[list="listaPatrimoniosDisponiveis"] {
       const ativoAtual = u.ativo !== false;
       const proximoStatus = ativoAtual ? 'false' : 'true';
       const textoBotao = ativoAtual ? 'Inativar' : 'Ativar';
+      const trocaPendente = u.exigirTrocaSenha === true || u.trocarSenhaPrimeiroAcesso === true || u.primeiroAcesso === true;
       const botaoStatus = `<button class="btn btn-sm" onclick='toggleUsuario(${idSeguro}, ${proximoStatus})'>${textoBotao}</button>`;
+      const botaoReset = `<button class="btn btn-sm" onclick='resetarSenhaUsuario(${idSeguro})'>Resetar senha</button>`;
+      const botaoForcar = `<button class="btn btn-sm" onclick='forcarTrocaSenhaUsuario(${idSeguro})'>Forçar troca</button>`;
       const botaoExcluir = u.id === 'admin'
         ? '<span class="subnote">Protegido</span>'
         : `<button class="btn btn-danger btn-sm" onclick='excluirUsuario(${idSeguro})'>Excluir</button>`;
@@ -5177,9 +5702,11 @@ input[list="listaPatrimoniosDisponiveis"] {
       return `<tr>
         <td><b>${escapeHTML(u.nomeCompleto || u.id)}</b></td>
         <td>${escapeHTML(desnormalizarLogin(u.id))}</td>
+        <td>${escapeHTML(u.email || '-')}<br><span class="subnote">${escapeHTML(u.telefone || '')}</span></td>
         <td><span class="pill pill-blue">${escapeHTML(u.role || 'Analista')}</span></td>
         <td><span class="pill ${ativoAtual ? 'pill-ok' : 'pill-bad'}">${ativoAtual ? 'Ativo' : 'Inativo'}</span></td>
-        <td><div class="actions">${botaoStatus}${botaoExcluir}</div></td>
+        <td><span class="pill ${trocaPendente ? 'pill-warn' : 'pill-ok'}">${trocaPendente ? 'Troca pendente' : 'Ok'}</span></td>
+        <td><div class="actions">${botaoStatus}${botaoReset}${botaoForcar}${botaoExcluir}</div></td>
       </tr>`;
     }).join('');
   }
