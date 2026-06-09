@@ -2223,6 +2223,153 @@ body[data-theme="light"] canvas {
   .movement-grid { grid-template-columns: 1fr; }
 }
 
+
+/* ====== V4.8 CURSORES LEVES NATIVOS - SEM LAG ====== */
+#heliCursor {
+  display: none !important;
+}
+
+/* Remove o cursor fake antigo e deixa o navegador renderizar o cursor nativo. */
+@media (hover: hover) and (pointer: fine) {
+  body:not([data-cursor-model="cursor_padrao"]) *,
+  body:not([data-cursor-model="cursor_padrao"]) *::before,
+  body:not([data-cursor-model="cursor_padrao"]) *::after {
+    cursor: auto !important;
+  }
+}
+
+body[data-cursor-model="heli_lite"] *,
+body[data-cursor-model="heli_lite"] *::before,
+body[data-cursor-model="heli_lite"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Cpath%20d%3D%22M3%206h20%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M12%206v4%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M7%2013c0-4%204-7%209-7h3c4%200%207%203%208%206l1%204c1%203-1%206-5%206H12c-4%200-7-3-7-7v-2z%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22/%3E%0A%3Cpath%20d%3D%22M25%2013l5-2%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M28%2010l1%206%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M10%2023h15%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M12%2011h7c2%200%204%201%205%204H10c0-2%201-4%202-4z%22%20fill%3D%22%23dff8ff%22%20opacity%3D%22.85%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="aviao_lite"] *,
+body[data-cursor-model="aviao_lite"] *::before,
+body[data-cursor-model="aviao_lite"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Cpath%20d%3D%22M5%2016L27%204l-6%2023-6-9-10-2z%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M15%2018l12-14%22%20stroke%3D%22%23dff8ff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="seta_omni"] *,
+body[data-cursor-model="seta_omni"] *::before,
+body[data-cursor-model="seta_omni"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Cpath%20d%3D%22M5%204l20%2010-9%203-5%209L5%204z%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="radar_lite"] *,
+body[data-cursor-model="radar_lite"] *::before,
+body[data-cursor-model="radar_lite"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2210%22%20fill%3D%22none%22%20stroke%3D%22%2300a9e8%22%20stroke-width%3D%222%22/%3E%0A%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%223%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%221.5%22/%3E%0A%3Cpath%20d%3D%22M16%2016L25%2010%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M16%203v5M16%2024v5M3%2016h5M24%2016h5%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="pin_rota"] *,
+body[data-cursor-model="pin_rota"] *::before,
+body[data-cursor-model="pin_rota"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Cpath%20d%3D%22M16%203c-5%200-9%204-9%209%200%207%209%2017%209%2017s9-10%209-17c0-5-4-9-9-9z%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22/%3E%0A%3Ccircle%20cx%3D%2216%22%20cy%3D%2212%22%20r%3D%223%22%20fill%3D%22%23dff8ff%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="torre_lite"] *,
+body[data-cursor-model="torre_lite"] *::before,
+body[data-cursor-model="torre_lite"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Cpath%20d%3D%22M10%205h12l3%206H7l3-6z%22%20fill%3D%22%23dff8ff%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M12%2011h8l3%2018H9l3-18z%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M13%2016h6M12%2022h8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="nuvem_lite"] *,
+body[data-cursor-model="nuvem_lite"] *::before,
+body[data-cursor-model="nuvem_lite"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Cpath%20d%3D%22M10%2023h13c4%200%207-3%207-7s-3-7-7-7c-2-4-8-5-11-1-4%200-7%203-7%207%200%205%203%208%205%208z%22%20fill%3D%22%23dff8ff%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M8%2025l-4%204%22%20stroke%3D%22%2300a9e8%22%20stroke-width%3D%222.3%22%20stroke-linecap%3D%22round%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="ferramenta_ti"] *,
+body[data-cursor-model="ferramenta_ti"] *::before,
+body[data-cursor-model="ferramenta_ti"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Cpath%20d%3D%22M20%204a7%207%200%200%200%208%208L14%2026a5%205%200%200%201-7-7L20%204z%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Ccircle%20cx%3D%2210%22%20cy%3D%2222%22%20r%3D%222%22%20fill%3D%22%23dff8ff%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="notebook_lite"] *,
+body[data-cursor-model="notebook_lite"] *::before,
+body[data-cursor-model="notebook_lite"] *::after {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%3Crect%20x%3D%226%22%20y%3D%227%22%20width%3D%2220%22%20height%3D%2214%22%20rx%3D%222%22%20fill%3D%22%2300a9e8%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22/%3E%0A%3Cpath%20d%3D%22M4%2024h24l-2%204H6l-2-4z%22%20fill%3D%22%23dff8ff%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M9%2026h14%22%20stroke%3D%22%230b2239%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%0A%3C/svg%3E") 4 4, auto !important;
+}
+
+body[data-cursor-model="cursor_padrao"] *,
+body[data-cursor-model="cursor_padrao"] *::before,
+body[data-cursor-model="cursor_padrao"] *::after {
+  cursor: auto !important;
+}
+
+body[data-cursor-model="cursor_padrao"] button,
+body[data-cursor-model="cursor_padrao"] a,
+body[data-cursor-model="cursor_padrao"] .btn,
+body[data-cursor-model="cursor_padrao"] .nav-item,
+body[data-cursor-model="cursor_padrao"] [onclick],
+body[data-cursor-model="cursor_padrao"] [role="button"] {
+  cursor: pointer !important;
+}
+
+body[data-cursor-model="cursor_padrao"] input,
+body[data-cursor-model="cursor_padrao"] textarea {
+  cursor: text !important;
+}
+
+/* Cards mais simples e menos pesados visualmente */
+.cursor-model-grid-lite {
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)) !important;
+}
+
+.cursor-card {
+  min-height: 116px !important;
+  padding: 13px !important;
+  border-radius: 16px !important;
+}
+
+.cursor-card::before {
+  display: none !important;
+}
+
+.cursor-card:hover {
+  transform: translateY(-1px) !important;
+}
+
+.cursor-preview,
+.cursor-preview-lite {
+  position: absolute;
+  left: 13px;
+  top: 12px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--chip-bg);
+  font-size: 1.16rem;
+  color: var(--text);
+  box-shadow: none !important;
+}
+
+.cursor-card strong {
+  font-size: .86rem !important;
+}
+
+.cursor-card small {
+  font-size: .66rem !important;
+}
+
+/* Desliga animações antigas dos cursores pesados */
+.cursor-plane,
+.cursor-jet,
+.cursor-drone,
+.cursor-radar,
+.cursor-tower,
+.cursor-compass,
+.cursor-propeller,
+.cursor-waypoint,
+.cursor-hangar,
+.heli-machine {
+  display: none !important;
+}
+
 </style>
 </head>
 <body>
@@ -2835,65 +2982,65 @@ body[data-theme="light"] canvas {
             <div class="config-panel">
               <div class="card-title" style="margin-bottom:6px;">Cursor do colaborador</div>
               <p class="subnote" id="cursorPreferenceStatus" style="margin-bottom:14px;">A escolha fica salva na conta conectada.</p>
-              <div class="cursor-model-grid">
-                <button class="cursor-card active" data-cursor-choice="helicoptero" onclick="setCursorModel('helicoptero')">
-                  <span class="cursor-preview preview-heli">🚁</span>
-                  <strong>Helicóptero</strong>
+              <div class="cursor-model-grid cursor-model-grid-lite">
+                <button class="cursor-card active" data-cursor-choice="heli_lite" onclick="setCursorModel('heli_lite')">
+                  <span class="cursor-preview-lite">🚁</span>
+                  <strong>Heli Lite</strong>
                   <small>Operação aérea</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="aviao" onclick="setCursorModel('aviao')">
-                  <span class="cursor-preview preview-plane">✈</span>
-                  <strong>Avião</strong>
+                <button class="cursor-card" data-cursor-choice="aviao_lite" onclick="setCursorModel('aviao_lite')">
+                  <span class="cursor-preview-lite">✈️</span>
+                  <strong>Avião Lite</strong>
                   <small>Voo executivo</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="jet" onclick="setCursorModel('jet')">
-                  <span class="cursor-preview preview-jet">➤</span>
-                  <strong>Jet</strong>
-                  <small>Alta performance</small>
+                <button class="cursor-card" data-cursor-choice="seta_omni" onclick="setCursorModel('seta_omni')">
+                  <span class="cursor-preview-lite">➤</span>
+                  <strong>Seta Omni</strong>
+                  <small>Rápido e leve</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="drone" onclick="setCursorModel('drone')">
-                  <span class="cursor-preview preview-drone"></span>
-                  <strong>Drone</strong>
-                  <small>Inspeção tech</small>
-                </button>
-
-                <button class="cursor-card" data-cursor-choice="radar" onclick="setCursorModel('radar')">
-                  <span class="cursor-preview preview-radar">⌖</span>
-                  <strong>Radar</strong>
+                <button class="cursor-card" data-cursor-choice="radar_lite" onclick="setCursorModel('radar_lite')">
+                  <span class="cursor-preview-lite">⌖</span>
+                  <strong>Radar Lite</strong>
                   <small>Central de comando</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="torre" onclick="setCursorModel('torre')">
-                  <span class="cursor-preview preview-torre"></span>
-                  <strong>Torre</strong>
+                <button class="cursor-card" data-cursor-choice="pin_rota" onclick="setCursorModel('pin_rota')">
+                  <span class="cursor-preview-lite">📍</span>
+                  <strong>Pin de Rota</strong>
+                  <small>Localização</small>
+                </button>
+
+                <button class="cursor-card" data-cursor-choice="torre_lite" onclick="setCursorModel('torre_lite')">
+                  <span class="cursor-preview-lite">▣</span>
+                  <strong>Torre Lite</strong>
                   <small>Controle aéreo</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="bussola" onclick="setCursorModel('bussola')">
-                  <span class="cursor-preview preview-bussola"></span>
-                  <strong>Bússola</strong>
-                  <small>Navegação</small>
+                <button class="cursor-card" data-cursor-choice="nuvem_lite" onclick="setCursorModel('nuvem_lite')">
+                  <span class="cursor-preview-lite">☁️</span>
+                  <strong>Nuvem Lite</strong>
+                  <small>Ambiente cloud</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="helice" onclick="setCursorModel('helice')">
-                  <span class="cursor-preview preview-helice"></span>
-                  <strong>Hélice</strong>
-                  <small>Energia e giro</small>
+                <button class="cursor-card" data-cursor-choice="ferramenta_ti" onclick="setCursorModel('ferramenta_ti')">
+                  <span class="cursor-preview-lite">🔧</span>
+                  <strong>Ferramenta TI</strong>
+                  <small>Suporte técnico</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="waypoint" onclick="setCursorModel('waypoint')">
-                  <span class="cursor-preview preview-waypoint"></span>
-                  <strong>Waypoint</strong>
-                  <small>Rota aérea</small>
+                <button class="cursor-card" data-cursor-choice="notebook_lite" onclick="setCursorModel('notebook_lite')">
+                  <span class="cursor-preview-lite">💻</span>
+                  <strong>Notebook</strong>
+                  <small>Ativos de TI</small>
                 </button>
 
-                <button class="cursor-card" data-cursor-choice="hangar" onclick="setCursorModel('hangar')">
-                  <span class="cursor-preview preview-hangar"></span>
-                  <strong>Hangar</strong>
-                  <small>Base Omni</small>
+                <button class="cursor-card" data-cursor-choice="cursor_padrao" onclick="setCursorModel('cursor_padrao')">
+                  <span class="cursor-preview-lite">↖</span>
+                  <strong>Padrão</strong>
+                  <small>Windows normal</small>
                 </button>
               </div>
             </div>
@@ -2974,174 +3121,35 @@ body[data-theme="light"] canvas {
 
 
   // ====== PREFERÊNCIAS VISUAIS POR USUÁRIO ======
-  const CURSOR_MODELS = ['helicoptero', 'aviao', 'jet', 'drone', 'radar', 'torre', 'bussola', 'helice', 'waypoint', 'hangar'];
-  const DEFAULT_CURSOR_MODEL = 'helicoptero';
+  const CURSOR_MODELS = ['heli_lite', 'aviao_lite', 'seta_omni', 'radar_lite', 'pin_rota', 'torre_lite', 'nuvem_lite', 'ferramenta_ti', 'notebook_lite', 'cursor_padrao'];
+  const DEFAULT_CURSOR_MODEL = 'heli_lite';
 
   function getCursorStorageKey() {
     return 'omniCursorModelV2_' + (logado?.login || 'guest');
   }
 
   function normalizarCursorModel(model) {
+    const legado = {
+      helicoptero: 'heli_lite',
+      aviao: 'aviao_lite',
+      jet: 'seta_omni',
+      drone: 'radar_lite',
+      radar: 'radar_lite',
+      torre: 'torre_lite',
+      bussola: 'pin_rota',
+      helice: 'seta_omni',
+      waypoint: 'pin_rota',
+      hangar: 'notebook_lite',
+      sistema: 'cursor_padrao'
+    };
+    model = legado[model] || model;
     return CURSOR_MODELS.includes(model) ? model : DEFAULT_CURSOR_MODEL;
   }
 
   function cursorMarkup(model) {
-    if (model === 'aviao') {
-      return `
-        <div class="cursor-plane">
-          <svg viewBox="0 0 128 128" aria-hidden="true" role="presentation">
-            <defs>
-              <linearGradient id="planeBodyG" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0%" stop-color="#ffffff"/>
-                <stop offset="45%" stop-color="#7dd3fc"/>
-                <stop offset="100%" stop-color="#0b5f90"/>
-              </linearGradient>
-            </defs>
-            <path d="M68 8 L82 58 L120 76 C125 79 124 86 118 87 L87 83 L79 116 C78 122 70 124 67 118 L56 82 L24 92 C18 94 12 88 16 82 L49 61 L38 25 C36 18 44 13 50 18 L68 8Z"
-              fill="url(#planeBodyG)" stroke="#e8fbff" stroke-width="4" stroke-linejoin="round"/>
-            <path d="M62 52 L82 58 L87 83 L57 75Z" fill="#e8fbff" opacity=".45"/>
-            <circle cx="72" cy="61" r="5" fill="#063755" opacity=".75"/>
-          </svg>
-          <span class="plane-trail"></span>
-        </div>`;
-    }
-
-    if (model === 'jet') {
-      return `
-        <div class="cursor-jet">
-          <svg viewBox="0 0 128 128" aria-hidden="true" role="presentation">
-            <defs>
-              <linearGradient id="jetBodyG" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0%" stop-color="#ffffff"/>
-                <stop offset="55%" stop-color="#91e5ff"/>
-                <stop offset="100%" stop-color="#06608f"/>
-              </linearGradient>
-            </defs>
-            <path d="M17 68 L74 18 L87 22 L71 57 L111 46 L117 52 L84 72 L111 93 L106 99 L72 88 L82 113 L75 118 L49 87 L22 92 L17 86 L40 72 L17 68 Z" fill="url(#jetBodyG)" stroke="#e8fbff" stroke-width="4" stroke-linejoin="round"/>
-            <path d="M69 57 L84 72 L70 86" fill="none" stroke="#ffffff" stroke-width="3" opacity=".5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="jet-trail"></span>
-        </div>`;
-    }
-
-    if (model === 'drone') {
-      return `
-        <div class="cursor-drone">
-          <span class="drone-arm arm-a"></span>
-          <span class="drone-arm arm-b"></span>
-          <span class="drone-prop p1"></span>
-          <span class="drone-prop p2"></span>
-          <span class="drone-prop p3"></span>
-          <span class="drone-prop p4"></span>
-          <span class="drone-body"></span>
-        </div>`;
-    }
-
-    if (model === 'radar') {
-      return `<div class="cursor-radar"></div>`;
-    }
-
-    if (model === 'torre') {
-      return `
-        <div class="cursor-tower">
-          <span class="tower-beam beam-l"></span>
-          <span class="tower-beam beam-r"></span>
-          <span class="tower-top"></span>
-          <span class="tower-body"></span>
-          <span class="tower-window"></span>
-          <span class="tower-leg leg-l"></span>
-          <span class="tower-leg leg-r"></span>
-        </div>`;
-    }
-
-    if (model === 'bussola') {
-      return `
-        <div class="cursor-compass">
-          <span class="compass-ring"></span>
-          <span class="compass-needle needle-n"></span>
-          <span class="compass-needle needle-s"></span>
-          <span class="compass-core"></span>
-        </div>`;
-    }
-
-    if (model === 'helice') {
-      return `
-        <div class="cursor-propeller">
-          <span class="prop-blade blade-a"></span>
-          <span class="prop-blade blade-b"></span>
-          <span class="prop-blade blade-c"></span>
-          <span class="prop-blade blade-d"></span>
-          <span class="prop-core"></span>
-        </div>`;
-    }
-
-    if (model === 'waypoint') {
-      return `
-        <div class="cursor-waypoint">
-          <span class="waypoint-trail"></span>
-          <span class="waypoint-ring"></span>
-          <span class="waypoint-pin"></span>
-          <span class="waypoint-dot"></span>
-        </div>`;
-    }
-
-    if (model === 'hangar') {
-      return `
-        <div class="cursor-hangar">
-          <span class="hangar-roof"></span>
-          <span class="hangar-body"></span>
-          <span class="hangar-door"></span>
-          <span class="hangar-window w1"></span>
-          <span class="hangar-window w2"></span>
-        </div>`;
-    }
-
-    return `
-      <div class="heli-machine">
-        <span class="rotor-disc rotor-main"></span>
-        <span class="rotor-blade rotor-blade-a"></span>
-        <span class="rotor-blade rotor-blade-b"></span>
-        <svg viewBox="0 0 180 100" role="presentation" aria-hidden="true" class="heli-svg">
-          <defs>
-            <linearGradient id="heliBlueBodyDynamic" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#f5fdff"/>
-              <stop offset="38%" stop-color="#7dd3fc"/>
-              <stop offset="72%" stop-color="#1283bd"/>
-              <stop offset="100%" stop-color="#063755"/>
-            </linearGradient>
-            <linearGradient id="heliWindowDynamic" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#ffffff"/>
-              <stop offset="55%" stop-color="#b9ecff"/>
-              <stop offset="100%" stop-color="#2aa7dc"/>
-            </linearGradient>
-            <filter id="heliGlowDynamic" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#03121f" flood-opacity=".55"/>
-            </filter>
-          </defs>
-          <g class="heli-aircraft" filter="url(#heliGlowDynamic)">
-            <path d="M72 27 L72 39" stroke="#dff8ff" stroke-width="4" stroke-linecap="round"/>
-            <circle cx="72" cy="27" r="5" fill="#eafaff"/>
-            <path d="M105 48 L154 33" stroke="#c9f1ff" stroke-width="9" stroke-linecap="round"/>
-            <path d="M109 55 L155 44" stroke="#0d6f9f" stroke-width="5" stroke-linecap="round" opacity=".9"/>
-            <path d="M152 28 L169 22 L164 38 Z" fill="#7dd3fc" stroke="#e6fbff" stroke-width="2"/>
-            <path d="M158 43 L174 52 L156 57 Z" fill="#0d7eb7" stroke="#d8f7ff" stroke-width="2"/>
-            <path d="M22 48 C24 31 41 22 66 22 L82 22 C103 22 119 35 122 52 C125 70 111 82 89 82 L54 82 C34 82 20 68 22 48Z" fill="url(#heliBlueBodyDynamic)" stroke="#e8fbff" stroke-width="3"/>
-            <path d="M36 37 C43 28 56 27 68 29 L65 51 L31 51 C31 45 33 40 36 37Z" fill="url(#heliWindowDynamic)" stroke="#effcff" stroke-width="2" opacity=".96"/>
-            <path d="M72 29 C90 30 104 40 110 54 L72 54Z" fill="#aee8ff" stroke="#effcff" stroke-width="2" opacity=".74"/>
-            <path d="M48 31 L45 51" stroke="#064b72" stroke-width="2" opacity=".45"/>
-            <path d="M72 29 L72 55" stroke="#064b72" stroke-width="2" opacity=".35"/>
-            <path d="M57 65 C70 70 94 70 111 60" fill="none" stroke="#e8fbff" stroke-width="3" stroke-linecap="round" opacity=".85"/>
-            <circle cx="87" cy="63" r="5" fill="#042b42" opacity=".72"/>
-            <circle cx="100" cy="61" r="3.5" fill="#e8fbff" opacity=".78"/>
-            <path d="M37 86 L118 86" stroke="#e8fbff" stroke-width="5" stroke-linecap="round"/>
-            <path d="M52 80 L44 86" stroke="#e8fbff" stroke-width="4" stroke-linecap="round"/>
-            <path d="M99 80 L107 86" stroke="#e8fbff" stroke-width="4" stroke-linecap="round"/>
-          </g>
-        </svg>
-        <span class="tail-rotor tail-rotor-a"></span>
-        <span class="tail-rotor tail-rotor-b"></span>
-        <span class="heli-trace"></span>
-      </div>`;
+    // V4.8: os cursores agora são nativos via CSS, não elementos seguindo o mouse.
+    // Isso elimina o atraso/lag ao movimentar o mouse.
+    return '';
   }
 
   function atualizarCursorCards(model) {
@@ -3152,16 +3160,16 @@ body[data-theme="light"] canvas {
     const status = document.getElementById('cursorPreferenceStatus');
     if (status) {
       const nomes = {
-        helicoptero: 'Helicóptero Aero operacional',
-        aviao: 'Avião executivo',
-        jet: 'Jet de alta performance',
-        drone: 'Drone de inspeção',
-        radar: 'Radar central de comando',
-        torre: 'Torre de controle',
-        bussola: 'Bússola de navegação',
-        helice: 'Hélice rotativa',
-        waypoint: 'Waypoint de rota aérea',
-        hangar: 'Hangar Omni'
+        heli_lite: 'Heli Lite',
+        aviao_lite: 'Avião Lite',
+        seta_omni: 'Seta Omni',
+        radar_lite: 'Radar Lite',
+        pin_rota: 'Pin de Rota',
+        torre_lite: 'Torre Lite',
+        nuvem_lite: 'Nuvem Lite',
+        ferramenta_ti: 'Ferramenta TI',
+        notebook_lite: 'Notebook Lite',
+        cursor_padrao: 'Cursor padrão do Windows'
       };
       status.innerHTML = `Cursor atual: <b>${nomes[model] || nomes.helicoptero}</b>. Essa preferência fica salva na sua conta.`;
     }
@@ -3172,9 +3180,11 @@ body[data-theme="light"] canvas {
 
     document.body.setAttribute('data-cursor-model', model);
 
+    // V4.8: esconde o cursor fake antigo e usa cursor nativo do navegador via CSS.
     const cursor = document.getElementById('heliCursor');
     if (cursor) {
-      cursor.innerHTML = cursorMarkup(model);
+      cursor.innerHTML = '';
+      cursor.style.display = 'none';
       cursor.style.transform = 'translate3d(-140px,-140px,0)';
     }
 
@@ -4318,50 +4328,25 @@ body[data-theme="light"] canvas {
 
   // ====== EFEITOS VISUAIS AERO TECH ======
   (function initAeroTechFx() {
+    // V4.8: removido o cursor fake seguindo o mouse.
+    // Antes, o mousemove redesenhava um elemento e calculava colisão com nuvens,
+    // causando sensação de atraso. Agora usamos cursor nativo via CSS.
     const cursor = document.getElementById('heliCursor');
-    const clouds = () => Array.from(document.querySelectorAll('.cloud:not(.cleared)'));
-    if (!cursor) return;
-
-    let x = -100, y = -100;
-    let lastX = x;
-
-    function moveCursor(ev) {
-      x = ev.clientX;
-      y = ev.clientY;
-      const direction = x < lastX ? -1 : 1;
-      lastX = x;
-      const rect = cursor.getBoundingClientRect();
-      const offsetX = Math.max(28, rect.width / 2);
-      const offsetY = Math.max(28, rect.height / 2);
-      cursor.style.transform = `translate3d(${x - offsetX}px, ${y - offsetY}px, 0) scaleX(${direction})`;
-
-      for (const cloud of clouds()) {
-        const r = cloud.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        const dist = Math.hypot(x - cx, y - cy);
-        if (dist < Math.max(r.width, r.height) * 0.70) {
-          cloud.classList.add('cleared');
-        }
-      }
+    if (cursor) {
+      cursor.innerHTML = '';
+      cursor.style.display = 'none';
     }
 
-    document.addEventListener('mousemove', moveCursor, { passive: true });
-    document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
-    document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
-    document.addEventListener('mouseleave', () => { cursor.style.transform = 'translate3d(-100px,-100px,0)'; });
-
     document.addEventListener('click', (ev) => {
+      const model = document.body.getAttribute('data-cursor-model') || '';
+      if (model === 'cursor_padrao') return;
+
       const burst = document.createElement('span');
       burst.className = 'click-burst';
-      burst.style.cssText = `position:fixed;left:${ev.clientX-6}px;top:${ev.clientY-6}px;width:12px;height:12px;border-radius:999px;border:2px solid rgba(56,189,248,.9);z-index:999998;pointer-events:none;animation:burstFx .45s ease-out forwards;`;
+      burst.style.cssText = `position:fixed;left:${ev.clientX-5}px;top:${ev.clientY-5}px;width:10px;height:10px;border-radius:999px;border:2px solid rgba(56,189,248,.7);pointer-events:none;z-index:999998;animation:clickBurst .42s ease-out forwards;`;
       document.body.appendChild(burst);
-      setTimeout(() => burst.remove(), 480);
+      setTimeout(() => burst.remove(), 440);
     });
-
-    const style = document.createElement('style');
-    style.textContent = '@keyframes burstFx{to{transform:scale(5);opacity:0}}';
-    document.head.appendChild(style);
   })();
 
 </script>
