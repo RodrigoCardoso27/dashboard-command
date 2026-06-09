@@ -3676,6 +3676,128 @@ body[data-theme="light"] .language-switch-hero {
   transform: translateY(-1px);
 }
 
+
+/* ====== V5.8 GERADOR DE SENHA NO CADASTRO ====== */
+.password-generate-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-generate-password {
+  min-width: 118px;
+  height: 44px;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--brand2) 14%, var(--read-field, #182A40)) !important;
+  border-color: color-mix(in srgb, var(--brand2) 30%, var(--read-border-strong, rgba(220,236,247,.34))) !important;
+  color: var(--read-text, #fff) !important;
+}
+
+.btn-generate-password:hover {
+  background: color-mix(in srgb, var(--brand2) 24%, var(--read-field, #182A40)) !important;
+}
+
+@media (max-width: 760px) {
+  .password-generate-row {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-generate-password {
+    width: 100%;
+  }
+}
+
+
+/* ====== V5.9 ACESSO POR CONVITE ====== */
+#accessGate {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: grid;
+  grid-template-columns: minmax(360px, 470px) 1fr;
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--app-bg-1, #071426) 98%, transparent) 0%, color-mix(in srgb, var(--app-bg-1, #071426) 94%, transparent) 44%, color-mix(in srgb, var(--app-bg-2, #0A1D33) 78%, transparent) 100%),
+    radial-gradient(620px 420px at 78% 28%, color-mix(in srgb, var(--brand2) 18%, transparent), transparent 66%);
+  color: var(--text);
+}
+
+#accessGate.hidden {
+  display: none !important;
+}
+
+.access-card {
+  border-top: 4px solid var(--brand2) !important;
+}
+
+.admin-access-btn {
+  opacity: .88;
+}
+
+.admin-access-btn:hover {
+  opacity: 1;
+}
+
+.invite-generated-box {
+  margin-top: 14px;
+  border: 1px dashed color-mix(in srgb, var(--brand) 45%, var(--read-border));
+  background: color-mix(in srgb, var(--brand) 7%, var(--read-panel));
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.invite-code-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--read-field, #182A40);
+  border: 1px solid var(--read-border-strong, rgba(220,236,247,.34));
+  color: var(--read-text, #fff);
+  font-weight: 950;
+  letter-spacing: 1px;
+  font-size: 1.15rem;
+}
+
+.invite-status-pill {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 950;
+  border: 1px solid var(--line);
+}
+
+.invite-status-pill.ok {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  border-color: color-mix(in srgb, var(--success) 28%, transparent);
+}
+
+.invite-status-pill.warn {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 28%, transparent);
+}
+
+.invite-status-pill.bad {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+@media (max-width: 900px) {
+  #accessGate {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  #accessGate .login-hero {
+    display: none;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3791,8 +3913,47 @@ body[data-theme="light"] .language-switch-hero {
     </div>
   </div>
 
+
+  <!-- ACESSO POR CONVITE -->
+  <section id="accessGate">
+    <div class="login-panel">
+      <div class="login-card access-card">
+        <div class="brand-mark">
+          <div class="brand-symbol omni-wing-mark" aria-hidden="true"></div>
+          <div class="brand-name">Acesso autorizado Omni<span>Convite obrigatório</span></div>
+        </div>
+
+        <h1 class="login-title">Código de convite</h1>
+        <p class="login-sub">Digite o código temporário enviado pelo administrador para liberar a tela de login.</p>
+
+        <div class="field">
+          <label>Código de convite</label>
+          <input id="inviteCodeInput" type="text" placeholder="Ex: OMNI-A7K9Q2" autocomplete="one-time-code" onkeypress="if(event.key === 'Enter') validarCodigoConvite()" />
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="validarCodigoConvite()">Validar código e liberar login</button>
+        <button class="btn btn-block admin-access-btn" style="margin-top:10px;" onclick="abrirLoginAdmin()">Sou administrador</button>
+
+        <div id="inviteStatus" class="connection-pill">🔒 Aguardando código de convite</div>
+      </div>
+    </div>
+
+    <div class="login-hero">
+      <div class="air-card">
+        <div class="page-kicker">Omni Service Desk TI</div>
+        <h2 style="font-size:2.55rem; line-height:1.05; letter-spacing:-1.7px; margin:10px 0 16px;">Acesso protegido por convite.</h2>
+        <p class="subnote" style="font-size:1rem; max-width:560px;">Apenas pessoas autorizadas conseguem visualizar a tela de login. O código é temporário, controlado pelo administrador e pode expirar em minutos.</p>
+        <div class="grid grid-3" style="margin-top:26px;">
+          <div class="kpi-card"><div class="kpi-label">Convite</div><div class="kpi-value">OTP</div><div class="kpi-desc">Código temporário</div></div>
+          <div class="kpi-card"><div class="kpi-label">Admin</div><div class="kpi-value">Bypass</div><div class="kpi-desc">Entrada administrativa</div></div>
+          <div class="kpi-card"><div class="kpi-label">Segurança</div><div class="kpi-value">TI</div><div class="kpi-desc">Acesso controlado</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- LOGIN -->
-  <section id="loginScreen">
+  <section id="loginScreen" class="hidden">
     <div class="login-panel">
       <div class="login-card">
         <div class="brand-mark">
@@ -4278,7 +4439,14 @@ body[data-theme="light"] .language-switch-hero {
           <div class="grid grid-4">
             <div><label>Nome completo</label><input id="usNome" placeholder="Nome do analista"></div>
             <div><label>Login</label><input id="usLogin" placeholder="sem espaços"></div>
-            <div><label>Senha provisória</label><input id="usSenha" type="password" placeholder="Mín. 8: letras, números e símbolo" oninput="validarSenhaUsuarioVisual()"><div id="senhaRegraUsuario" class="subnote" style="margin-top:6px; font-size:.72rem;">Obrigatório: mínimo 8 caracteres, letras, números e símbolo.</div></div>
+            <div>
+              <label>Senha provisória</label>
+              <div class="password-generate-row">
+                <input id="usSenha" type="password" placeholder="Mín. 8: letras, números e símbolo" oninput="validarSenhaUsuarioVisual()">
+                <button type="button" class="btn btn-sm btn-generate-password" onclick="gerarSenhaCadastroUsuario()">Gerar senha</button>
+              </div>
+              <div id="senhaRegraUsuario" class="subnote" style="margin-top:6px; font-size:.72rem;">Obrigatório: mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.</div>
+            </div>
             <div><label>Perfil</label><select id="usRole"><option>Analista Pleno</option><option>Analista N1</option><option>Consulta</option><option>Gestor</option><option value="admin">Admin</option></select></div>
           </div>
           <div class="grid grid-3" style="margin-top:14px;">
@@ -4340,6 +4508,38 @@ body[data-theme="light"] .language-switch-hero {
           </div>
 
           <div class="config-panel only-admin" style="margin-top:18px;">
+            <div class="card-title" style="margin-bottom:6px;">Códigos de convite</div>
+            <p class="subnote" style="margin-bottom:14px;">Gere códigos temporários para liberar a tela de login de novos acessos.</p>
+
+            <div class="grid grid-4">
+              <div>
+                <label>Expira em minutos</label>
+                <input id="inviteMinutos" type="number" min="1" value="30">
+              </div>
+              <div>
+                <label>Máximo de usos</label>
+                <input id="inviteMaxUsos" type="number" min="1" value="1">
+              </div>
+              <div>
+                <label>Prefixo</label>
+                <input id="invitePrefixo" value="OMNI">
+              </div>
+              <div style="display:flex;align-items:end;">
+                <button class="btn btn-primary btn-block" onclick="gerarCodigoConvite()">Gerar convite</button>
+              </div>
+            </div>
+
+            <div id="inviteGeneratedBox" class="invite-generated-box hidden"></div>
+
+            <div class="table-wrap" style="margin-top:14px;">
+              <table>
+                <thead><tr><th>Código</th><th>Expira em</th><th>Uso</th><th>Status</th><th>Ação</th></tr></thead>
+                <tbody id="tbCodigosConvite"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="config-panel only-admin" style="margin-top:18px;">
             <div class="card-title" style="margin-bottom:6px;">Manutenção administrativa</div>
             <p class="subnote" style="margin-bottom:14px;">Use apenas em caso de perda do usuário administrador padrão.</p>
             <button class="btn btn-warning" style="width:auto;" onclick="corrigirAdminFirebase()">🛠 Recriar admin padrão</button>
@@ -4370,6 +4570,8 @@ body[data-theme="light"] .language-switch-hero {
   let cacheEstoque = [];
   let cacheMovimentacoes = [];
   let cacheUsuarios = [];
+  let cacheCodigosConvite = [];
+  let modoAdminBypass = false;
   let chartStatus = null;
   let chartCategoria = null;
 
@@ -4537,14 +4739,14 @@ body[data-theme="light"] .language-switch-hero {
     if (!input || !regra) return;
 
     if (!input.value) {
-      regra.innerText = 'Obrigatório: mínimo 8 caracteres, letras, números e símbolo.';
+      regra.innerText = 'Obrigatório: mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.';
       regra.style.color = 'var(--muted)';
       input.style.borderColor = 'var(--border)';
       return;
     }
 
     if (validarSenhaForte(input.value)) {
-      regra.innerText = 'Senha válida.';
+      regra.innerText = 'Senha válida: contém letras, números e símbolo.';
       regra.style.color = 'var(--brand2)';
       input.style.borderColor = 'var(--brand2)';
     } else {
@@ -4761,6 +4963,9 @@ body[data-theme="light"] .language-switch-hero {
       'Nome completo': 'Full name',
       'Login': 'Login',
       'Senha provisória': 'Temporary password',
+      'Gerar senha': 'Generate password',
+      'Obrigatório: mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.': 'Required: minimum 8 characters, with letters, numbers and at least 1 symbol.',
+      'Senha válida: contém letras, números e símbolo.': 'Valid password: contains letters, numbers and a symbol.',
       'Perfil': 'Profile',
       'E-mail': 'Email',
       'Telefone / WhatsApp': 'Phone / WhatsApp',
@@ -4807,7 +5012,25 @@ body[data-theme="light"] .language-switch-hero {
       'Salvar nova senha e entrar': 'Save new password and enter',
       'Recuperação de senha': 'Password recovery',
       'Solicite ao administrador a redefinição da sua senha.': 'Ask the administrator to reset your password.',
-      'Fechar': 'Close'
+      'Fechar': 'Close',
+      'Acesso autorizado Omni': 'Authorized Omni access',
+      'Convite obrigatório': 'Invite required',
+      'Código de convite': 'Invite code',
+      'Digite o código temporário enviado pelo administrador para liberar a tela de login.': 'Enter the temporary code sent by the administrator to unlock the login screen.',
+      'Validar código e liberar login': 'Validate code and unlock login',
+      'Sou administrador': 'I am an administrator',
+      'Aguardando código de convite': 'Waiting for invite code',
+      'Acesso protegido por convite.': 'Access protected by invite.',
+      'Códigos de convite': 'Invite codes',
+      'Gere códigos temporários para liberar a tela de login de novos acessos.': 'Generate temporary codes to unlock the login screen for new access.',
+      'Expira em minutos': 'Expires in minutes',
+      'Máximo de usos': 'Maximum uses',
+      'Prefixo': 'Prefix',
+      'Gerar convite': 'Generate invite',
+      'Código': 'Code',
+      'Expira em': 'Expires at',
+      'Uso': 'Usage',
+      'Revogar': 'Revoke'
     },
     es: {
       'Idioma': 'Idioma',
@@ -4955,6 +5178,9 @@ body[data-theme="light"] .language-switch-hero {
       'Nome completo': 'Nombre completo',
       'Login': 'Login',
       'Senha provisória': 'Contraseña temporal',
+      'Gerar senha': 'Generar contraseña',
+      'Obrigatório: mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.': 'Obligatorio: mínimo 8 caracteres, con letras, números y al menos 1 símbolo.',
+      'Senha válida: contém letras, números e símbolo.': 'Contraseña válida: contiene letras, números y símbolo.',
       'Perfil': 'Perfil',
       'E-mail': 'Correo',
       'Telefone / WhatsApp': 'Teléfono / WhatsApp',
@@ -5001,7 +5227,25 @@ body[data-theme="light"] .language-switch-hero {
       'Salvar nova senha e entrar': 'Guardar nueva contraseña y entrar',
       'Recuperação de senha': 'Recuperación de contraseña',
       'Solicite ao administrador a redefinição da sua senha.': 'Solicite al administrador el restablecimiento de su contraseña.',
-      'Fechar': 'Cerrar'
+      'Fechar': 'Cerrar',
+      'Acesso autorizado Omni': 'Acceso autorizado Omni',
+      'Convite obrigatório': 'Invitación obligatoria',
+      'Código de convite': 'Código de invitación',
+      'Digite o código temporário enviado pelo administrador para liberar a tela de login.': 'Ingrese el código temporal enviado por el administrador para liberar la pantalla de login.',
+      'Validar código e liberar login': 'Validar código y liberar login',
+      'Sou administrador': 'Soy administrador',
+      'Aguardando código de convite': 'Esperando código de invitación',
+      'Acesso protegido por convite.': 'Acceso protegido por invitación.',
+      'Códigos de convite': 'Códigos de invitación',
+      'Gere códigos temporários para liberar a tela de login de novos acessos.': 'Genere códigos temporales para liberar la pantalla de login de nuevos accesos.',
+      'Expira em minutos': 'Expira en minutos',
+      'Máximo de usos': 'Máximo de usos',
+      'Prefixo': 'Prefijo',
+      'Gerar convite': 'Generar invitación',
+      'Código': 'Código',
+      'Expira em': 'Expira en',
+      'Uso': 'Uso',
+      'Revogar': 'Revocar'
     }
   };
 
@@ -5019,7 +5263,8 @@ body[data-theme="light"] .language-switch-hero {
       'Serial number': 'Serial number',
       'Marca/modelo': 'Brand/model',
       'OMNI0000 ou ALG0000': 'OMNI0000 or ALG0000',
-      'email@empresa.com': 'email@company.com'
+      'email@empresa.com': 'email@company.com',
+      'Mín. 8: letras, números e símbolo': 'Min. 8: letters, numbers and symbol'
     },
     es: {
       'Ex: admin': 'Ej: admin',
@@ -5034,7 +5279,8 @@ body[data-theme="light"] .language-switch-hero {
       'Serial number': 'Número de serie',
       'Marca/modelo': 'Marca/modelo',
       'OMNI0000 ou ALG0000': 'OMNI0000 o ALG0000',
-      'email@empresa.com': 'correo@empresa.com'
+      'email@empresa.com': 'correo@empresa.com',
+      'Mín. 8: letras, números e símbolo': 'Mín. 8: letras, números y símbolo'
     }
   };
 
@@ -5126,14 +5372,44 @@ body[data-theme="light"] .language-switch-hero {
 
 
   // ====== SEGURANÇA / SENHA ======
-  function gerarSenhaProvisoria() {
-    const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
-    const nums = '23456789';
-    const syms = '@#$%!';
-    const all = letras + nums + syms;
-    let s = letras[Math.floor(Math.random()*letras.length)] + nums[Math.floor(Math.random()*nums.length)] + syms[Math.floor(Math.random()*syms.length)];
-    while (s.length < 10) s += all[Math.floor(Math.random()*all.length)];
-    return s.split('').sort(() => Math.random() - .5).join('');
+  function gerarSenhaProvisoria(tamanho = 12) {
+    const letrasMaiusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const letrasMinusculas = 'abcdefghijkmnpqrstuvwxyz';
+    const numeros = '23456789';
+    const simbolos = '@#$%!*?&';
+    const todos = letrasMaiusculas + letrasMinusculas + numeros + simbolos;
+
+    const pick = chars => chars[Math.floor(Math.random() * chars.length)];
+
+    let senha = [
+      pick(letrasMaiusculas),
+      pick(letrasMinusculas),
+      pick(numeros),
+      pick(simbolos)
+    ];
+
+    while (senha.length < Math.max(8, tamanho)) senha.push(pick(todos));
+
+    return senha
+      .sort(() => Math.random() - 0.5)
+      .join('');
+  }
+
+  function gerarSenhaCadastroUsuario() {
+    const input = document.getElementById('usSenha');
+    if (!input) return;
+
+    const senha = gerarSenhaProvisoria(12);
+    input.type = 'text';
+    input.value = senha;
+    validarSenhaUsuarioVisual();
+
+    try {
+      navigator.clipboard?.writeText(senha);
+      showToast('Senha forte gerada e copiada.');
+    } catch(e) {
+      showToast('Senha forte gerada.');
+    }
   }
 
   function normalizarTelefoneWhatsapp(tel) {
@@ -5266,6 +5542,222 @@ body[data-theme="light"] .language-switch-hero {
   }
 
 
+
+  // ====== ACESSO POR CONVITE ======
+  function normalizarCodigoConvite(codigo) {
+    return String(codigo || '').trim().toUpperCase().replace(/\s+/g, '');
+  }
+
+  function gerarTrechoCodigo(tam = 6) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let out = '';
+    for (let i = 0; i < tam; i++) out += chars[Math.floor(Math.random() * chars.length)];
+    return out;
+  }
+
+  function getConviteLocal() {
+    try {
+      const raw = localStorage.getItem('omniInviteAccessV1');
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data.expiraTimestamp || Date.now() > Number(data.expiraTimestamp)) {
+        localStorage.removeItem('omniInviteAccessV1');
+        return null;
+      }
+      return data;
+    } catch(e) {
+      localStorage.removeItem('omniInviteAccessV1');
+      return null;
+    }
+  }
+
+  function conviteLocalValido() {
+    return !!getConviteLocal();
+  }
+
+  function mostrarGate() {
+    document.getElementById('accessGate')?.classList.remove('hidden');
+    document.getElementById('loginScreen')?.classList.add('hidden');
+    document.getElementById('appShell')?.classList.add('hidden');
+    setTimeout(() => document.getElementById('inviteCodeInput')?.focus(), 80);
+  }
+
+  function mostrarLogin(adminBypass = false) {
+    modoAdminBypass = !!adminBypass;
+    document.getElementById('accessGate')?.classList.add('hidden');
+    document.getElementById('loginScreen')?.classList.remove('hidden');
+    document.getElementById('appShell')?.classList.add('hidden');
+
+    const st = document.getElementById('firebaseStatus');
+    if (st && adminBypass) st.innerText = '🔐 Entrada administrativa';
+    else if (st) st.innerText = '✅ Código validado. Faça login.';
+
+    setTimeout(() => document.getElementById('lUser')?.focus(), 80);
+  }
+
+  function abrirLoginAdmin() {
+    mostrarLogin(true);
+  }
+
+  async function validarCodigoConvite() {
+    const input = document.getElementById('inviteCodeInput');
+    const status = document.getElementById('inviteStatus');
+    const codigo = normalizarCodigoConvite(input?.value || '');
+
+    if (!codigo) {
+      if (status) status.innerText = '⚠️ Digite o código de convite.';
+      return showToast('Digite o código de convite.', 'warning');
+    }
+
+    try {
+      const snap = await db.ref('codigosAcesso/' + codigo).once('value');
+      const data = snap.val();
+
+      if (!data) {
+        if (status) status.innerText = '❌ Código não encontrado.';
+        return showToast('Código de convite inválido.', 'error');
+      }
+
+      const agora = Date.now();
+      const expira = Number(data.expiraTimestamp || 0);
+      const usos = Number(data.usos || 0);
+      const maxUsos = Number(data.maxUsos || 1);
+
+      if (data.ativo === false) return showToast('Este código foi revogado pelo administrador.', 'error');
+      if (!expira || agora > expira) return showToast('Este código expirou. Solicite outro ao administrador.', 'error');
+      if (usos >= maxUsos) return showToast('Este código já atingiu o limite de uso.', 'error');
+
+      await db.ref('codigosAcesso/' + codigo).update({
+        usos: usos + 1,
+        ultimoUsoEm: new Date().toISOString(),
+        ultimoUsoTimestamp: agora
+      });
+
+      localStorage.setItem('omniInviteAccessV1', JSON.stringify({
+        codigo,
+        autorizadoEm: new Date().toISOString(),
+        expiraTimestamp: expira
+      }));
+
+      if (status) status.innerText = '✅ Código validado. Login liberado.';
+      mostrarLogin(false);
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao validar código: ' + error.message, 'error');
+    }
+  }
+
+  async function gerarCodigoConvite() {
+    if (!isAdmin()) return showToast('Apenas admin pode gerar códigos.', 'error');
+
+    const minutos = Math.max(1, Number(document.getElementById('inviteMinutos')?.value || 30));
+    const maxUsos = Math.max(1, Number(document.getElementById('inviteMaxUsos')?.value || 1));
+    const prefixo = normalizarCodigoConvite(document.getElementById('invitePrefixo')?.value || 'OMNI').replace(/[^A-Z0-9]/g, '') || 'OMNI';
+
+    let codigo = `${prefixo}-${gerarTrechoCodigo(6)}`;
+    let tentativas = 0;
+
+    try {
+      while (tentativas < 5) {
+        const exists = await db.ref('codigosAcesso/' + codigo).once('value');
+        if (!exists.exists()) break;
+        codigo = `${prefixo}-${gerarTrechoCodigo(6)}`;
+        tentativas++;
+      }
+
+      const agora = Date.now();
+      const expiraTimestamp = agora + (minutos * 60000);
+      const payload = {
+        codigo,
+        tipo: 'convite',
+        ativo: true,
+        usos: 0,
+        maxUsos,
+        minutos,
+        criadoPor: logado.nome,
+        criadoPorLogin: logado.login,
+        criadoEm: new Date(agora).toISOString(),
+        criadoTimestamp: agora,
+        expiraEm: new Date(expiraTimestamp).toISOString(),
+        expiraTimestamp
+      };
+
+      await db.ref('codigosAcesso/' + codigo).set(payload);
+
+      const box = document.getElementById('inviteGeneratedBox');
+      if (box) {
+        box.classList.remove('hidden');
+        box.innerHTML = `
+          <div class="subnote" style="margin-bottom:8px;">Código gerado:</div>
+          <div class="invite-code-display">${escapeHTML(codigo)}</div>
+          <div class="grid grid-3" style="margin-top:12px;">
+            <button class="btn btn-primary" onclick="navigator.clipboard?.writeText('${escapeHTML(codigo)}'); showToast('Código copiado.')">Copiar código</button>
+            <input readonly value="Expira em ${minutos} minuto(s)">
+            <input readonly value="Máx. uso(s): ${maxUsos}">
+          </div>
+        `;
+      }
+
+      showToast('Código de convite gerado.');
+      renderCodigosConvite();
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao gerar convite: ' + error.message, 'error');
+    }
+  }
+
+  function renderCodigosConvite() {
+    const tb = document.getElementById('tbCodigosConvite');
+    if (!tb || !isAdmin()) return;
+
+    const agora = Date.now();
+    const lista = (cacheCodigosConvite || []).slice(0, 20);
+
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">Nenhum código gerado.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = lista.map(c => {
+      const exp = Number(c.expiraTimestamp || 0);
+      const usos = Number(c.usos || 0);
+      const max = Number(c.maxUsos || 1);
+      const expirado = exp && agora > exp;
+      const esgotado = usos >= max;
+      const ativo = c.ativo !== false && !expirado && !esgotado;
+      const cls = ativo ? 'ok' : expirado ? 'bad' : 'warn';
+      const status = c.ativo === false ? 'Revogado' : expirado ? 'Expirado' : esgotado ? 'Usado' : 'Ativo';
+
+      return `<tr>
+        <td><b>${escapeHTML(c.codigo || c.id)}</b><br><span class="subnote">${escapeHTML(c.criadoPor || '')}</span></td>
+        <td>${exp ? escapeHTML(new Date(exp).toLocaleString('pt-BR')) : '-'}</td>
+        <td>${usos}/${max}</td>
+        <td><span class="invite-status-pill ${cls}">${escapeHTML(status)}</span></td>
+        <td><div class="actions">
+          <button class="btn btn-sm" onclick="navigator.clipboard?.writeText('${escapeHTML(c.codigo || c.id)}'); showToast('Código copiado.')">Copiar</button>
+          <button class="btn btn-danger btn-sm" onclick="revogarCodigoConvite('${escapeHTML(c.id)}')">Revogar</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function revogarCodigoConvite(id) {
+    if (!isAdmin()) return;
+    if (!confirm('Revogar este código?')) return;
+    try {
+      await db.ref('codigosAcesso/' + id).update({
+        ativo: false,
+        revogadoEm: new Date().toISOString(),
+        revogadoPor: logado.nome
+      });
+      showToast('Código revogado.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao revogar código: ' + error.message, 'error');
+    }
+  }
+
+
   // ====== LOGIN ======
   async function autenticar() {
     const userInput = document.getElementById('lUser').value.trim();
@@ -5279,6 +5771,12 @@ body[data-theme="light"] .language-switch-hero {
       if (!user) return showToast('Usuário não encontrado no Firebase.', 'error');
       if (user.ativo === false) return showToast('Usuário inativo. Fale com o administrador.', 'error');
       if (String(senhaInput) !== String(user.senha)) return showToast('Senha incorreta.', 'error');
+
+      const roleTemp = user.role || 'Analista Pleno';
+      const isAdminLogin = String(roleTemp).toLowerCase() === 'admin';
+      if (modoAdminBypass && !isAdminLogin && !conviteLocalValido()) {
+        return showToast('Entrada administrativa liberada apenas para admin. Usuários comuns precisam validar convite.', 'error');
+      }
 
       logado = {
         nome: user.nomeCompleto || userInput,
@@ -5318,6 +5816,7 @@ body[data-theme="light"] .language-switch-hero {
   }
 
   function iniciarApp() {
+    document.getElementById('accessGate')?.classList.add('hidden');
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
     document.getElementById('displayUser').innerText = logado.nome;
@@ -5361,9 +5860,12 @@ body[data-theme="light"] .language-switch-hero {
 
     const salvo = localStorage.getItem('usuarioOmniV2');
     if (salvo) {
-      try { logado = JSON.parse(salvo); iniciarApp(); }
+      try { logado = JSON.parse(salvo); iniciarApp(); return; }
       catch(e) { localStorage.removeItem('usuarioOmniV2'); }
     }
+
+    if (conviteLocalValido()) mostrarLogin(false);
+    else mostrarGate();
   };
 
   function switchView(view, event, skipSave = false) {
@@ -5397,6 +5899,7 @@ body[data-theme="light"] .language-switch-hero {
     if (view === 'insights') renderOmniInsights();
     if (view === 'relatorios') renderRelatorios();
     if (view === 'usuarios') renderUsuarios();
+    if (view === 'config') { renderCodigosConvite(); }
     if (view === 'config') atualizarCursorCards(normalizarCursorModel(localStorage.getItem(getCursorStorageKey()) || document.body.getAttribute('data-cursor-model') || DEFAULT_CURSOR_MODEL));
   }
 
@@ -5461,6 +5964,15 @@ body[data-theme="light"] .language-switch-hero {
     }, error => {
       console.error('Erro ao escutar usuários:', error);
       showToast('Erro ao carregar usuários: ' + error.message, 'error');
+    });
+
+    db.ref('codigosAcesso').on('value', snap => {
+      cacheCodigosConvite = [];
+      snap.forEach(item => cacheCodigosConvite.push({ id: item.key, ...item.val() }));
+      cacheCodigosConvite.sort((a,b) => Number(b.criadoTimestamp || 0) - Number(a.criadoTimestamp || 0));
+      renderCodigosConvite();
+    }, error => {
+      console.error('Erro ao escutar códigos de convite:', error);
     });
   }
 
