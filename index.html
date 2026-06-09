@@ -3197,6 +3197,98 @@ body[data-theme="light"] .sidebar {
   }
 }
 
+
+/* ====== V5.2 CORREÇÃO MODAL EDITAR/VER ======
+   O tema Aero antigo sobrescrevia .modal-overlay para position:relative.
+   Isso deixava o modal fora do quadro/empurrando a página. Agora volta a ser overlay real.
+*/
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: none;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: rgba(2, 8, 17, .78) !important;
+  z-index: 999999 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.modal-box {
+  position: relative !important;
+  width: min(860px, calc(100vw - 48px)) !important;
+  max-width: 860px !important;
+  max-height: none !important;
+  margin: 24px auto !important;
+  overflow: visible !important;
+  background: var(--read-panel, #111F33) !important;
+  border: 1px solid var(--read-border-strong, rgba(220,236,247,.34)) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.42) !important;
+  color: var(--read-text, #F7FAFC) !important;
+}
+
+body[data-theme="light"] .modal-box {
+  background: #FFFFFF !important;
+  color: #132033 !important;
+  box-shadow: 0 24px 70px rgba(19,32,51,.20) !important;
+}
+
+#modalContent {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+body.modal-open {
+  overflow: hidden !important;
+}
+
+@media (max-width: 760px) {
+  .modal-overlay {
+    padding: 12px !important;
+  }
+
+  .modal-box {
+    width: calc(100vw - 24px) !important;
+    margin: 12px auto !important;
+    padding: 18px !important;
+  }
+
+  #modalContent {
+    max-height: calc(100vh - 130px);
+  }
+}
+
+/* Inventário: contador e tabela mais estáveis */
+.inventory-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--read-border, rgba(220,236,247,.22));
+  background: color-mix(in srgb, var(--read-field, #182A40) 88%, var(--brand) 6%);
+  color: var(--read-muted, #C0CAD6);
+  font-size: .74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#tbEstoque tr {
+  display: table-row !important;
+}
+
+#tbEstoque td {
+  vertical-align: middle !important;
+}
+
 </style>
 </head>
 <body>
@@ -3527,7 +3619,13 @@ body[data-theme="light"] .sidebar {
         </div>
 
         <div class="card">
-          <div class="card-header"><div class="card-title">Inventário de TI</div><button class="btn btn-sm" onclick="exportarEstoque()">⬇ Excel</button></div>
+          <div class="card-header">
+            <div>
+              <div class="card-title">Inventário de TI</div>
+              <div id="estoqueStatusCount" class="subnote">Carregando itens...</div>
+            </div>
+            <button class="btn btn-sm" onclick="exportarEstoque()">⬇ Excel</button>
+          </div>
           <div class="grid grid-3" style="margin-bottom:14px;"><input id="filtroEstoque" placeholder="Buscar item, patrimônio, usuário..." oninput="renderEstoque()"><select id="filtroStatusEstoque" onchange="renderEstoque()"><option value="">Todos status</option><option>Disponível</option><option>Em uso</option><option>Emprestado</option><option>Manutenção</option><option>Baixado</option></select><button class="btn" onclick="renderEstoque()">Atualizar</button></div>
           <div class="table-wrap"><table><thead><tr><th>Item</th><th>Categoria</th><th>Qtd</th><th>Patrimônio</th><th>Serial</th><th>Status</th><th>Usuário</th><th>Localização</th><th>Ação</th></tr></thead><tbody id="tbEstoque"></tbody></table></div>
         </div>
@@ -4071,12 +4169,22 @@ body[data-theme="light"] .sidebar {
 
   function uid() { return db.ref().push().key; }
 
-  function closeModal() { document.getElementById('modal').style.display = 'none'; document.getElementById('modalContent').innerHTML = ''; }
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('modalContent').innerHTML = '';
+    document.body.classList.remove('modal-open');
+  }
+
   function openModal(title, subtitle, html) {
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalSubtitle').innerText = subtitle || '';
     document.getElementById('modalContent').innerHTML = html;
     document.getElementById('modal').style.display = 'flex';
+    document.body.classList.add('modal-open');
+    setTimeout(() => {
+      const box = document.querySelector('#modal .modal-box');
+      if (box) box.scrollTop = 0;
+    }, 0);
   }
 
   // ====== LOGIN ======
@@ -4225,9 +4333,19 @@ body[data-theme="light"] .sidebar {
       renderDemandas(); renderDashboard(); renderOmniInsights();
     });
     db.ref('estoque_ti').on('value', snap => {
-      cacheEstoque = [];
-      snap.forEach(item => cacheEstoque.push({ id: item.key, ...item.val() }));
-      renderEstoque(); renderDashboard(); renderOmniInsights(); atualizarDatalistPatrimonios();
+      const dados = snap.val() || {};
+      cacheEstoque = Object.entries(dados).map(([id, valor]) => ({
+        id,
+        ...(valor && typeof valor === 'object' ? valor : { item: String(valor || '') })
+      }));
+      cacheEstoque.sort((a,b) => String(a.criadoEm || a.item || '').localeCompare(String(b.criadoEm || b.item || ''), 'pt-BR'));
+      renderEstoque();
+      renderDashboard();
+      renderOmniInsights();
+      atualizarDatalistPatrimonios();
+    }, error => {
+      console.error('Erro ao escutar estoque:', error);
+      showToast('Erro ao carregar estoque: ' + error.message, 'error');
     });
     db.ref('movimentacoes_ti').on('value', snap => {
       cacheMovimentacoes = [];
@@ -4677,7 +4795,15 @@ body[data-theme="light"] .sidebar {
       criadoEm: new Date().toISOString(),
       atualizadoEm: new Date().toISOString()
     };
-    await db.ref('estoque_ti').push(data);
+    const ref = await db.ref('estoque_ti').push(data);
+
+    // Atualização otimista: o listener do Firebase confirma depois,
+    // mas isso evita sensação de que o item sumiu após salvar.
+    cacheEstoque.push({ id: ref.key, ...data });
+    renderEstoque();
+    renderDashboard();
+    atualizarDatalistPatrimonios();
+
     ['etItem','etModelo','etPatrimonio','etSerial','etLocal','etUsuario','etSetor','etObs'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('etQtd').value = 1;
     document.getElementById('etMinimo').value = 1;
@@ -4686,12 +4812,63 @@ body[data-theme="light"] .sidebar {
 
   function renderEstoque() {
     const tb = document.getElementById('tbEstoque'); if (!tb) return;
-    const termo = texto(document.getElementById('filtroEstoque')?.value || '');
+
+    const termoRaw = document.getElementById('filtroEstoque')?.value || '';
+    const termo = texto(termoRaw);
     const st = document.getElementById('filtroStatusEstoque')?.value || '';
-    let lista = cacheEstoque.filter(e => (!st || e.status === st) && (!termo || texto(`${e.item} ${e.categoria} ${e.modelo} ${e.patrimonio} ${e.serial} ${e.usuario} ${e.localizacao}`).includes(termo)));
-    lista.sort((a,b) => String(a.item || '').localeCompare(String(b.item || '')));
-    if (!lista.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);">Nenhum item encontrado.</td></tr>'; return; }
-    tb.innerHTML = lista.map(e => `<tr><td><b>${escapeHTML(e.item)}</b><br><span class="subnote">${escapeHTML(e.modelo)}</span></td><td>${escapeHTML(e.categoria)}</td><td><b>${escapeHTML(e.quantidade)}</b><br><span class="subnote">Mín: ${escapeHTML(e.minimo)}</span></td><td>${escapeHTML(e.patrimonio || '-')}</td><td>${escapeHTML(e.serial || '-')}</td><td><span class="pill ${pillStatus(e.status)}">${escapeHTML(e.status)}</span></td><td>${escapeHTML(e.usuario || '-')}<br><span class="subnote">${escapeHTML(e.setor || '')}</span></td><td>${escapeHTML(e.localizacao)}</td><td><div class="actions"><button class="btn btn-sm" onclick="editarEstoque('${e.id}')">Editar</button><button class="btn btn-danger btn-sm" onclick="excluirRegistro('estoque_ti','${e.id}')">Excluir</button></div></td></tr>`).join('');
+
+    const total = cacheEstoque.length;
+
+    let lista = cacheEstoque.filter(e => {
+      const statusItem = String(e.status || '').trim();
+      if (st && statusItem !== st) return false;
+
+      const baseTexto = `${e.item || ''} ${e.categoria || ''} ${e.modelo || ''} ${e.patrimonio || ''} ${e.serial || ''} ${e.usuario || ''} ${e.setor || ''} ${e.localizacao || ''} ${e.observacao || ''}`;
+      return !termo || texto(baseTexto).includes(termo);
+    });
+
+    lista.sort((a,b) => {
+      const pa = String(a.patrimonio || '');
+      const pb = String(b.patrimonio || '');
+      if (pa || pb) return pa.localeCompare(pb, 'pt-BR');
+      return String(a.item || '').localeCompare(String(b.item || ''), 'pt-BR');
+    });
+
+    const countEl = document.getElementById('estoqueStatusCount');
+    if (countEl) {
+      const filtros = [];
+      if (st) filtros.push(`status: ${st}`);
+      if (termoRaw.trim()) filtros.push(`busca: ${termoRaw.trim()}`);
+      countEl.innerHTML = `<span class="inventory-count-pill">${lista.length} exibido(s) de ${total} item(ns) no Firebase${filtros.length ? ' • filtro ' + escapeHTML(filtros.join(' / ')) : ''}</span>`;
+    }
+
+    if (!lista.length) {
+      tb.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);">
+        Nenhum item encontrado.${total ? '<br><span class="subnote">Existem itens no Firebase, mas o filtro atual não retornou resultados.</span>' : ''}
+      </td></tr>`;
+      return;
+    }
+
+    tb.innerHTML = lista.map(e => {
+      const item = e.item || e.nome || 'Sem nome';
+      const qtd = Number(e.quantidade ?? 0);
+      const minimo = Number(e.minimo ?? 0);
+
+      return `<tr>
+        <td><b>${escapeHTML(item)}</b><br><span class="subnote">${escapeHTML(e.modelo || '-')}</span></td>
+        <td>${escapeHTML(e.categoria || '-')}</td>
+        <td><b>${escapeHTML(qtd)}</b><br><span class="subnote">Mín: ${escapeHTML(minimo)}</span></td>
+        <td>${escapeHTML(e.patrimonio || '-')}</td>
+        <td>${escapeHTML(e.serial || '-')}</td>
+        <td><span class="pill ${pillStatus(e.status)}">${escapeHTML(e.status || '-')}</span></td>
+        <td>${escapeHTML(e.usuario || '-')}<br><span class="subnote">${escapeHTML(e.setor || '')}</span></td>
+        <td>${escapeHTML(e.localizacao || '-')}</td>
+        <td><div class="actions">
+          <button class="btn btn-sm" onclick="editarEstoque('${e.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="excluirRegistro('estoque_ti','${e.id}')">Excluir</button>
+        </div></td>
+      </tr>`;
+    }).join('');
   }
 
   function editarEstoque(id) {
