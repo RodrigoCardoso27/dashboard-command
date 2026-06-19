@@ -4072,7 +4072,7 @@ body[data-theme="light"] .language-switch-hero {
         </div>
 
         <button class="btn btn-primary btn-block" onclick="validarCodigoConvite()">Validar código e liberar login</button>
-        <button class="btn btn-block admin-access-btn" style="margin-top:10px;" onclick="abrirLoginAdmin()">Sou administrador</button>
+        <button class="btn btn-block admin-access-btn" style="margin-top:10px;" onclick="abrirLoginCadastrado()">Já tenho cadastro</button>
 
         <div id="inviteStatus" class="connection-pill">🔒 Aguardando código de convite</div>
       </div>
@@ -4082,10 +4082,10 @@ body[data-theme="light"] .language-switch-hero {
       <div class="air-card">
         <div class="page-kicker">Omni Service Desk TI</div>
         <h2 style="font-size:2.55rem; line-height:1.05; letter-spacing:-1.7px; margin:10px 0 16px;">Acesso protegido por convite.</h2>
-        <p class="subnote" style="font-size:1rem; max-width:560px;">Apenas pessoas autorizadas conseguem visualizar a tela de login. O código é temporário, controlado pelo administrador e pode expirar em minutos.</p>
+        <p class="subnote" style="font-size:1rem; max-width:560px;">Usuários já cadastrados podem acessar a tela de login diretamente. O código de convite fica reservado para novos acessos liberados temporariamente pelo administrador.</p>
         <div class="grid grid-3" style="margin-top:26px;">
           <div class="kpi-card"><div class="kpi-label">Convite</div><div class="kpi-value">OTP</div><div class="kpi-desc">Código temporário</div></div>
-          <div class="kpi-card"><div class="kpi-label">Admin</div><div class="kpi-value">Bypass</div><div class="kpi-desc">Entrada administrativa</div></div>
+          <div class="kpi-card"><div class="kpi-label">Cadastro</div><div class="kpi-value">Login</div><div class="kpi-desc">Usuário já existente</div></div>
           <div class="kpi-card"><div class="kpi-label">Segurança</div><div class="kpi-value">TI</div><div class="kpi-desc">Acesso controlado</div></div>
         </div>
       </div>
@@ -5511,8 +5511,10 @@ body[data-theme="light"] .language-switch-hero {
       'Digite o código temporário enviado pelo administrador para liberar a tela de login.': 'Enter the temporary code sent by the administrator to unlock the login screen.',
       'Validar código e liberar login': 'Validate code and unlock login',
       'Sou administrador': 'I am an administrator',
+      'Já tenho cadastro': 'I already have an account',
       'Aguardando código de convite': 'Waiting for invite code',
       'Acesso protegido por convite.': 'Access protected by invite.',
+      'Usuários já cadastrados podem acessar a tela de login diretamente. O código de convite fica reservado para novos acessos liberados temporariamente pelo administrador.': 'Registered users can access the login screen directly. The invite code is reserved for new access temporarily approved by the administrator.',
       'Códigos de convite': 'Invite codes',
       'Gere códigos temporários para liberar a tela de login de novos acessos.': 'Generate temporary codes to unlock the login screen for new access.',
       'Expira em minutos': 'Expires in minutes',
@@ -5740,8 +5742,10 @@ body[data-theme="light"] .language-switch-hero {
       'Digite o código temporário enviado pelo administrador para liberar a tela de login.': 'Ingrese el código temporal enviado por el administrador para liberar la pantalla de login.',
       'Validar código e liberar login': 'Validar código y liberar login',
       'Sou administrador': 'Soy administrador',
+      'Já tenho cadastro': 'Ya tengo registro',
       'Aguardando código de convite': 'Esperando código de invitación',
       'Acesso protegido por convite.': 'Acceso protegido por invitación.',
+      'Usuários já cadastrados podem acessar a tela de login diretamente. O código de convite fica reservado para novos acessos liberados temporariamente pelo administrador.': 'Los usuarios registrados pueden acceder a la pantalla de login directamente. El código de invitación queda reservado para nuevos accesos liberados temporalmente por el administrador.',
       'Códigos de convite': 'Códigos de invitación',
       'Gere códigos temporários para liberar a tela de login de novos acessos.': 'Genere códigos temporales para liberar la pantalla de login de nuevos accesos.',
       'Expira em minutos': 'Expira en minutos',
@@ -6104,22 +6108,26 @@ body[data-theme="light"] .language-switch-hero {
     setTimeout(() => document.getElementById('inviteCodeInput')?.focus(), 80);
   }
 
-  function mostrarLogin(adminBypass = false) {
-    modoAdminBypass = !!adminBypass;
+  function mostrarLogin(acessoCadastrado = false) {
+    modoAdminBypass = false;
     document.getElementById('accessGate')?.classList.add('hidden');
     document.getElementById('loginScreen')?.classList.remove('hidden');
     document.getElementById('appShell')?.classList.add('hidden');
 
     const st = document.getElementById('firebaseStatus');
-    if (st && adminBypass) st.innerText = '🔐 Entrada administrativa';
+    if (st && acessoCadastrado) st.innerText = '🔐 Login liberado para usuário cadastrado';
     else if (st) st.innerText = '✅ Código validado. Faça login.';
 
     atualizarBotaoAdminRecovery();
     setTimeout(() => document.getElementById('lUser')?.focus(), 80);
   }
 
-  function abrirLoginAdmin() {
+  function abrirLoginCadastrado() {
     mostrarLogin(true);
+  }
+
+  function abrirLoginAdmin() {
+    abrirLoginCadastrado();
   }
 
   async function validarCodigoConvite() {
@@ -6404,10 +6412,6 @@ body[data-theme="light"] .language-switch-hero {
       if (String(senhaInput) !== String(user.senha)) return showToast('Senha incorreta.', 'error');
 
       const roleTemp = user.role || 'Analista Pleno';
-      const isAdminLogin = String(roleTemp).toLowerCase() === 'admin';
-      if (modoAdminBypass && !isAdminLogin && !conviteLocalValido()) {
-        return showToast('Entrada administrativa liberada apenas para admin. Usuários comuns precisam validar convite.', 'error');
-      }
 
       logado = {
         nome: user.nomeCompleto || userInput,
