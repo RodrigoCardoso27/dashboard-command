@@ -4436,6 +4436,7 @@ body.is-mobile #appShell {
         </div>
         <button class="btn btn-primary btn-block" onclick="autenticar()">Entrar no sistema</button>
         <button class="btn btn-block" style="margin-top:10px;" onclick="abrirEsqueciSenha()">Esqueci minha senha</button>
+        <button class="btn btn-block" style="margin-top:10px;" onclick="limparSessaoUsuario(); showToast('Sessão limpa. Digite usuário e senha.');">Trocar / limpar conta salva</button>
         <button id="btnAdminRecovery" class="btn btn-warning btn-block admin-recovery-btn" style="margin-top:10px;" onclick="abrirRecuperacaoAdmin()">Recuperar admin</button>
         <div id="firebaseStatus" class="connection-pill">⚪ Firebase verificando...</div>
       </div>
@@ -6351,7 +6352,7 @@ body.is-mobile #appShell {
       if (logado.login === 'admin') {
         await desativarRecuperacaoAdminAposTrocaSenha();
       }
-      localStorage.setItem('usuarioOmniV2', JSON.stringify(logado));
+      salvarSessaoUsuario();
       forceCloseModal();
       showToast('Senha alterada com sucesso.');
     } catch (error) {
@@ -6771,7 +6772,7 @@ body.is-mobile #appShell {
         garantiaPermissoes: normalizarPermissoesGarantia(user.garantiaPermissoes, user.role || 'Analista Pleno'),
         exigirTrocaSenha: user.exigirTrocaSenha === true || user.trocarSenhaPrimeiroAcesso === true || user.primeiroAcesso === true
       };
-      localStorage.setItem('usuarioOmniV2', JSON.stringify(logado));
+      salvarSessaoUsuario();
       iniciarApp();
     } catch (error) {
       console.error(error);
@@ -6860,9 +6861,25 @@ body.is-mobile #appShell {
     document.body.classList.remove('mobile-menu-open');
   }
 
-  function logout() {
+
+  // ====== SESSÃO SEGURA ======
+  // V6.8: não usa mais localStorage para manter usuário logado.
+  // Isso evita que Safari/Chrome no celular abram direto em uma conta antiga.
+  function salvarSessaoUsuario() {
+    if (!logado) return;
+    sessionStorage.setItem('usuarioOmniSessaoV1', JSON.stringify(logado));
+    localStorage.removeItem('usuarioOmniV2'); // limpa legado das versões anteriores
+  }
+
+  function limparSessaoUsuario() {
+    sessionStorage.removeItem('usuarioOmniSessaoV1');
     localStorage.removeItem('usuarioOmniV2');
     localStorage.removeItem('omniActiveViewV2');
+  }
+
+  function logout() {
+    limparSessaoUsuario();
+    logado = null;
     location.reload();
   }
 
@@ -6873,10 +6890,13 @@ body.is-mobile #appShell {
     renderPermissoesCadastro();
     atualizarBotaoAdminRecovery();
 
-    const salvo = localStorage.getItem('usuarioOmniV2');
-    if (salvo) {
-      try { logado = JSON.parse(salvo); iniciarApp(); return; }
-      catch(e) { localStorage.removeItem('usuarioOmniV2'); }
+    // Limpa login persistido por versões antigas. Agora a sessão fica só no sessionStorage.
+    localStorage.removeItem('usuarioOmniV2');
+
+    const salvoSessao = sessionStorage.getItem('usuarioOmniSessaoV1');
+    if (salvoSessao) {
+      try { logado = JSON.parse(salvoSessao); iniciarApp(); return; }
+      catch(e) { sessionStorage.removeItem('usuarioOmniSessaoV1'); }
     }
 
     if (conviteLocalValido()) mostrarLogin(false);
