@@ -4707,6 +4707,20 @@ body {
   }
 }
 
+
+.warranty-copy-note {
+  border: 1px solid color-mix(in srgb, var(--warning, #f5b84b) 32%, var(--read-border));
+  background: color-mix(in srgb, var(--warning, #f5b84b) 9%, var(--read-panel));
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 12px;
+  color: var(--read-text);
+}
+
+.warranty-copy-note b {
+  color: var(--read-text);
+}
+
 </style>
 </head>
 <body>
@@ -8500,7 +8514,7 @@ body {
     const patrimonio = String(g.patrimonio || '').trim().toUpperCase() || 'NÃO INFORMADO';
     const defeito = String(g.defeito || g.observacao || '').trim() || 'Descrever defeito';
 
-    return `${saudacaoPorHorario()},\n\nGostaria de acionar a garantia do notebook abaixo. O equipamento apresenta o seguinte defeito: ${defeito}.\n\nAs fotos do problema seguem em anexo para análise técnica.\n\nPATRIMÔNIO: ${patrimonio}\nMODEL: ${modelo}\nST: ${serial}\n\nDefeito: ${defeito}.`;
+    return `${saudacaoPorHorario()},\n\nGostaria de acionar a garantia do notebook abaixo. O equipamento apresenta o seguinte defeito: ${defeito}.\n\nAs fotos do problema seguem em anexo para análise do fornecedor e realização do reparo.\n\nPATRIMÔNIO: ${patrimonio}\nMODEL: ${modelo}\nST: ${serial}\n\nDefeito: ${defeito}.`;
   }
 
   function melhorarTextoGarantia(g, textoAtual = '') {
@@ -8509,7 +8523,7 @@ body {
     const patrimonio = String(g.patrimonio || '').trim().toUpperCase() || 'NÃO INFORMADO';
     const defeito = String(g.defeito || g.observacao || '').trim() || 'defeito não especificado';
 
-    return `${saudacaoPorHorario()},\n\nSolicito a abertura de atendimento em garantia para o notebook identificado abaixo.\n\nDurante a análise inicial, foi identificado o seguinte problema: ${defeito}. O equipamento necessita de avaliação técnica do fornecedor para confirmação do reparo ou substituição aplicável.\n\nAs evidências fotográficas do defeito seguem anexadas a este e-mail.\n\nDADOS DO EQUIPAMENTO\nPATRIMÔNIO: ${patrimonio}\nMODEL: ${modelo}\nST: ${serial}\n\nDEFEITO RELATADO\n${defeito}.\n\nFico à disposição para quaisquer informações adicionais necessárias.`;
+    return `${saudacaoPorHorario()},\n\nSolicito o acionamento da garantia para o notebook identificado abaixo.\n\nO equipamento apresenta o seguinte defeito: ${defeito}. Peço, por gentileza, o direcionamento do atendimento para realização do reparo pelo fornecedor.\n\nAs fotos do problema seguem anexadas a este e-mail.\n\nDADOS DO EQUIPAMENTO\nPATRIMÔNIO: ${patrimonio}\nMODEL: ${modelo}\nST: ${serial}\n\nDEFEITO RELATADO\n${defeito}.\n\nFico à disposição para quaisquer informações adicionais necessárias.`;
   }
 
   function aplicarMelhoriaTextoGarantia(id) {
@@ -8519,6 +8533,28 @@ body {
     if (!area) return;
     area.value = melhorarTextoGarantia(g, area.value);
     showToast('Texto recriado em formato mais técnico.');
+  }
+
+  function textoParaHtmlEmail(textoEmail = '') {
+    return String(textoEmail || '')
+      .split('\n')
+      .map(l => escapeHTML(l))
+      .join('<br>');
+  }
+
+  function htmlEmailGarantia(g, textoEmail = '') {
+    const anexos = Array.isArray(g.anexos) ? g.anexos : [];
+    const fotosHtml = anexos.length ? `
+      <p><b>Fotos do defeito:</b></p>
+      ${anexos.map((a, i) => `
+        <div style="margin:10px 0 16px;">
+          <div style="font-size:12px;color:#555;margin-bottom:4px;">${escapeHTML(a.nome || ('Foto ' + (i + 1)))}</div>
+          <img src="${escapeHTML(a.base64 || '')}" alt="${escapeHTML(a.nome || ('Foto ' + (i + 1)))}" style="max-width:520px;width:100%;border:1px solid #ddd;border-radius:8px;">
+        </div>
+      `).join('')}
+    ` : '';
+
+    return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#111;">${textoParaHtmlEmail(textoEmail)}${fotosHtml}</div>`;
   }
 
   async function copiarTextoEmailGarantiaAtual() {
@@ -8537,13 +8573,64 @@ body {
     }
   }
 
+  async function copiarEmailCompletoGarantiaAtual(id) {
+    const g = cacheGarantias.find(x => x.id === id);
+    if (!g) return showToast('Registro não encontrado.', 'error');
+
+    const area = document.getElementById('emailGarantiaEdit');
+    const textoEmail = area?.value || textoEmailGarantia(g);
+    const html = htmlEmailGarantia(g, textoEmail);
+
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([textoEmail], { type: 'text/plain' })
+          })
+        ]);
+        showToast('E-mail copiado com as fotos incorporadas. Cole no corpo do e-mail.');
+      } else {
+        await navigator.clipboard.writeText(textoEmail);
+        showToast('Texto copiado. Este navegador não permite copiar imagens junto.');
+      }
+    } catch (error) {
+      console.warn(error);
+      try {
+        await navigator.clipboard.writeText(textoEmail);
+        showToast('Texto copiado. O navegador bloqueou a cópia das fotos junto.');
+      } catch(e) {
+        showToast('Não foi possível copiar automaticamente.', 'warning');
+      }
+    }
+  }
+
+  function baixarAnexosGarantia(id) {
+    const g = cacheGarantias.find(x => x.id === id);
+    if (!g) return showToast('Registro não encontrado.', 'error');
+    const anexos = Array.isArray(g.anexos) ? g.anexos : [];
+    if (!anexos.length) return showToast('Este registro não possui fotos anexadas.', 'warning');
+
+    anexos.forEach((a, i) => {
+      const link = document.createElement('a');
+      link.href = a.base64;
+      const nomeBase = String(g.patrimonio || g.serial || 'garantia').replace(/[^a-z0-9_-]/gi, '_');
+      link.download = `${nomeBase}_foto_${i + 1}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+
+    showToast('Download das fotos iniciado.');
+  }
+
   async function copiarEmailGarantia(id) {
     const g = cacheGarantias.find(x => x.id === id);
     if (!g) return showToast('Registro não encontrado.', 'error');
 
     try {
       await navigator.clipboard.writeText(textoEmailGarantia(g));
-      showToast('Texto de acionamento copiado. As fotos devem ser anexadas manualmente no e-mail.');
+      showToast('Texto de acionamento copiado.');
     } catch (error) {
       console.warn('Clipboard indisponível, abrindo prévia:', error);
       visualizarEmailGarantia(id);
@@ -8560,13 +8647,17 @@ body {
       <div class="subnote">Edite o texto antes de copiar. O botão de melhoria recria a mensagem em um formato mais técnico e fácil de entender.</div>
       <textarea id="emailGarantiaEdit" class="warranty-email-editor">${escapeHTML(textoEmail)}</textarea>
       <div class="warranty-email-actions">
-        <button class="btn btn-primary" onclick='copiarTextoEmailGarantiaAtual()'>Copiar texto</button>
+        <button class="btn btn-primary" onclick='copiarTextoEmailGarantiaAtual()'>Copiar só texto</button>
+        <button class="btn btn-success" onclick='copiarEmailCompletoGarantiaAtual(${JSON.stringify(id)})'>Copiar texto + fotos</button>
         <button class="btn" onclick='aplicarMelhoriaTextoGarantia(${JSON.stringify(id)})'>✨ Melhorar texto técnico</button>
+        <button class="btn" onclick='baixarAnexosGarantia(${JSON.stringify(id)})'>Baixar fotos</button>
         <button class="btn" onclick='visualizarEmailGarantia(${JSON.stringify(id)})'>Restaurar padrão</button>
+      </div>
+      <div class="warranty-copy-note">
+        <b>Sobre os anexos:</b> por segurança, navegadores não conseguem criar “anexo de e-mail” automaticamente. O botão <b>Copiar texto + fotos</b> tenta copiar as imagens incorporadas no corpo do e-mail. Se o Gmail/Outlook não aceitar, use <b>Baixar fotos</b> e anexe manualmente.
       </div>
       <div style="margin-top:14px;">
         <div class="card-title" style="font-size:.92rem;">Fotos anexadas ao registro</div>
-        <div class="subnote">O texto é copiado para a área de transferência. As fotos abaixo devem ser anexadas manualmente no e-mail ao fornecedor.</div>
         ${renderThumbsGarantia(anexos)}
       </div>
     `);
@@ -8606,7 +8697,7 @@ body {
       const st = statusGarantiaAuto(g);
       const id = JSON.stringify(g.id);
       const acoes = [
-        `<button class="btn btn-sm btn-copy-warranty" onclick='copiarEmailGarantia(${id})'>Copiar e-mail</button>`,
+        `<button class="btn btn-sm btn-copy-warranty" onclick='visualizarEmailGarantia(${id})'>E-mail + anexos</button>`,
         `<button class="btn btn-sm" onclick='visualizarEmailGarantia(${id})'>Prévia</button>`,
         podeEditar ? `<button class="btn btn-sm" onclick='editarGarantia(${id})'>Editar</button>` : '',
         podeExcluir ? `<button class="btn btn-danger btn-sm" onclick='excluirGarantia(${id})'>Excluir</button>` : ''
