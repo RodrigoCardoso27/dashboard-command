@@ -4640,6 +4640,73 @@ body {
   }
 }
 
+
+/* ====== V7.3 GARANTIA: CAIXA ALTA, ANEXOS E E-MAIL TÉCNICO ====== */
+.uppercase-input {
+  text-transform: uppercase;
+}
+
+.warranty-attachment-box {
+  border: 1px dashed color-mix(in srgb, var(--brand2) 32%, var(--read-border));
+  background: color-mix(in srgb, var(--brand2) 6%, var(--read-panel));
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.warranty-attachments-preview,
+.warranty-email-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.warranty-thumb {
+  width: 86px;
+  border: 1px solid var(--read-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--read-field);
+}
+
+.warranty-thumb img {
+  width: 100%;
+  height: 64px;
+  object-fit: cover;
+  display: block;
+}
+
+.warranty-thumb span {
+  display: block;
+  padding: 6px;
+  font-size: .66rem;
+  color: var(--read-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.warranty-email-editor {
+  width: 100%;
+  min-height: 250px;
+  margin-top: 12px;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+.warranty-email-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (max-width: 700px) {
+  .warranty-email-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -5276,19 +5343,19 @@ body {
           <div class="card-header">
             <div>
               <div class="card-title">🛡️ Garantia Equipamentos</div>
-              <div class="subnote">Levantamento de notebooks vinculados a colaboradores, evitando registros duplicados por patrimônio, usuário ou e-mail.</div>
+              <div class="subnote">Levantamento de notebooks vinculados a colaboradores, com anexos do defeito, texto de acionamento e relatório de garantias resolvidas.</div>
             </div>
             <button class="btn btn-sm" data-garantia-action="criar" onclick="limparGarantia()">+ Novo levantamento</button>
           </div>
 
           <div class="permission-warning hidden" id="garantiaPermissionWarning">
-            Você possui acesso somente para visualização deste módulo. Criação, edição, exclusão ou encerramento dependem de permissão do administrador.
+            Você possui acesso somente para visualização deste módulo. Criação, edição, exclusão ou alteração de status dependem de permissão do administrador.
           </div>
 
           <div class="grid grid-4" data-garantia-action="criar">
-            <div><label>Patrimônio</label><input id="gaPatrimonio" placeholder="OMNI0000 ou ALG0000"></div>
-            <div><label>Serial</label><input id="gaSerial" placeholder="Serial number"></div>
-            <div><label>Modelo</label><input id="gaModelo" placeholder="Marca/modelo"></div>
+            <div><label>Patrimônio</label><input id="gaPatrimonio" class="uppercase-input" placeholder="OMNI0000 ou ALG0000" oninput="forcarCaixaAlta(this)"></div>
+            <div><label>Serial</label><input id="gaSerial" class="uppercase-input" placeholder="SERIAL NUMBER" oninput="forcarCaixaAlta(this)"></div>
+            <div><label>Modelo</label><input id="gaModelo" class="uppercase-input" placeholder="MARCA/MODELO" oninput="forcarCaixaAlta(this)"></div>
             <div>
               <label>Fornecedor</label>
               <select id="gaFornecedor"></select>
@@ -5301,9 +5368,9 @@ body {
             <div>
               <label>Status</label>
               <select id="gaStatus">
-                <option>Acionar Garantia</option>
+                <option>Acionar garantia</option>
                 <option>Aguardando Fornecedor</option>
-                <option>Resolvida</option>
+                <option>Resolvido</option>
               </select>
             </div>
             <div><label>Responsável</label><input id="gaResponsavelView" readonly></div>
@@ -5312,6 +5379,15 @@ body {
           <div style="margin-top:14px;" data-garantia-action="criar">
             <label>Defeito relatado</label>
             <input id="gaDefeito" placeholder="Ex: Monitor quebrado, tela danificada, teclado falhando...">
+          </div>
+
+          <div style="margin-top:14px;" data-garantia-action="criar">
+            <label>Anexos do defeito</label>
+            <div class="warranty-attachment-box">
+              <input id="gaAnexos" type="file" accept="image/*" multiple onchange="prepararAnexosGarantia(this.files)">
+              <div class="subnote">Adicione fotos do possível defeito antes de salvar. Elas ficam salvas no registro e aparecem na prévia do e-mail.</div>
+              <div id="gaAnexosPreview" class="warranty-attachments-preview"></div>
+            </div>
           </div>
 
           <div style="margin-top:14px;" data-garantia-action="criar">
@@ -5334,6 +5410,22 @@ body {
             <table>
               <thead><tr><th>Patrimônio</th><th>Colaborador / E-mail</th><th>Modelo / Serial</th><th>Status</th><th>Responsável</th><th>Ação</th></tr></thead>
               <tbody id="tbGarantia"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Relatório de garantias resolvidas</div>
+              <div id="garantiaResolvidaStatus" class="subnote">Notebooks que tiveram garantia usada para solução do problema levantado.</div>
+            </div>
+            <input id="filtroGarantiaResolvida" style="max-width:280px;" placeholder="Buscar resolvidos..." oninput="renderGarantiasResolvidas()">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Patrimônio</th><th>Colaborador</th><th>Modelo / Serial</th><th>Defeito</th><th>Resolvido em</th><th>Responsável</th></tr></thead>
+              <tbody id="tbGarantiaResolvidas"></tbody>
             </table>
           </div>
         </div>
@@ -8143,17 +8235,23 @@ body {
   // Para alterar depois, edite somente esta lista abaixo.
   const FORNECEDORES_GARANTIA = [
     'DELL',
+    'LENOVO',
     'HP',
+    'APNETWORKS',
+    'ALG',
+    'OMNI',
+    'POSITIVO',
+    'SAMSUNG',
     'APPLE',
     'OUTRO FORNECEDOR CORPORATIVO'
   ];
+
+  let garantiaAnexosTemp = [];
 
   function opcoesFornecedorGarantia(valorAtual = '') {
     const atual = String(valorAtual || '').trim();
     const lista = [...FORNECEDORES_GARANTIA];
 
-    // Se houver registro antigo no Firebase com fornecedor fora da lista,
-    // mantém o valor visível no select para não perder histórico.
     if (atual && !lista.some(x => texto(x) === texto(atual))) lista.push(atual);
 
     return `<option value="">Selecione o fornecedor</option>` + lista.map(f => {
@@ -8165,6 +8263,92 @@ body {
   function carregarFornecedoresGarantia() {
     const select = document.getElementById('gaFornecedor');
     if (select) select.innerHTML = opcoesFornecedorGarantia(select.value || '');
+  }
+
+  function forcarCaixaAlta(el) {
+    if (!el) return;
+    const inicio = el.selectionStart;
+    const fim = el.selectionEnd;
+    el.value = String(el.value || '').toUpperCase();
+    try { el.setSelectionRange(inicio, fim); } catch(e) {}
+  }
+
+  function statusGarantiaPadrao(valor = '') {
+    const v = texto(valor);
+    if (v.includes('resolvid') || v.includes('encerrad')) return 'Resolvido';
+    if (v.includes('aguardando')) return 'Aguardando Fornecedor';
+    return 'Acionar garantia';
+  }
+
+  function imagemCompactaBase64(file, maxWidth = 1280, quality = 0.74) {
+    return new Promise((resolve, reject) => {
+      if (!file || !String(file.type || '').startsWith('image/')) {
+        return reject(new Error('Arquivo inválido. Envie apenas imagens.'));
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxWidth / img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const base64 = canvas.toDataURL('image/jpeg', quality);
+          resolve({
+            nome: file.name,
+            tipo: 'image/jpeg',
+            tamanhoOriginal: file.size,
+            tamanhoBase64: base64.length,
+            base64,
+            criadoEm: new Date().toISOString()
+          });
+        };
+        img.onerror = () => reject(new Error('Não foi possível processar a imagem.'));
+        img.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function prepararAnexosGarantia(files) {
+    const lista = Array.from(files || []).slice(0, 6);
+    if (!lista.length) {
+      garantiaAnexosTemp = [];
+      renderAnexosGarantiaTemp();
+      return;
+    }
+
+    try {
+      showToast('Processando anexos...');
+      const anexos = [];
+      for (const file of lista) anexos.push(await imagemCompactaBase64(file));
+      garantiaAnexosTemp = anexos;
+      renderAnexosGarantiaTemp();
+      showToast(`${anexos.length} anexo(s) preparado(s).`);
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || 'Erro ao processar anexos.', 'error');
+    }
+  }
+
+  function renderThumbsGarantia(anexos = []) {
+    if (!anexos || !anexos.length) return '<div class="subnote">Nenhuma foto anexada ao registro.</div>';
+    return `<div class="warranty-email-attachments">${anexos.map((a, i) => `
+      <div class="warranty-thumb">
+        <img src="${escapeHTML(a.base64 || '')}" alt="Anexo ${i + 1}">
+        <span>${escapeHTML(a.nome || ('Foto ' + (i + 1)))}</span>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  function renderAnexosGarantiaTemp() {
+    const box = document.getElementById('gaAnexosPreview');
+    if (!box) return;
+    box.innerHTML = renderThumbsGarantia(garantiaAnexosTemp);
   }
 
   function atualizarPermissoesGarantiaUI() {
@@ -8183,14 +8367,23 @@ body {
 
   function limparGarantia() {
     if (!canGarantia('criar')) return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
+
     ['gaPatrimonio','gaSerial','gaModelo','gaUsuario','gaEmailUsuario','gaDefeito','gaObs'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+
     const fornecedor = document.getElementById('gaFornecedor');
     if (fornecedor) fornecedor.value = '';
+
     const st = document.getElementById('gaStatus');
-    if (st) st.value = 'Em levantamento';
+    if (st) st.value = 'Acionar garantia';
+
+    garantiaAnexosTemp = [];
+    const anexos = document.getElementById('gaAnexos');
+    if (anexos) anexos.value = '';
+    renderAnexosGarantiaTemp();
+
     const resp = document.getElementById('gaResponsavelView');
     if (resp) resp.value = logado?.nome || '';
   }
@@ -8211,7 +8404,7 @@ body {
 
     return (cacheGarantias || []).find(g => {
       if (ignorarId && g.id === ignorarId) return false;
-      if (g.status === 'Encerrada') return false;
+      if (statusGarantiaPadrao(g.status) === 'Resolvido') return false;
 
       const gp = chaveNormalizada(g.patrimonio);
       const gu = texto(g.usuarioVinculado || g.usuario || '');
@@ -8238,13 +8431,14 @@ body {
       return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
     }
 
-    const patrimonio = document.getElementById('gaPatrimonio').value.trim();
-    const serial = document.getElementById('gaSerial').value.trim();
-    const modelo = document.getElementById('gaModelo').value.trim();
+    const patrimonio = document.getElementById('gaPatrimonio').value.trim().toUpperCase();
+    const serial = document.getElementById('gaSerial').value.trim().toUpperCase();
+    const modelo = document.getElementById('gaModelo').value.trim().toUpperCase();
     const fornecedor = document.getElementById('gaFornecedor').value.trim();
     const usuario = document.getElementById('gaUsuario').value.trim();
     const emailUsuario = document.getElementById('gaEmailUsuario').value.trim();
     const defeito = document.getElementById('gaDefeito').value.trim();
+    const status = statusGarantiaPadrao(document.getElementById('gaStatus').value);
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
     if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
@@ -8265,7 +8459,9 @@ body {
       usuarioVinculado: usuario,
       emailUsuario,
       defeito,
-      status: document.getElementById('gaStatus').value,
+      anexos: garantiaAnexosTemp || [],
+      status,
+      resolvidoEm: status === 'Resolvido' ? new Date().toISOString() : '',
       responsavel: logado.nome,
       responsavelLogin: logado.login,
       observacao: document.getElementById('gaObs').value.trim(),
@@ -8288,9 +8484,8 @@ body {
   }
 
   function statusGarantiaAuto(g) {
-    return g.status || 'Em levantamento';
+    return statusGarantiaPadrao(g.status);
   }
-
 
   function saudacaoPorHorario() {
     const h = new Date().getHours();
@@ -8300,28 +8495,58 @@ body {
   }
 
   function textoEmailGarantia(g) {
-    const modelo = String(g.modelo || '').trim() || 'Não informado';
-    const serial = String(g.serial || '').trim() || 'Não informado';
+    const modelo = String(g.modelo || '').trim().toUpperCase() || 'NÃO INFORMADO';
+    const serial = String(g.serial || '').trim().toUpperCase() || 'NÃO INFORMADO';
+    const patrimonio = String(g.patrimonio || '').trim().toUpperCase() || 'NÃO INFORMADO';
     const defeito = String(g.defeito || g.observacao || '').trim() || 'Descrever defeito';
 
-    return `${saudacaoPorHorario()},\n\nGostaria de acionar a garantia do notebook abaixo, que está com ${defeito.toLowerCase()}. A foto do problema segue em anexo.\n\nMODEL: ${modelo}\nST: ${serial}\n\nDefeito: ${defeito}.`;
+    return `${saudacaoPorHorario()},\n\nGostaria de acionar a garantia do notebook abaixo. O equipamento apresenta o seguinte defeito: ${defeito}.\n\nAs fotos do problema seguem em anexo para análise técnica.\n\nPATRIMÔNIO: ${patrimonio}\nMODEL: ${modelo}\nST: ${serial}\n\nDefeito: ${defeito}.`;
+  }
+
+  function melhorarTextoGarantia(g, textoAtual = '') {
+    const modelo = String(g.modelo || '').trim().toUpperCase() || 'NÃO INFORMADO';
+    const serial = String(g.serial || '').trim().toUpperCase() || 'NÃO INFORMADO';
+    const patrimonio = String(g.patrimonio || '').trim().toUpperCase() || 'NÃO INFORMADO';
+    const defeito = String(g.defeito || g.observacao || '').trim() || 'defeito não especificado';
+
+    return `${saudacaoPorHorario()},\n\nSolicito a abertura de atendimento em garantia para o notebook identificado abaixo.\n\nDurante a análise inicial, foi identificado o seguinte problema: ${defeito}. O equipamento necessita de avaliação técnica do fornecedor para confirmação do reparo ou substituição aplicável.\n\nAs evidências fotográficas do defeito seguem anexadas a este e-mail.\n\nDADOS DO EQUIPAMENTO\nPATRIMÔNIO: ${patrimonio}\nMODEL: ${modelo}\nST: ${serial}\n\nDEFEITO RELATADO\n${defeito}.\n\nFico à disposição para quaisquer informações adicionais necessárias.`;
+  }
+
+  function aplicarMelhoriaTextoGarantia(id) {
+    const g = cacheGarantias.find(x => x.id === id);
+    if (!g) return showToast('Registro não encontrado.', 'error');
+    const area = document.getElementById('emailGarantiaEdit');
+    if (!area) return;
+    area.value = melhorarTextoGarantia(g, area.value);
+    showToast('Texto recriado em formato mais técnico.');
+  }
+
+  async function copiarTextoEmailGarantiaAtual() {
+    const area = document.getElementById('emailGarantiaEdit');
+    const textoEmail = area?.value || '';
+    if (!textoEmail.trim()) return showToast('Não há texto para copiar.', 'warning');
+
+    try {
+      await navigator.clipboard.writeText(textoEmail);
+      showToast('Texto do e-mail copiado.');
+    } catch (error) {
+      console.warn(error);
+      showToast('Não foi possível copiar automaticamente. Selecione o texto manualmente.', 'warning');
+      area?.focus();
+      area?.select();
+    }
   }
 
   async function copiarEmailGarantia(id) {
     const g = cacheGarantias.find(x => x.id === id);
     if (!g) return showToast('Registro não encontrado.', 'error');
 
-    const textoEmail = textoEmailGarantia(g);
-
     try {
-      await navigator.clipboard.writeText(textoEmail);
-      showToast('Texto de acionamento copiado.');
+      await navigator.clipboard.writeText(textoEmailGarantia(g));
+      showToast('Texto de acionamento copiado. As fotos devem ser anexadas manualmente no e-mail.');
     } catch (error) {
       console.warn('Clipboard indisponível, abrindo prévia:', error);
-      openModal('Texto para acionar garantia', g.patrimonio || g.serial || 'Equipamento', `
-        <div class="subnote">Copie manualmente o texto abaixo:</div>
-        <div class="warranty-email-preview">${escapeHTML(textoEmail)}</div>
-      `);
+      visualizarEmailGarantia(id);
     }
   }
 
@@ -8329,10 +8554,21 @@ body {
     const g = cacheGarantias.find(x => x.id === id);
     if (!g) return showToast('Registro não encontrado.', 'error');
     const textoEmail = textoEmailGarantia(g);
+    const anexos = Array.isArray(g.anexos) ? g.anexos : [];
+
     openModal('Texto para acionar garantia', g.patrimonio || g.serial || 'Equipamento', `
-      <div class="subnote">Texto pronto para enviar por e-mail ao fornecedor.</div>
-      <div class="warranty-email-preview">${escapeHTML(textoEmail)}</div>
-      <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick='copiarEmailGarantia(${JSON.stringify(id)})'>Copiar texto</button>
+      <div class="subnote">Edite o texto antes de copiar. O botão de melhoria recria a mensagem em um formato mais técnico e fácil de entender.</div>
+      <textarea id="emailGarantiaEdit" class="warranty-email-editor">${escapeHTML(textoEmail)}</textarea>
+      <div class="warranty-email-actions">
+        <button class="btn btn-primary" onclick='copiarTextoEmailGarantiaAtual()'>Copiar texto</button>
+        <button class="btn" onclick='aplicarMelhoriaTextoGarantia(${JSON.stringify(id)})'>✨ Melhorar texto técnico</button>
+        <button class="btn" onclick='visualizarEmailGarantia(${JSON.stringify(id)})'>Restaurar padrão</button>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="card-title" style="font-size:.92rem;">Fotos anexadas ao registro</div>
+        <div class="subnote">O texto é copiado para a área de transferência. As fotos abaixo devem ser anexadas manualmente no e-mail ao fornecedor.</div>
+        ${renderThumbsGarantia(anexos)}
+      </div>
     `);
   }
 
@@ -8347,7 +8583,7 @@ body {
 
     let lista = base.filter(g => {
       if (!termo) return true;
-      return texto([g.patrimonio, g.serial, g.modelo, g.fornecedor, g.usuarioVinculado, g.usuario, g.emailUsuario, g.responsavel, g.status].join(' ')).includes(termo);
+      return texto([g.patrimonio, g.serial, g.modelo, g.fornecedor, g.usuarioVinculado, g.usuario, g.emailUsuario, g.responsavel, g.status, g.defeito].join(' ')).includes(termo);
     });
 
     const status = document.getElementById('garantiaStatus');
@@ -8359,12 +8595,12 @@ body {
 
     if (!lista.length) {
       tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">Nenhum levantamento de garantia cadastrado.</td></tr>';
+      renderGarantiasResolvidas();
       return;
     }
 
     const podeEditar = canGarantia('editar');
     const podeExcluir = canGarantia('excluir');
-    const podeEncerrar = canGarantia('encerrar');
 
     tb.innerHTML = lista.map(g => {
       const st = statusGarantiaAuto(g);
@@ -8373,19 +8609,52 @@ body {
         `<button class="btn btn-sm btn-copy-warranty" onclick='copiarEmailGarantia(${id})'>Copiar e-mail</button>`,
         `<button class="btn btn-sm" onclick='visualizarEmailGarantia(${id})'>Prévia</button>`,
         podeEditar ? `<button class="btn btn-sm" onclick='editarGarantia(${id})'>Editar</button>` : '',
-        podeEncerrar && st !== 'Encerrada' ? `<button class="btn btn-sm" onclick='encerrarGarantia(${id})'>Encerrar</button>` : '',
         podeExcluir ? `<button class="btn btn-danger btn-sm" onclick='excluirGarantia(${id})'>Excluir</button>` : ''
       ].filter(Boolean).join('');
 
       return `<tr>
         <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.fornecedor || '')}</span></td>
         <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></td>
-        <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span></td>
+        <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span><br><span class="subnote">${Array.isArray(g.anexos) && g.anexos.length ? '📎 ' + g.anexos.length + ' foto(s)' : ''}</span></td>
         <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span><br><span class="subnote">${escapeHTML(g.defeito || '')}</span></td>
         <td>${escapeHTML(g.responsavel || g.criadoPor || '-')}<br><span class="subnote">${escapeHTML(g.criadoEm ? new Date(g.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
         <td><div class="actions">${acoes || '<span class="subnote">Somente visualização</span>'}</div></td>
       </tr>`;
     }).join('');
+
+    renderGarantiasResolvidas();
+  }
+
+  function renderGarantiasResolvidas() {
+    const tb = document.getElementById('tbGarantiaResolvidas');
+    if (!tb) return;
+
+    const termo = texto(document.getElementById('filtroGarantiaResolvida')?.value || '');
+    const base = registrosGarantiaVisiveis().filter(g => statusGarantiaPadrao(g.status) === 'Resolvido');
+
+    const lista = base.filter(g => {
+      if (!termo) return true;
+      return texto([g.patrimonio, g.serial, g.modelo, g.usuarioVinculado, g.emailUsuario, g.defeito, g.responsavel].join(' ')).includes(termo);
+    });
+
+    const status = document.getElementById('garantiaResolvidaStatus');
+    if (status) status.innerText = `${lista.length} garantia(s) resolvida(s) exibida(s).`;
+
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">Nenhuma garantia resolvida registrada.</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = lista.map(g => `
+      <tr>
+        <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.fornecedor || '')}</span></td>
+        <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></td>
+        <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span></td>
+        <td>${escapeHTML(g.defeito || '-')}</td>
+        <td>${escapeHTML(g.resolvidoEm ? new Date(g.resolvidoEm).toLocaleString('pt-BR') : (g.atualizadoEm ? new Date(g.atualizadoEm).toLocaleString('pt-BR') : '-'))}</td>
+        <td>${escapeHTML(g.responsavel || g.criadoPor || '-')}</td>
+      </tr>
+    `).join('');
   }
 
   function editarGarantia(id) {
@@ -8395,17 +8664,18 @@ body {
 
     openModal('Editar garantia', g.patrimonio || g.serial || 'Equipamento', `
       <div class="grid grid-3">
-        <div><label>Patrimônio</label><input id="edGaPatrimonio" value="${escapeHTML(g.patrimonio || '')}"></div>
-        <div><label>Serial</label><input id="edGaSerial" value="${escapeHTML(g.serial || '')}"></div>
-        <div><label>Modelo</label><input id="edGaModelo" value="${escapeHTML(g.modelo || '')}"></div>
+        <div><label>Patrimônio</label><input id="edGaPatrimonio" class="uppercase-input" oninput="forcarCaixaAlta(this)" value="${escapeHTML(g.patrimonio || '')}"></div>
+        <div><label>Serial</label><input id="edGaSerial" class="uppercase-input" oninput="forcarCaixaAlta(this)" value="${escapeHTML(g.serial || '')}"></div>
+        <div><label>Modelo</label><input id="edGaModelo" class="uppercase-input" oninput="forcarCaixaAlta(this)" value="${escapeHTML(g.modelo || '')}"></div>
         <div><label>Fornecedor</label><select id="edGaFornecedor">${opcoesFornecedorGarantia(g.fornecedor || '')}</select></div>
         <div><label>Nome do usuário</label><input id="edGaUsuario" value="${escapeHTML(g.usuarioVinculado || g.usuario || '')}"></div>
         <div><label>E-mail do usuário</label><input id="edGaEmailUsuario" type="email" value="${escapeHTML(g.emailUsuario || '')}"></div>
-        <div><label>Status</label><select id="edGaStatus">${['Em levantamento','Aguardando fornecedor','Acionada','Resolvida','Encerrada'].map(x=>`<option ${g.status===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>Status</label><select id="edGaStatus">${['Acionar garantia','Aguardando Fornecedor','Resolvido'].map(x=>`<option ${statusGarantiaPadrao(g.status)===x?'selected':''}>${x}</option>`).join('')}</select></div>
         <div><label>Responsável</label><input readonly value="${escapeHTML(g.responsavel || g.criadoPor || '')}"></div>
       </div>
       <div style="margin-top:12px;"><label>Defeito relatado</label><input id="edGaDefeito" value="${escapeHTML(g.defeito || '')}" placeholder="Ex: Monitor quebrado"></div>
       <div style="margin-top:12px;"><label>Observação</label><textarea id="edGaObs">${escapeHTML(g.observacao || '')}</textarea></div>
+      <div style="margin-top:12px;"><label>Fotos anexadas</label>${renderThumbsGarantia(Array.isArray(g.anexos) ? g.anexos : [])}</div>
       <button class="btn btn-success btn-block" style="margin-top:14px;" onclick='salvarEdicaoGarantia(${JSON.stringify(id)})'>Salvar alterações</button>
     `);
   }
@@ -8413,10 +8683,11 @@ body {
   async function salvarEdicaoGarantia(id) {
     if (!canGarantia('editar')) return showToast('Acesso negado para editar garantia.', 'error');
 
-    const patrimonio = document.getElementById('edGaPatrimonio').value.trim();
+    const patrimonio = document.getElementById('edGaPatrimonio').value.trim().toUpperCase();
     const fornecedor = document.getElementById('edGaFornecedor').value.trim();
     const usuario = document.getElementById('edGaUsuario').value.trim();
     const emailUsuario = document.getElementById('edGaEmailUsuario').value.trim();
+    const status = statusGarantiaPadrao(document.getElementById('edGaStatus').value);
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
     if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
@@ -8432,13 +8703,14 @@ body {
     try {
       await db.ref('garantias_equipamentos/' + id).update({
         patrimonio,
-        serial: document.getElementById('edGaSerial').value.trim(),
-        modelo: document.getElementById('edGaModelo').value.trim(),
+        serial: document.getElementById('edGaSerial').value.trim().toUpperCase(),
+        modelo: document.getElementById('edGaModelo').value.trim().toUpperCase(),
         fornecedor,
         usuarioVinculado: usuario,
         emailUsuario,
         defeito: document.getElementById('edGaDefeito').value.trim(),
-        status: document.getElementById('edGaStatus').value,
+        status,
+        resolvidoEm: status === 'Resolvido' ? new Date().toISOString() : '',
         observacao: document.getElementById('edGaObs').value.trim(),
         atualizadoPor: logado.nome,
         atualizadoPorLogin: logado.login,
@@ -8454,19 +8726,20 @@ body {
 
   async function encerrarGarantia(id) {
     if (!canGarantia('encerrar')) return showToast('Acesso negado para encerrar garantia.', 'error');
-    if (!confirm('Encerrar esta garantia?')) return;
+    if (!confirm('Marcar esta garantia como resolvida?')) return;
     try {
       await db.ref('garantias_equipamentos/' + id).update({
-        status: 'Encerrada',
+        status: 'Resolvido',
+        resolvidoEm: new Date().toISOString(),
         encerradoPor: logado.nome,
         encerradoPorLogin: logado.login,
         encerradoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString()
       });
-      showToast('Garantia encerrada.');
+      showToast('Garantia marcada como resolvida.');
     } catch (error) {
       console.error(error);
-      showToast('Erro ao encerrar garantia: ' + error.message, 'error');
+      showToast('Erro ao atualizar garantia: ' + error.message, 'error');
     }
   }
 
