@@ -3915,6 +3915,29 @@ body[data-theme="light"] .language-switch-hero {
   }
 }
 
+
+/* ====== V6.2 RECUPERAÇÃO ADMINISTRATIVA DE USO ÚNICO ====== */
+.admin-recovery-btn {
+  opacity: .78;
+  font-size: .78rem;
+}
+
+.admin-recovery-btn:hover {
+  opacity: 1;
+}
+
+.admin-recovery-alert {
+  border: 1px solid color-mix(in srgb, var(--danger) 32%, var(--read-border));
+  background: color-mix(in srgb, var(--danger) 9%, var(--read-panel));
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.admin-recovery-alert b {
+  color: var(--read-text);
+}
+
 </style>
 </head>
 <body>
@@ -4090,6 +4113,7 @@ body[data-theme="light"] .language-switch-hero {
         </div>
         <button class="btn btn-primary btn-block" onclick="autenticar()">Entrar no sistema</button>
         <button class="btn btn-block" style="margin-top:10px;" onclick="abrirEsqueciSenha()">Esqueci minha senha</button>
+        <button id="btnAdminRecovery" class="btn btn-warning btn-block admin-recovery-btn" style="margin-top:10px;" onclick="abrirRecuperacaoAdmin()">Recuperar admin</button>
         <div id="firebaseStatus" class="connection-pill">⚪ Firebase verificando...</div>
       </div>
     </div>
@@ -5475,6 +5499,10 @@ body[data-theme="light"] .language-switch-hero {
       'Confirmar nova senha': 'Confirm new password',
       'Salvar nova senha e entrar': 'Save new password and enter',
       'Recuperação de senha': 'Password recovery',
+      'Recuperar admin': 'Recover admin',
+      'Função emergencial de uso único': 'One-time emergency function',
+      'Código de confirmação': 'Confirmation code',
+      'Senha provisória': 'Temporary password',
       'Solicite ao administrador a redefinição da sua senha.': 'Ask the administrator to reset your password.',
       'Fechar': 'Close',
       'Acesso autorizado Omni': 'Authorized Omni access',
@@ -5700,6 +5728,10 @@ body[data-theme="light"] .language-switch-hero {
       'Confirmar nova senha': 'Confirmar nueva contraseña',
       'Salvar nova senha e entrar': 'Guardar nueva contraseña y entrar',
       'Recuperação de senha': 'Recuperación de contraseña',
+      'Recuperar admin': 'Recuperar admin',
+      'Função emergencial de uso único': 'Función de emergencia de uso único',
+      'Código de confirmação': 'Código de confirmación',
+      'Senha provisória': 'Contraseña temporal',
       'Solicite ao administrador a redefinição da sua senha.': 'Solicite al administrador el restablecimiento de su contraseña.',
       'Fechar': 'Cerrar',
       'Acesso autorizado Omni': 'Acceso autorizado Omni',
@@ -5962,6 +5994,9 @@ body[data-theme="light"] .language-switch-hero {
       });
 
       logado.exigirTrocaSenha = false;
+      if (logado.login === 'admin') {
+        await desativarRecuperacaoAdminAposTrocaSenha();
+      }
       localStorage.setItem('usuarioOmniV2', JSON.stringify(logado));
       forceCloseModal();
       showToast('Senha alterada com sucesso.');
@@ -6079,6 +6114,7 @@ body[data-theme="light"] .language-switch-hero {
     if (st && adminBypass) st.innerText = '🔐 Entrada administrativa';
     else if (st) st.innerText = '✅ Código validado. Faça login.';
 
+    atualizarBotaoAdminRecovery();
     setTimeout(() => document.getElementById('lUser')?.focus(), 80);
   }
 
@@ -6245,6 +6281,114 @@ body[data-theme="light"] .language-switch-hero {
   }
 
 
+
+  // ====== RECUPERAÇÃO ADMINISTRATIVA DE USO ÚNICO ======
+  const ADMIN_RECOVERY_CONFIRM_CODE = 'OMNI-RESET-ADMIN';
+
+  async function adminRecoveryDisponivel() {
+    try {
+      const snap = await db.ref('configuracoes/adminRecovery/desabilitado').once('value');
+      return snap.val() !== true;
+    } catch (error) {
+      console.error('Erro ao verificar recuperação admin:', error);
+      return true;
+    }
+  }
+
+  async function atualizarBotaoAdminRecovery() {
+    const btn = document.getElementById('btnAdminRecovery');
+    if (!btn) return;
+    const disponivel = await adminRecoveryDisponivel();
+    btn.style.display = disponivel ? '' : 'none';
+  }
+
+  async function abrirRecuperacaoAdmin() {
+    const disponivel = await adminRecoveryDisponivel();
+    if (!disponivel) {
+      return showToast('A recuperação administrativa já foi desativada após uso.', 'warning');
+    }
+
+    openModal('Recuperar admin', 'Função emergencial de uso único', `
+      <div class="admin-recovery-alert">
+        <b>Atenção:</b>
+        <p class="subnote" style="margin-top:8px;">Use apenas se o login admin foi perdido. Esta ação recria o usuário admin com senha provisória e exige troca de senha no próximo acesso.</p>
+      </div>
+      <div class="grid grid-2">
+        <div>
+          <label>Código de confirmação</label>
+          <input id="adminRecoveryCode" placeholder="Digite OMNI-RESET-ADMIN" onkeypress="if(event.key === 'Enter') executarRecuperacaoAdmin()">
+        </div>
+        <div>
+          <label>Senha provisória</label>
+          <input value="Admin@123" readonly>
+        </div>
+      </div>
+      <button class="btn btn-warning btn-block" style="margin-top:16px;" onclick="executarRecuperacaoAdmin()">Recriar admin emergencial</button>
+      <p class="subnote" style="margin-top:12px;">Depois que o admin entrar e trocar a senha, esta recuperação será desativada automaticamente.</p>
+    `);
+  }
+
+  async function executarRecuperacaoAdmin() {
+    const code = String(document.getElementById('adminRecoveryCode')?.value || '').trim().toUpperCase();
+    if (code !== ADMIN_RECOVERY_CONFIRM_CODE) {
+      return showToast('Código de confirmação incorreto.', 'error');
+    }
+
+    const disponivel = await adminRecoveryDisponivel();
+    if (!disponivel) {
+      forceCloseModal();
+      return showToast('A recuperação administrativa já foi desativada.', 'warning');
+    }
+
+    try {
+      const updates = {};
+      ['ADMIN','Admin','Administrador','administrador'].forEach(k => updates['usuarios/' + k] = null);
+      updates['usuarios/admin'] = {
+        nomeCompleto: 'Administrador',
+        senha: 'Admin@123',
+        role: 'admin',
+        ativo: true,
+        modulos: mapaModulos(true),
+        garantiaPermissoes: mapaGarantia(true),
+        exigirTrocaSenha: true,
+        trocarSenhaPrimeiroAcesso: true,
+        primeiroAcesso: true,
+        recuperacaoEmergencial: true,
+        recuperadoEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      };
+      updates['configuracoes/adminRecovery'] = {
+        desabilitado: false,
+        pendenteTrocaSenhaAdmin: true,
+        ultimoResetEm: new Date().toISOString(),
+        observacao: 'Será desativado automaticamente após o admin trocar a senha.'
+      };
+
+      await db.ref().update(updates);
+      forceCloseModal();
+      showToast('Admin recriado. Entre como admin / Admin@123 e troque a senha.');
+      mostrarLogin(true);
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao recuperar admin: ' + error.message, 'error');
+    }
+  }
+
+  async function desativarRecuperacaoAdminAposTrocaSenha() {
+    try {
+      await db.ref('configuracoes/adminRecovery').update({
+        desabilitado: true,
+        pendenteTrocaSenhaAdmin: false,
+        desabilitadoEm: new Date().toISOString(),
+        motivo: 'Admin recuperado e senha alterada com sucesso.'
+      });
+      atualizarBotaoAdminRecovery();
+    } catch (error) {
+      console.error('Erro ao desativar recuperação admin:', error);
+    }
+  }
+
+
   // ====== LOGIN ======
   async function autenticar() {
     const userInput = document.getElementById('lUser').value.trim();
@@ -6350,6 +6494,7 @@ body[data-theme="light"] .language-switch-hero {
     applyLanguage(getLanguage());
     startI18nObserver();
     renderPermissoesCadastro();
+    atualizarBotaoAdminRecovery();
 
     const salvo = localStorage.getItem('usuarioOmniV2');
     if (salvo) {
