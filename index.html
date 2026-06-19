@@ -4565,7 +4565,7 @@ body[data-theme="light"] .language-switch-hero {
           <div class="card-header">
             <div>
               <div class="card-title">🛡️ Garantia Equipamentos</div>
-              <div class="subnote">Levantamento de notebooks e equipamentos com garantia, validade e status de acompanhamento.</div>
+              <div class="subnote">Levantamento de notebooks vinculados a colaboradores, evitando registros duplicados por patrimônio, usuário ou e-mail.</div>
             </div>
             <button class="btn btn-sm" data-garantia-action="criar" onclick="limparGarantia()">+ Novo levantamento</button>
           </div>
@@ -4582,19 +4582,19 @@ body[data-theme="light"] .language-switch-hero {
           </div>
 
           <div class="grid grid-4" style="margin-top:14px;" data-garantia-action="criar">
-            <div><label>Data de compra</label><input id="gaDataCompra" type="date"></div>
-            <div><label>Fim da garantia</label><input id="gaDataFim" type="date"></div>
+            <div><label>Nome do usuário</label><input id="gaUsuario" placeholder="Colaborador vinculado ao notebook"></div>
+            <div><label>E-mail do usuário</label><input id="gaEmailUsuario" type="email" placeholder="email@empresa.com"></div>
             <div>
               <label>Status</label>
               <select id="gaStatus">
-                <option>Em garantia</option>
-                <option>Próximo do vencimento</option>
-                <option>Vencida</option>
+                <option>Em levantamento</option>
+                <option>Aguardando fornecedor</option>
                 <option>Acionada</option>
+                <option>Resolvida</option>
                 <option>Encerrada</option>
               </select>
             </div>
-            <div><label>Responsável</label><input id="gaResponsavel" placeholder="Responsável pelo levantamento"></div>
+            <div><label>Responsável</label><input id="gaResponsavelView" readonly></div>
           </div>
 
           <div style="margin-top:14px;" data-garantia-action="criar">
@@ -4611,11 +4611,11 @@ body[data-theme="light"] .language-switch-hero {
               <div class="card-title">Levantamentos cadastrados</div>
               <div id="garantiaStatus" class="subnote">Lista sincronizada com o Firebase.</div>
             </div>
-            <input id="filtroGarantia" style="max-width:280px;" placeholder="Buscar patrimônio, serial, modelo..." oninput="renderGarantias()">
+            <input id="filtroGarantia" style="max-width:280px;" placeholder="Buscar patrimônio, usuário, e-mail, serial..." oninput="renderGarantias()">
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Patrimônio</th><th>Modelo / Serial</th><th>Garantia</th><th>Status</th><th>Responsável</th><th>Ação</th></tr></thead>
+              <thead><tr><th>Patrimônio</th><th>Colaborador / E-mail</th><th>Modelo / Serial</th><th>Status</th><th>Responsável</th><th>Ação</th></tr></thead>
               <tbody id="tbGarantia"></tbody>
             </table>
           </div>
@@ -4800,7 +4800,7 @@ body[data-theme="light"] .language-switch-hero {
     demandas: ['Demandas', 'Demandas Diárias', 'Controle atividades sem chamado, rotinas administrativas e acompanhamentos.'],
     estoque: ['Estoque TI', 'Controle de Estoque e Ativos', 'Gerencie equipamentos, patrimônios, seriais, usuários e localização.'],
     movimentacoes: ['Movimentações', 'Empréstimos, Trocas e Devoluções', 'Controle histórico de notebooks, acessórios, patrimônio OMNI e ALG/APNETWORKS.'],
-    garantia: ['Garantia Equipamentos', 'Levantamento de Garantias', 'Controle notebooks, seriais, validade de garantia e status de acompanhamento.'],
+    garantia: ['Garantia Equipamentos', 'Levantamento de Garantias', 'Controle notebooks vinculados a colaboradores, sem duplicidade por patrimônio, usuário ou e-mail.'],
     insights: ['Omni Insights', 'IA de Melhoria Contínua', 'Análise automática dos registros, gargalos, pendências e oportunidades de melhoria.'],
     relatorios: ['Relatórios', 'Relatórios e Indicadores', 'Exporte dados e acompanhe a produtividade do suporte.'],
     usuarios: ['Usuários', 'Gestão de Analistas', 'Administre acessos, perfis e status dos usuários.'],
@@ -5328,6 +5328,8 @@ body[data-theme="light"] .language-switch-hero {
       'Estoque TI': 'IT Inventory',
       'Movimentações': 'Movements',
       'Garantia Equipamentos': 'Equipment Warranty',
+      'Nome do usuário': 'User name',
+      'E-mail do usuário': 'User email',
       'Relatórios': 'Reports',
       'Usuários': 'Users',
       'Configurações': 'Settings',
@@ -5560,6 +5562,8 @@ body[data-theme="light"] .language-switch-hero {
       'Estoque TI': 'Inventario TI',
       'Movimentações': 'Movimientos',
       'Garantia Equipamentos': 'Garantía de Equipos',
+      'Nome do usuário': 'Nombre del usuario',
+      'E-mail do usuário': 'Correo del usuario',
       'Relatórios': 'Informes',
       'Usuários': 'Usuarios',
       'Configurações': 'Configuración',
@@ -7295,16 +7299,59 @@ body[data-theme="light"] .language-switch-hero {
     document.querySelectorAll('[data-garantia-action="criar"]').forEach(el => {
       el.style.display = podeCriar ? '' : 'none';
     });
+
+    const resp = document.getElementById('gaResponsavelView');
+    if (resp) resp.value = logado?.nome || '';
   }
 
   function limparGarantia() {
     if (!canGarantia('criar')) return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
-    ['gaPatrimonio','gaSerial','gaModelo','gaFornecedor','gaDataCompra','gaDataFim','gaResponsavel','gaObs'].forEach(id => {
+    ['gaPatrimonio','gaSerial','gaModelo','gaFornecedor','gaUsuario','gaEmailUsuario','gaObs'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
     const st = document.getElementById('gaStatus');
-    if (st) st.value = 'Em garantia';
+    if (st) st.value = 'Em levantamento';
+    const resp = document.getElementById('gaResponsavelView');
+    if (resp) resp.value = logado?.nome || '';
+  }
+
+  function chaveNormalizada(valor) {
+    return texto(valor).replace(/\s+/g, '');
+  }
+
+  function registrosGarantiaVisiveis() {
+    if (isAdmin()) return cacheGarantias || [];
+    return (cacheGarantias || []).filter(g => String(g.criadoPorLogin || '') === String(logado?.login || ''));
+  }
+
+  function encontrarDuplicidadeGarantia({ patrimonio, usuario, emailUsuario }, ignorarId = null) {
+    const patrKey = chaveNormalizada(patrimonio);
+    const userKey = texto(usuario);
+    const emailKey = texto(emailUsuario);
+
+    return (cacheGarantias || []).find(g => {
+      if (ignorarId && g.id === ignorarId) return false;
+      if (g.status === 'Encerrada') return false;
+
+      const gp = chaveNormalizada(g.patrimonio);
+      const gu = texto(g.usuarioVinculado || g.usuario || '');
+      const ge = texto(g.emailUsuario || '');
+
+      return (patrKey && gp && patrKey === gp)
+        || (userKey && gu && userKey === gu)
+        || (emailKey && ge && emailKey === ge);
+    });
+  }
+
+  function mensagemDuplicidadeGarantia(dup, payload) {
+    const motivos = [];
+    if (dup) {
+      if (chaveNormalizada(payload.patrimonio) && chaveNormalizada(payload.patrimonio) === chaveNormalizada(dup.patrimonio)) motivos.push('patrimônio');
+      if (texto(payload.usuario) && texto(payload.usuario) === texto(dup.usuarioVinculado || dup.usuario || '')) motivos.push('nome do usuário');
+      if (texto(payload.emailUsuario) && texto(payload.emailUsuario) === texto(dup.emailUsuario || '')) motivos.push('e-mail');
+    }
+    return `Já existe um levantamento ativo com o mesmo ${motivos.join(', ') || 'dado informado'}. Registro duplicado bloqueado para evitar múltiplos chamados.`;
   }
 
   async function salvarGarantia() {
@@ -7315,18 +7362,29 @@ body[data-theme="light"] .language-switch-hero {
     const patrimonio = document.getElementById('gaPatrimonio').value.trim();
     const serial = document.getElementById('gaSerial').value.trim();
     const modelo = document.getElementById('gaModelo').value.trim();
+    const usuario = document.getElementById('gaUsuario').value.trim();
+    const emailUsuario = document.getElementById('gaEmailUsuario').value.trim();
 
-    if (!patrimonio && !serial) return showToast('Informe patrimônio ou serial do equipamento.', 'error');
+    if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
+    if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
+    if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
+
+    const payloadDuplicidade = { patrimonio, usuario, emailUsuario };
+    const duplicado = encontrarDuplicidadeGarantia(payloadDuplicidade);
+    if (duplicado) {
+      return showToast(mensagemDuplicidadeGarantia(duplicado, payloadDuplicidade), 'error');
+    }
 
     const data = {
       patrimonio,
       serial,
       modelo,
       fornecedor: document.getElementById('gaFornecedor').value.trim(),
-      dataCompra: document.getElementById('gaDataCompra').value,
-      dataFim: document.getElementById('gaDataFim').value,
+      usuarioVinculado: usuario,
+      emailUsuario,
       status: document.getElementById('gaStatus').value,
-      responsavel: document.getElementById('gaResponsavel').value.trim() || logado.nome,
+      responsavel: logado.nome,
+      responsavelLogin: logado.login,
       observacao: document.getElementById('gaObs').value.trim(),
       criadoPor: logado.nome,
       criadoPorLogin: logado.login,
@@ -7347,16 +7405,7 @@ body[data-theme="light"] .language-switch-hero {
   }
 
   function statusGarantiaAuto(g) {
-    if (g.status === 'Encerrada' || g.status === 'Acionada') return g.status;
-    if (!g.dataFim) return g.status || 'Não informado';
-
-    const hoje = new Date(getHoje() + 'T00:00:00');
-    const fim = new Date(String(g.dataFim) + 'T00:00:00');
-    const dias = Math.ceil((fim - hoje) / 86400000);
-
-    if (dias < 0) return 'Vencida';
-    if (dias <= 30) return 'Próximo do vencimento';
-    return g.status || 'Em garantia';
+    return g.status || 'Em levantamento';
   }
 
   function renderGarantias() {
@@ -7366,13 +7415,19 @@ body[data-theme="light"] .language-switch-hero {
     atualizarPermissoesGarantiaUI();
 
     const termo = texto(document.getElementById('filtroGarantia')?.value || '');
-    let lista = cacheGarantias.filter(g => {
+    const base = registrosGarantiaVisiveis();
+
+    let lista = base.filter(g => {
       if (!termo) return true;
-      return texto([g.patrimonio, g.serial, g.modelo, g.fornecedor, g.responsavel, g.status].join(' ')).includes(termo);
+      return texto([g.patrimonio, g.serial, g.modelo, g.fornecedor, g.usuarioVinculado, g.usuario, g.emailUsuario, g.responsavel, g.status].join(' ')).includes(termo);
     });
 
     const status = document.getElementById('garantiaStatus');
-    if (status) status.innerText = `${lista.length} levantamento(s) exibido(s) de ${cacheGarantias.length}.`;
+    if (status) {
+      status.innerText = isAdmin()
+        ? `${lista.length} levantamento(s) exibido(s) de ${cacheGarantias.length} no Firebase.`
+        : `${lista.length} levantamento(s) do seu usuário exibido(s). Administrador visualiza todos.`;
+    }
 
     if (!lista.length) {
       tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">Nenhum levantamento de garantia cadastrado.</td></tr>';
@@ -7394,10 +7449,10 @@ body[data-theme="light"] .language-switch-hero {
 
       return `<tr>
         <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.fornecedor || '')}</span></td>
+        <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></td>
         <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span></td>
-        <td>${escapeHTML(g.dataFim || '-')}</td>
         <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span></td>
-        <td>${escapeHTML(g.responsavel || '-')}</td>
+        <td>${escapeHTML(g.responsavel || g.criadoPor || '-')}<br><span class="subnote">${escapeHTML(g.criadoEm ? new Date(g.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
         <td><div class="actions">${acoes || '<span class="subnote">Somente visualização</span>'}</div></td>
       </tr>`;
     }).join('');
@@ -7414,9 +7469,10 @@ body[data-theme="light"] .language-switch-hero {
         <div><label>Serial</label><input id="edGaSerial" value="${escapeHTML(g.serial || '')}"></div>
         <div><label>Modelo</label><input id="edGaModelo" value="${escapeHTML(g.modelo || '')}"></div>
         <div><label>Fornecedor</label><input id="edGaFornecedor" value="${escapeHTML(g.fornecedor || '')}"></div>
-        <div><label>Fim da garantia</label><input id="edGaDataFim" type="date" value="${escapeHTML(g.dataFim || '')}"></div>
-        <div><label>Status</label><select id="edGaStatus">${['Em garantia','Próximo do vencimento','Vencida','Acionada','Encerrada'].map(x=>`<option ${g.status===x?'selected':''}>${x}</option>`).join('')}</select></div>
-        <div><label>Responsável</label><input id="edGaResponsavel" value="${escapeHTML(g.responsavel || '')}"></div>
+        <div><label>Nome do usuário</label><input id="edGaUsuario" value="${escapeHTML(g.usuarioVinculado || g.usuario || '')}"></div>
+        <div><label>E-mail do usuário</label><input id="edGaEmailUsuario" type="email" value="${escapeHTML(g.emailUsuario || '')}"></div>
+        <div><label>Status</label><select id="edGaStatus">${['Em levantamento','Aguardando fornecedor','Acionada','Resolvida','Encerrada'].map(x=>`<option ${g.status===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>Responsável</label><input readonly value="${escapeHTML(g.responsavel || g.criadoPor || '')}"></div>
       </div>
       <div style="margin-top:12px;"><label>Observação</label><textarea id="edGaObs">${escapeHTML(g.observacao || '')}</textarea></div>
       <button class="btn btn-success btn-block" style="margin-top:14px;" onclick='salvarEdicaoGarantia(${JSON.stringify(id)})'>Salvar alterações</button>
@@ -7425,17 +7481,33 @@ body[data-theme="light"] .language-switch-hero {
 
   async function salvarEdicaoGarantia(id) {
     if (!canGarantia('editar')) return showToast('Acesso negado para editar garantia.', 'error');
+
+    const patrimonio = document.getElementById('edGaPatrimonio').value.trim();
+    const usuario = document.getElementById('edGaUsuario').value.trim();
+    const emailUsuario = document.getElementById('edGaEmailUsuario').value.trim();
+
+    if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
+    if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
+    if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
+
+    const payloadDuplicidade = { patrimonio, usuario, emailUsuario };
+    const duplicado = encontrarDuplicidadeGarantia(payloadDuplicidade, id);
+    if (duplicado) {
+      return showToast(mensagemDuplicidadeGarantia(duplicado, payloadDuplicidade), 'error');
+    }
+
     try {
       await db.ref('garantias_equipamentos/' + id).update({
-        patrimonio: document.getElementById('edGaPatrimonio').value.trim(),
+        patrimonio,
         serial: document.getElementById('edGaSerial').value.trim(),
         modelo: document.getElementById('edGaModelo').value.trim(),
         fornecedor: document.getElementById('edGaFornecedor').value.trim(),
-        dataFim: document.getElementById('edGaDataFim').value,
+        usuarioVinculado: usuario,
+        emailUsuario,
         status: document.getElementById('edGaStatus').value,
-        responsavel: document.getElementById('edGaResponsavel').value.trim(),
         observacao: document.getElementById('edGaObs').value.trim(),
         atualizadoPor: logado.nome,
+        atualizadoPorLogin: logado.login,
         atualizadoEm: new Date().toISOString()
       });
       forceCloseModal();
@@ -7453,6 +7525,7 @@ body[data-theme="light"] .language-switch-hero {
       await db.ref('garantias_equipamentos/' + id).update({
         status: 'Encerrada',
         encerradoPor: logado.nome,
+        encerradoPorLogin: logado.login,
         encerradoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString()
       });
@@ -7474,7 +7547,6 @@ body[data-theme="light"] .language-switch-hero {
       showToast('Erro ao excluir garantia: ' + error.message, 'error');
     }
   }
-
 
   // ====== USUÁRIOS ======
   async function salvarUsuario() {
