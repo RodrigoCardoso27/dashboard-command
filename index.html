@@ -4050,6 +4050,8 @@ body[data-theme="light"] .language-switch-hero {
       <div class="nav-item" data-view="estoque" onclick="switchView('estoque', event)">💻 Estoque TI</div>
       <div class="nav-item" data-view="movimentacoes" onclick="switchView('movimentacoes', event)">🔄 Movimentações</div>
 
+      <div class="nav-item" data-view="garantia" onclick="switchView('garantia', event)">🛡️ Garantia Equipamentos</div>
+
       <div class="section-title">Gestão</div>
       <div class="nav-item" data-view="insights" onclick="switchView('insights', event)">🤖 Omni Insights</div>
       <div class="nav-item" data-view="relatorios" onclick="switchView('relatorios', event)">📑 Relatórios</div>
@@ -4591,7 +4593,35 @@ body[data-theme="light"] .language-switch-hero {
           </div>
         </div>
       </section>
-    </main>
+    
+<!-- GARANTIA EQUIPAMENTOS -->
+<section id="viewGarantia" class="view">
+<div class="card">
+<div class="card-header"><div class="card-title">🛡️ Garantia de Equipamentos</div></div>
+<div class="grid grid-2">
+<div>
+<div class="field"><label>Nome do Colaborador</label><input id="g_nome"></div>
+<div class="field"><label>E-mail Corporativo</label><input id="g_email"></div>
+<div class="field"><label>Número de Série</label><input id="g_serial"></div>
+<div class="field"><label>Modelo</label><input id="g_modelo"></div>
+<div class="field"><label>Prioridade</label>
+<select id="g_prioridade"><option>Crítica</option><option>Média</option><option>Baixa</option></select></div>
+</div>
+<div>
+<div class="field"><label>Defeitos</label><textarea id="g_defeitos"></textarea></div>
+<div class="field"><label>Acessórios</label><input id="g_acessorios"></div>
+<button class="btn btn-primary" onclick="salvarGarantia()">Salvar Levantamento</button>
+<button class="btn" onclick="exportarGarantiaCSV()">Exportar CSV</button>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="card-title">Triagem</div>
+<div class="table-wrap"><table><thead><tr><th>Prioridade</th><th>Nome</th><th>Email</th><th>Serial</th><th>Modelo</th></tr></thead><tbody id="garantiaTabela"></tbody></table></div>
+</div>
+</section>
+
+</main>
   </section>
 
 <script>
@@ -7400,6 +7430,28 @@ body[data-theme="light"] .language-switch-hero {
     }
   }
   */
+
+
+const garantiaStoreKey='omni_garantia';
+function getGarantias(){return JSON.parse(localStorage.getItem(garantiaStoreKey)||'[]')}
+function renderGarantia(){
+ const p={ 'Crítica':1,'Média':2,'Baixa':3 };
+ const dados=getGarantias().sort((a,b)=>p[a.prioridade]-p[b.prioridade]);
+ const tb=document.getElementById('garantiaTabela'); if(!tb) return;
+ tb.innerHTML=dados.map(x=>`<tr><td>${x.prioridade}</td><td>${x.nome}</td><td>${x.email}</td><td>${x.serial}</td><td>${x.modelo}</td></tr>`).join('');
+}
+function salvarGarantia(){
+ const item={nome:g_nome.value.trim(),email:g_email.value.trim().toLowerCase(),serial:g_serial.value.trim().toUpperCase(),modelo:g_modelo.value.trim(),prioridade:g_prioridade.value,defeitos:g_defeitos.value,acessorios:g_acessorios.value};
+ let dados=getGarantias();
+ if(dados.some(x=>x.email===item.email)){alert('E-mail já cadastrado');return;}
+ if(dados.some(x=>x.serial===item.serial)){alert('Serial já cadastrado');return;}
+ dados.push(item); localStorage.setItem(garantiaStoreKey,JSON.stringify(dados)); renderGarantia(); alert('Salvo');
+}
+function exportarGarantiaCSV(){
+ let dados=getGarantias(); let csv='Prioridade,Nome,Email,Serial,Modelo\n'+dados.map(x=>[x.prioridade,x.nome,x.email,x.serial,x.modelo].join(',')).join('\n');
+ let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='garantia.csv'; a.click();
+}
+document.addEventListener('DOMContentLoaded',renderGarantia);
 
 </script>
 </body>
