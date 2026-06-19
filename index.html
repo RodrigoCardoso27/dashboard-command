@@ -4428,15 +4428,15 @@ body.is-mobile #appShell {
 
         <div class="field">
           <label>Usuário</label>
-          <input id="lUser" type="text" placeholder="Ex: admin" autocomplete="username" />
+          <input id="lUser" type="text" placeholder="Ex: admin" autocomplete="off" autocapitalize="none" spellcheck="false" />
         </div>
         <div class="field">
           <label>Senha</label>
-          <input id="lPass" type="password" placeholder="Digite sua senha" autocomplete="current-password" onkeypress="if(event.key === 'Enter') autenticar()" />
+          <input id="lPass" type="password" placeholder="Digite sua senha" autocomplete="off" onkeypress="if(event.key === 'Enter') autenticar()" />
         </div>
         <button class="btn btn-primary btn-block" onclick="autenticar()">Entrar no sistema</button>
         <button class="btn btn-block" style="margin-top:10px;" onclick="abrirEsqueciSenha()">Esqueci minha senha</button>
-        <button class="btn btn-block" style="margin-top:10px;" onclick="limparSessaoUsuario(); showToast('Sessão limpa. Digite usuário e senha.');">Trocar / limpar conta salva</button>
+        <button class="btn btn-block" style="margin-top:10px;" onclick="limparSessaoUsuario(); limparCamposLogin(); showToast('Sessão limpa. Digite usuário e senha.');">Trocar / limpar conta salva</button>
         <button id="btnAdminRecovery" class="btn btn-warning btn-block admin-recovery-btn" style="margin-top:10px;" onclick="abrirRecuperacaoAdmin()">Recuperar admin</button>
         <div id="firebaseStatus" class="connection-pill">⚪ Firebase verificando...</div>
       </div>
@@ -6461,9 +6461,14 @@ body.is-mobile #appShell {
 
   function mostrarLogin(acessoCadastrado = false) {
     modoAdminBypass = false;
+    logado = null;
+    limparSessaoUsuario();
+    pararEscutasFirebase();
     document.getElementById('accessGate')?.classList.add('hidden');
     document.getElementById('loginScreen')?.classList.remove('hidden');
     document.getElementById('appShell')?.classList.add('hidden');
+    document.body.classList.remove('is-admin', 'mobile-menu-open');
+    limparCamposLogin();
 
     const st = document.getElementById('firebaseStatus');
     if (st && acessoCadastrado) st.innerText = '🔐 Login liberado para usuário cadastrado';
@@ -6806,6 +6811,8 @@ body.is-mobile #appShell {
   }
 
   function iniciarApp() {
+    salvarSessaoUsuario();
+    pararEscutasFirebase();
     document.getElementById('accessGate')?.classList.add('hidden');
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
@@ -6863,12 +6870,12 @@ body.is-mobile #appShell {
 
 
   // ====== SESSÃO SEGURA ======
-  // V6.8: não usa mais localStorage para manter usuário logado.
-  // Isso evita que Safari/Chrome no celular abram direto em uma conta antiga.
+  // V6.9: sessão 100% em memória. Não salva usuário logado em localStorage nem sessionStorage.
+  // Isso evita Safari/Chrome mobile restaurarem conta antiga automaticamente.
   function salvarSessaoUsuario() {
-    if (!logado) return;
-    sessionStorage.setItem('usuarioOmniSessaoV1', JSON.stringify(logado));
-    localStorage.removeItem('usuarioOmniV2'); // limpa legado das versões anteriores
+    // Intencionalmente não persiste usuário logado.
+    localStorage.removeItem('usuarioOmniV2');
+    sessionStorage.removeItem('usuarioOmniSessaoV1');
   }
 
   function limparSessaoUsuario() {
@@ -6877,10 +6884,36 @@ body.is-mobile #appShell {
     localStorage.removeItem('omniActiveViewV2');
   }
 
-  function logout() {
+  function pararEscutasFirebase() {
+    try {
+      ['chamados_ti','demandas_ti','estoque_ti','movimentacoes_ti','garantias_equipamentos','usuarios','codigosAcesso'].forEach(path => db.ref(path).off());
+    } catch(e) {
+      console.warn('Não foi possível remover listeners Firebase:', e);
+    }
+  }
+
+  function limparCamposLogin() {
+    const u = document.getElementById('lUser');
+    const p = document.getElementById('lPass');
+    if (u) u.value = '';
+    if (p) p.value = '';
+  }
+
+  function voltarParaTelaSegura() {
+    pararEscutasFirebase();
     limparSessaoUsuario();
     logado = null;
-    location.reload();
+    document.getElementById('appShell')?.classList.add('hidden');
+    document.getElementById('loginScreen')?.classList.add('hidden');
+    document.getElementById('accessGate')?.classList.remove('hidden');
+    document.body.classList.remove('is-admin', 'mobile-menu-open');
+    limparCamposLogin();
+    applyResponsiveMode();
+  }
+
+  function logout() {
+    voltarParaTelaSegura();
+    showToast('Sessão encerrada. Faça login novamente para acessar.', 'success');
   }
 
   window.onload = () => {
@@ -6890,14 +6923,9 @@ body.is-mobile #appShell {
     renderPermissoesCadastro();
     atualizarBotaoAdminRecovery();
 
-    // Limpa login persistido por versões antigas. Agora a sessão fica só no sessionStorage.
-    localStorage.removeItem('usuarioOmniV2');
-
-    const salvoSessao = sessionStorage.getItem('usuarioOmniSessaoV1');
-    if (salvoSessao) {
-      try { logado = JSON.parse(salvoSessao); iniciarApp(); return; }
-      catch(e) { sessionStorage.removeItem('usuarioOmniSessaoV1'); }
-    }
+    // Limpa qualquer login salvo por versões antigas ou pelo navegador.
+    limparSessaoUsuario();
+    logado = null;
 
     if (conviteLocalValido()) mostrarLogin(false);
     else mostrarGate();
@@ -6905,6 +6933,10 @@ body.is-mobile #appShell {
 
   window.addEventListener('resize', applyResponsiveMode);
   window.addEventListener('orientationchange', () => setTimeout(applyResponsiveMode, 250));
+  window.addEventListener('pageshow', (event) => {
+    // Corrige Safari/iOS quando volta pelo cache de página e restaura tela antiga.
+    if (event.persisted && !logado) voltarParaTelaSegura();
+  });
 
   function switchView(view, event, skipSave = false) {
     const viewsPermitidas = MODULE_DEFINITIONS.map(m => m.key);
