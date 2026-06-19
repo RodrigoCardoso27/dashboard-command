@@ -3938,6 +3938,24 @@ body[data-theme="light"] .language-switch-hero {
   color: var(--read-text);
 }
 
+
+/* ====== V6.6 TEXTO PRONTO PARA ACIONAMENTO DE GARANTIA ====== */
+.btn-copy-warranty {
+  background: color-mix(in srgb, var(--brand2) 18%, var(--read-field, #182A40)) !important;
+  border-color: color-mix(in srgb, var(--brand2) 36%, var(--read-border-strong, rgba(220,236,247,.34))) !important;
+}
+
+.warranty-email-preview {
+  white-space: pre-wrap;
+  border: 1px solid color-mix(in srgb, var(--brand2) 28%, var(--read-border));
+  background: color-mix(in srgb, var(--brand2) 7%, var(--read-panel));
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 12px;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  line-height: 1.5;
+}
+
 </style>
 </head>
 <body>
@@ -4578,7 +4596,10 @@ body[data-theme="light"] .language-switch-hero {
             <div><label>Patrimônio</label><input id="gaPatrimonio" placeholder="OMNI0000 ou ALG0000"></div>
             <div><label>Serial</label><input id="gaSerial" placeholder="Serial number"></div>
             <div><label>Modelo</label><input id="gaModelo" placeholder="Marca/modelo"></div>
-            <div><label>Fornecedor</label><input id="gaFornecedor" placeholder="Dell, Lenovo, APNETWORKS..."></div>
+            <div>
+              <label>Fornecedor</label>
+              <select id="gaFornecedor"></select>
+            </div>
           </div>
 
           <div class="grid grid-4" style="margin-top:14px;" data-garantia-action="criar">
@@ -4595,6 +4616,11 @@ body[data-theme="light"] .language-switch-hero {
               </select>
             </div>
             <div><label>Responsável</label><input id="gaResponsavelView" readonly></div>
+          </div>
+
+          <div style="margin-top:14px;" data-garantia-action="criar">
+            <label>Defeito relatado</label>
+            <input id="gaDefeito" placeholder="Ex: Monitor quebrado, tela danificada, teclado falhando...">
           </div>
 
           <div style="margin-top:14px;" data-garantia-action="criar">
@@ -5330,6 +5356,9 @@ body[data-theme="light"] .language-switch-hero {
       'Garantia Equipamentos': 'Equipment Warranty',
       'Nome do usuário': 'User name',
       'E-mail do usuário': 'User email',
+      'Defeito relatado': 'Reported issue',
+      'Copiar e-mail': 'Copy email',
+      'Prévia': 'Preview',
       'Relatórios': 'Reports',
       'Usuários': 'Users',
       'Configurações': 'Settings',
@@ -5564,6 +5593,9 @@ body[data-theme="light"] .language-switch-hero {
       'Garantia Equipamentos': 'Garantía de Equipos',
       'Nome do usuário': 'Nombre del usuario',
       'E-mail do usuário': 'Correo del usuario',
+      'Defeito relatado': 'Defecto reportado',
+      'Copiar e-mail': 'Copiar correo',
+      'Prévia': 'Vista previa',
       'Relatórios': 'Informes',
       'Usuários': 'Usuarios',
       'Configurações': 'Configuración',
@@ -7291,6 +7323,41 @@ body[data-theme="light"] .language-switch-hero {
 
 
   // ====== GARANTIA EQUIPAMENTOS ======
+
+  // Lista manual de fornecedores do módulo Garantia.
+  // Para alterar depois, edite somente esta lista abaixo.
+  const FORNECEDORES_GARANTIA = [
+    'DELL',
+    'LENOVO',
+    'HP',
+    'APNETWORKS',
+    'ALG',
+    'OMNI',
+    'POSITIVO',
+    'SAMSUNG',
+    'APPLE',
+    'OUTRO FORNECEDOR CORPORATIVO'
+  ];
+
+  function opcoesFornecedorGarantia(valorAtual = '') {
+    const atual = String(valorAtual || '').trim();
+    const lista = [...FORNECEDORES_GARANTIA];
+
+    // Se houver registro antigo no Firebase com fornecedor fora da lista,
+    // mantém o valor visível no select para não perder histórico.
+    if (atual && !lista.some(x => texto(x) === texto(atual))) lista.push(atual);
+
+    return `<option value="">Selecione o fornecedor</option>` + lista.map(f => {
+      const selected = texto(f) === texto(atual) ? 'selected' : '';
+      return `<option value="${escapeHTML(f)}" ${selected}>${escapeHTML(f)}</option>`;
+    }).join('');
+  }
+
+  function carregarFornecedoresGarantia() {
+    const select = document.getElementById('gaFornecedor');
+    if (select) select.innerHTML = opcoesFornecedorGarantia(select.value || '');
+  }
+
   function atualizarPermissoesGarantiaUI() {
     const podeCriar = canGarantia('criar');
     const warning = document.getElementById('garantiaPermissionWarning');
@@ -7302,14 +7369,17 @@ body[data-theme="light"] .language-switch-hero {
 
     const resp = document.getElementById('gaResponsavelView');
     if (resp) resp.value = logado?.nome || '';
+    carregarFornecedoresGarantia();
   }
 
   function limparGarantia() {
     if (!canGarantia('criar')) return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
-    ['gaPatrimonio','gaSerial','gaModelo','gaFornecedor','gaUsuario','gaEmailUsuario','gaObs'].forEach(id => {
+    ['gaPatrimonio','gaSerial','gaModelo','gaUsuario','gaEmailUsuario','gaDefeito','gaObs'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+    const fornecedor = document.getElementById('gaFornecedor');
+    if (fornecedor) fornecedor.value = '';
     const st = document.getElementById('gaStatus');
     if (st) st.value = 'Em levantamento';
     const resp = document.getElementById('gaResponsavelView');
@@ -7362,10 +7432,13 @@ body[data-theme="light"] .language-switch-hero {
     const patrimonio = document.getElementById('gaPatrimonio').value.trim();
     const serial = document.getElementById('gaSerial').value.trim();
     const modelo = document.getElementById('gaModelo').value.trim();
+    const fornecedor = document.getElementById('gaFornecedor').value.trim();
     const usuario = document.getElementById('gaUsuario').value.trim();
     const emailUsuario = document.getElementById('gaEmailUsuario').value.trim();
+    const defeito = document.getElementById('gaDefeito').value.trim();
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
+    if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
     if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
     if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
 
@@ -7379,9 +7452,10 @@ body[data-theme="light"] .language-switch-hero {
       patrimonio,
       serial,
       modelo,
-      fornecedor: document.getElementById('gaFornecedor').value.trim(),
+      fornecedor,
       usuarioVinculado: usuario,
       emailUsuario,
+      defeito,
       status: document.getElementById('gaStatus').value,
       responsavel: logado.nome,
       responsavelLogin: logado.login,
@@ -7406,6 +7480,51 @@ body[data-theme="light"] .language-switch-hero {
 
   function statusGarantiaAuto(g) {
     return g.status || 'Em levantamento';
+  }
+
+
+  function saudacaoPorHorario() {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'Bom dia';
+    if (h >= 12 && h < 18) return 'Boa tarde';
+    return 'Boa noite';
+  }
+
+  function textoEmailGarantia(g) {
+    const modelo = String(g.modelo || '').trim() || 'Não informado';
+    const serial = String(g.serial || '').trim() || 'Não informado';
+    const defeito = String(g.defeito || g.observacao || '').trim() || 'Descrever defeito';
+
+    return `${saudacaoPorHorario()},\n\nGostaria de acionar a garantia do notebook abaixo, que está com ${defeito.toLowerCase()}. A foto do problema segue em anexo.\n\nMODEL: ${modelo}\nST: ${serial}\n\nDefeito: ${defeito}.`;
+  }
+
+  async function copiarEmailGarantia(id) {
+    const g = cacheGarantias.find(x => x.id === id);
+    if (!g) return showToast('Registro não encontrado.', 'error');
+
+    const textoEmail = textoEmailGarantia(g);
+
+    try {
+      await navigator.clipboard.writeText(textoEmail);
+      showToast('Texto de acionamento copiado.');
+    } catch (error) {
+      console.warn('Clipboard indisponível, abrindo prévia:', error);
+      openModal('Texto para acionar garantia', g.patrimonio || g.serial || 'Equipamento', `
+        <div class="subnote">Copie manualmente o texto abaixo:</div>
+        <div class="warranty-email-preview">${escapeHTML(textoEmail)}</div>
+      `);
+    }
+  }
+
+  function visualizarEmailGarantia(id) {
+    const g = cacheGarantias.find(x => x.id === id);
+    if (!g) return showToast('Registro não encontrado.', 'error');
+    const textoEmail = textoEmailGarantia(g);
+    openModal('Texto para acionar garantia', g.patrimonio || g.serial || 'Equipamento', `
+      <div class="subnote">Texto pronto para enviar por e-mail ao fornecedor.</div>
+      <div class="warranty-email-preview">${escapeHTML(textoEmail)}</div>
+      <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick='copiarEmailGarantia(${JSON.stringify(id)})'>Copiar texto</button>
+    `);
   }
 
   function renderGarantias() {
@@ -7442,6 +7561,8 @@ body[data-theme="light"] .language-switch-hero {
       const st = statusGarantiaAuto(g);
       const id = JSON.stringify(g.id);
       const acoes = [
+        `<button class="btn btn-sm btn-copy-warranty" onclick='copiarEmailGarantia(${id})'>Copiar e-mail</button>`,
+        `<button class="btn btn-sm" onclick='visualizarEmailGarantia(${id})'>Prévia</button>`,
         podeEditar ? `<button class="btn btn-sm" onclick='editarGarantia(${id})'>Editar</button>` : '',
         podeEncerrar && st !== 'Encerrada' ? `<button class="btn btn-sm" onclick='encerrarGarantia(${id})'>Encerrar</button>` : '',
         podeExcluir ? `<button class="btn btn-danger btn-sm" onclick='excluirGarantia(${id})'>Excluir</button>` : ''
@@ -7451,7 +7572,7 @@ body[data-theme="light"] .language-switch-hero {
         <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.fornecedor || '')}</span></td>
         <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></td>
         <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span></td>
-        <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span></td>
+        <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span><br><span class="subnote">${escapeHTML(g.defeito || '')}</span></td>
         <td>${escapeHTML(g.responsavel || g.criadoPor || '-')}<br><span class="subnote">${escapeHTML(g.criadoEm ? new Date(g.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
         <td><div class="actions">${acoes || '<span class="subnote">Somente visualização</span>'}</div></td>
       </tr>`;
@@ -7468,12 +7589,13 @@ body[data-theme="light"] .language-switch-hero {
         <div><label>Patrimônio</label><input id="edGaPatrimonio" value="${escapeHTML(g.patrimonio || '')}"></div>
         <div><label>Serial</label><input id="edGaSerial" value="${escapeHTML(g.serial || '')}"></div>
         <div><label>Modelo</label><input id="edGaModelo" value="${escapeHTML(g.modelo || '')}"></div>
-        <div><label>Fornecedor</label><input id="edGaFornecedor" value="${escapeHTML(g.fornecedor || '')}"></div>
+        <div><label>Fornecedor</label><select id="edGaFornecedor">${opcoesFornecedorGarantia(g.fornecedor || '')}</select></div>
         <div><label>Nome do usuário</label><input id="edGaUsuario" value="${escapeHTML(g.usuarioVinculado || g.usuario || '')}"></div>
         <div><label>E-mail do usuário</label><input id="edGaEmailUsuario" type="email" value="${escapeHTML(g.emailUsuario || '')}"></div>
         <div><label>Status</label><select id="edGaStatus">${['Em levantamento','Aguardando fornecedor','Acionada','Resolvida','Encerrada'].map(x=>`<option ${g.status===x?'selected':''}>${x}</option>`).join('')}</select></div>
         <div><label>Responsável</label><input readonly value="${escapeHTML(g.responsavel || g.criadoPor || '')}"></div>
       </div>
+      <div style="margin-top:12px;"><label>Defeito relatado</label><input id="edGaDefeito" value="${escapeHTML(g.defeito || '')}" placeholder="Ex: Monitor quebrado"></div>
       <div style="margin-top:12px;"><label>Observação</label><textarea id="edGaObs">${escapeHTML(g.observacao || '')}</textarea></div>
       <button class="btn btn-success btn-block" style="margin-top:14px;" onclick='salvarEdicaoGarantia(${JSON.stringify(id)})'>Salvar alterações</button>
     `);
@@ -7483,10 +7605,12 @@ body[data-theme="light"] .language-switch-hero {
     if (!canGarantia('editar')) return showToast('Acesso negado para editar garantia.', 'error');
 
     const patrimonio = document.getElementById('edGaPatrimonio').value.trim();
+    const fornecedor = document.getElementById('edGaFornecedor').value.trim();
     const usuario = document.getElementById('edGaUsuario').value.trim();
     const emailUsuario = document.getElementById('edGaEmailUsuario').value.trim();
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
+    if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
     if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
     if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
 
@@ -7501,9 +7625,10 @@ body[data-theme="light"] .language-switch-hero {
         patrimonio,
         serial: document.getElementById('edGaSerial').value.trim(),
         modelo: document.getElementById('edGaModelo').value.trim(),
-        fornecedor: document.getElementById('edGaFornecedor').value.trim(),
+        fornecedor,
         usuarioVinculado: usuario,
         emailUsuario,
+        defeito: document.getElementById('edGaDefeito').value.trim(),
         status: document.getElementById('edGaStatus').value,
         observacao: document.getElementById('edGaObs').value.trim(),
         atualizadoPor: logado.nome,
