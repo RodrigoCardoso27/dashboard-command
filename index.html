@@ -4261,6 +4261,43 @@ body.is-mobile #appShell {
   }
 }
 
+
+/* ====== V7.0 CORREÇÃO CRÍTICA MOBILE: .hidden DEVE VENCER O LAYOUT MOBILE ======
+   Nas versões mobile anteriores, #appShell tinha display:block!important.
+   Isso fazia o painel continuar visível por trás da tela de convite/login após logout.
+*/
+#appShell.hidden,
+#loginScreen.hidden,
+#accessGate.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#appShell:not(.hidden) {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+@media (max-width: 900px), (pointer: coarse) and (max-width: 1024px) {
+  #appShell.hidden,
+  #loginScreen.hidden,
+  #accessGate.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  #appShell:not(.hidden) {
+    display: block !important;
+  }
+
+  #loginScreen:not(.hidden),
+  #accessGate:not(.hidden) {
+    display: block !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -6453,9 +6490,18 @@ body.is-mobile #appShell {
   }
 
   function mostrarGate() {
-    document.getElementById('accessGate')?.classList.remove('hidden');
-    document.getElementById('loginScreen')?.classList.add('hidden');
-    document.getElementById('appShell')?.classList.add('hidden');
+    const gate = document.getElementById('accessGate');
+    const login = document.getElementById('loginScreen');
+    const app = document.getElementById('appShell');
+
+    gate?.classList.remove('hidden');
+    login?.classList.add('hidden');
+    app?.classList.add('hidden');
+
+    if (gate) gate.style.display = '';
+    if (login) login.style.display = 'none';
+    if (app) app.style.display = 'none';
+
     setTimeout(() => document.getElementById('inviteCodeInput')?.focus(), 80);
   }
 
@@ -6464,9 +6510,17 @@ body.is-mobile #appShell {
     logado = null;
     limparSessaoUsuario();
     pararEscutasFirebase();
-    document.getElementById('accessGate')?.classList.add('hidden');
-    document.getElementById('loginScreen')?.classList.remove('hidden');
-    document.getElementById('appShell')?.classList.add('hidden');
+    const gate = document.getElementById('accessGate');
+    const login = document.getElementById('loginScreen');
+    const app = document.getElementById('appShell');
+
+    gate?.classList.add('hidden');
+    login?.classList.remove('hidden');
+    app?.classList.add('hidden');
+
+    if (gate) gate.style.display = 'none';
+    if (login) login.style.display = '';
+    if (app) app.style.display = 'none';
     document.body.classList.remove('is-admin', 'mobile-menu-open');
     limparCamposLogin();
 
@@ -6813,9 +6867,17 @@ body.is-mobile #appShell {
   function iniciarApp() {
     salvarSessaoUsuario();
     pararEscutasFirebase();
-    document.getElementById('accessGate')?.classList.add('hidden');
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('appShell').classList.remove('hidden');
+    const gate = document.getElementById('accessGate');
+    const login = document.getElementById('loginScreen');
+    const app = document.getElementById('appShell');
+
+    gate?.classList.add('hidden');
+    login?.classList.add('hidden');
+    app?.classList.remove('hidden');
+
+    if (gate) gate.style.display = 'none';
+    if (login) login.style.display = 'none';
+    if (app) app.style.display = '';
     applyResponsiveMode();
     document.getElementById('displayUser').innerText = logado.nome;
     document.getElementById('displayRole').innerText = logado.role;
@@ -6903,9 +6965,19 @@ body.is-mobile #appShell {
     pararEscutasFirebase();
     limparSessaoUsuario();
     logado = null;
-    document.getElementById('appShell')?.classList.add('hidden');
-    document.getElementById('loginScreen')?.classList.add('hidden');
-    document.getElementById('accessGate')?.classList.remove('hidden');
+
+    const app = document.getElementById('appShell');
+    const login = document.getElementById('loginScreen');
+    const gate = document.getElementById('accessGate');
+
+    app?.classList.add('hidden');
+    login?.classList.add('hidden');
+    gate?.classList.remove('hidden');
+
+    if (app) app.style.display = 'none';
+    if (login) login.style.display = 'none';
+    if (gate) gate.style.display = '';
+
     document.body.classList.remove('is-admin', 'mobile-menu-open');
     limparCamposLogin();
     applyResponsiveMode();
