@@ -63,20 +63,6 @@
     button { cursor: pointer; }
     .hidden { display: none !important; }
 
-    /* Bloqueio visual inicial: evita piscar conteúdo antes da checagem de sessão */
-    body.security-locked #appShell { display: none !important; }
-    .security-note {
-      margin-top: 12px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(245,165,36,.28);
-      background: rgba(245,165,36,.10);
-      color: #ffd38a;
-      font-size: .78rem;
-      line-height: 1.45;
-      font-weight: 700;
-    }
-
     #toast-container {
       position: fixed;
       right: 24px;
@@ -3843,9 +3829,95 @@ body[data-theme="light"] .language-switch-hero {
   z-index: 1000002 !important;
 }
 
+
+/* ====== V6.1 PERMISSÕES POR USUÁRIO + GARANTIA ====== */
+.permission-card {
+  border: 1px solid var(--read-border, rgba(220,236,247,.22));
+  background: color-mix(in srgb, var(--read-panel, #111F33) 92%, transparent);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.permission-grid-small {
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+}
+
+.permission-check {
+  min-height: 44px;
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 13px;
+  background: var(--read-field, #182A40);
+  border: 1px solid var(--read-border-strong, rgba(220,236,247,.34));
+  color: var(--read-text, #F7FAFC) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+}
+
+.permission-check input {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  padding: 0 !important;
+  accent-color: var(--brand2);
+}
+
+.permission-warning {
+  border: 1px solid color-mix(in srgb, var(--warning) 34%, var(--read-border));
+  background: color-mix(in srgb, var(--warning) 10%, var(--read-panel));
+  color: var(--read-text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-weight: 800;
+}
+
+.module-list-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 420px;
+}
+
+.module-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand2) 25%, var(--read-border));
+  background: color-mix(in srgb, var(--brand2) 9%, transparent);
+  font-size: .68rem;
+  font-weight: 900;
+  color: var(--read-text);
+}
+
+@media (max-width: 1100px) {
+  .permission-grid,
+  .permission-grid-small {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .permission-grid,
+  .permission-grid-small {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 </head>
-<body class="security-locked">
+<body>
 
   <!-- Camada visual tecnológica: cursor helicóptero e nuvens interativas -->
   <div id="skyFx" aria-hidden="true">
@@ -4049,7 +4121,6 @@ body[data-theme="light"] .language-switch-hero {
       <div class="nav-item" data-view="demandas" onclick="switchView('demandas', event)">🗓️ Demandas Diárias</div>
       <div class="nav-item" data-view="estoque" onclick="switchView('estoque', event)">💻 Estoque TI</div>
       <div class="nav-item" data-view="movimentacoes" onclick="switchView('movimentacoes', event)">🔄 Movimentações</div>
-
       <div class="nav-item" data-view="garantia" onclick="switchView('garantia', event)">🛡️ Garantia Equipamentos</div>
 
       <div class="section-title">Gestão</div>
@@ -4463,6 +4534,70 @@ body[data-theme="light"] .language-switch-hero {
         </div>
       </section>
 
+
+      <!-- GARANTIA EQUIPAMENTOS -->
+      <section id="viewGarantia" class="view">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🛡️ Garantia Equipamentos</div>
+              <div class="subnote">Levantamento de notebooks e equipamentos com garantia, validade e status de acompanhamento.</div>
+            </div>
+            <button class="btn btn-sm" data-garantia-action="criar" onclick="limparGarantia()">+ Novo levantamento</button>
+          </div>
+
+          <div class="permission-warning hidden" id="garantiaPermissionWarning">
+            Você possui acesso somente para visualização deste módulo. Criação, edição, exclusão ou encerramento dependem de permissão do administrador.
+          </div>
+
+          <div class="grid grid-4" data-garantia-action="criar">
+            <div><label>Patrimônio</label><input id="gaPatrimonio" placeholder="OMNI0000 ou ALG0000"></div>
+            <div><label>Serial</label><input id="gaSerial" placeholder="Serial number"></div>
+            <div><label>Modelo</label><input id="gaModelo" placeholder="Marca/modelo"></div>
+            <div><label>Fornecedor</label><input id="gaFornecedor" placeholder="Dell, Lenovo, APNETWORKS..."></div>
+          </div>
+
+          <div class="grid grid-4" style="margin-top:14px;" data-garantia-action="criar">
+            <div><label>Data de compra</label><input id="gaDataCompra" type="date"></div>
+            <div><label>Fim da garantia</label><input id="gaDataFim" type="date"></div>
+            <div>
+              <label>Status</label>
+              <select id="gaStatus">
+                <option>Em garantia</option>
+                <option>Próximo do vencimento</option>
+                <option>Vencida</option>
+                <option>Acionada</option>
+                <option>Encerrada</option>
+              </select>
+            </div>
+            <div><label>Responsável</label><input id="gaResponsavel" placeholder="Responsável pelo levantamento"></div>
+          </div>
+
+          <div style="margin-top:14px;" data-garantia-action="criar">
+            <label>Observação</label>
+            <textarea id="gaObs" placeholder="Observações, protocolo de garantia, chamado do fornecedor..."></textarea>
+          </div>
+
+          <button class="btn btn-success btn-block" style="margin-top:16px;" data-garantia-action="criar" onclick="salvarGarantia()">Salvar levantamento de garantia</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Levantamentos cadastrados</div>
+              <div id="garantiaStatus" class="subnote">Lista sincronizada com o Firebase.</div>
+            </div>
+            <input id="filtroGarantia" style="max-width:280px;" placeholder="Buscar patrimônio, serial, modelo..." oninput="renderGarantias()">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Patrimônio</th><th>Modelo / Serial</th><th>Garantia</th><th>Status</th><th>Responsável</th><th>Ação</th></tr></thead>
+              <tbody id="tbGarantia"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- RELATÓRIOS -->
       <section id="viewRelatorios" class="view">
         <div class="card">
@@ -4494,7 +4629,7 @@ body[data-theme="light"] .language-switch-hero {
               </div>
               <div id="senhaRegraUsuario" class="subnote" style="margin-top:6px; font-size:.72rem;">Obrigatório: mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.</div>
             </div>
-            <div><label>Perfil</label><select id="usRole"><option>Analista Pleno</option><option>Analista N1</option><option>Consulta</option><option>Gestor</option><option value="admin">Admin</option></select></div>
+            <div><label>Perfil</label><select id="usRole" onchange="aplicarPresetPermissoesPorPerfil()"><option>Analista Pleno</option><option>Analista N1</option><option>Consulta</option><option>Gestor</option><option value="admin">Admin</option></select></div>
           </div>
           <div class="grid grid-3" style="margin-top:14px;">
             <div><label>E-mail</label><input id="usEmail" type="email" placeholder="email@empresa.com"></div>
@@ -4503,6 +4638,18 @@ body[data-theme="light"] .language-switch-hero {
               <label>Segurança</label>
               <label class="security-check"><input id="usExigirTroca" type="checkbox" checked> Exigir troca de senha no primeiro acesso</label>
             </div>
+          </div>
+
+          <div class="permission-card" style="margin-top:16px;">
+            <div class="card-title" style="margin-bottom:6px;">Permissões de Módulos</div>
+            <p class="subnote" style="margin-bottom:12px;">O administrador define quais menus laterais este usuário poderá visualizar e acessar.</p>
+            <div id="modulosUsuarioGrid" class="permission-grid"></div>
+          </div>
+
+          <div class="permission-card" style="margin-top:14px;">
+            <div class="card-title" style="margin-bottom:6px;">Permissões da Garantia</div>
+            <p class="subnote" style="margin-bottom:12px;">Permissões específicas para o módulo Garantia Equipamentos.</p>
+            <div id="garantiaPermissoesGrid" class="permission-grid permission-grid-small"></div>
           </div>
           <button id="btnSalvarUsuario" class="btn btn-success btn-block" style="margin-top:16px;" onclick="salvarUsuario()">Salvar usuário</button>
         </div>
@@ -4589,39 +4736,11 @@ body[data-theme="light"] .language-switch-hero {
           <div class="config-panel only-admin" style="margin-top:18px;">
             <div class="card-title" style="margin-bottom:6px;">Manutenção administrativa</div>
             <p class="subnote" style="margin-bottom:14px;">Use apenas em caso de perda do usuário administrador padrão.</p>
-            <button class="btn btn-warning" style="width:auto;" onclick="corrigirAdminFirebase()">🔒 Recuperação admin segura</button>
+            <button class="btn btn-warning" style="width:auto;" onclick="corrigirAdminFirebase()">🛠 Recriar admin padrão</button>
           </div>
         </div>
       </section>
-    
-<!-- GARANTIA EQUIPAMENTOS -->
-<section id="viewGarantia" class="view">
-<div class="card">
-<div class="card-header"><div class="card-title">🛡️ Garantia de Equipamentos</div></div>
-<div class="grid grid-2">
-<div>
-<div class="field"><label>Nome do Colaborador</label><input id="g_nome"></div>
-<div class="field"><label>E-mail Corporativo</label><input id="g_email"></div>
-<div class="field"><label>Número de Série</label><input id="g_serial"></div>
-<div class="field"><label>Modelo</label><input id="g_modelo"></div>
-<div class="field"><label>Prioridade</label>
-<select id="g_prioridade"><option>Crítica</option><option>Média</option><option>Baixa</option></select></div>
-</div>
-<div>
-<div class="field"><label>Defeitos</label><textarea id="g_defeitos"></textarea></div>
-<div class="field"><label>Acessórios</label><input id="g_acessorios"></div>
-<button class="btn btn-primary" onclick="salvarGarantia()">Salvar Levantamento</button>
-<button class="btn" onclick="exportarGarantiaCSV()">Exportar CSV</button>
-</div>
-</div>
-</div>
-<div class="card">
-<div class="card-title">Triagem</div>
-<div class="table-wrap"><table><thead><tr><th>Prioridade</th><th>Nome</th><th>Email</th><th>Serial</th><th>Modelo</th></tr></thead><tbody id="garantiaTabela"></tbody></table></div>
-</div>
-</section>
-
-</main>
+    </main>
   </section>
 
 <script>
@@ -4644,24 +4763,12 @@ body[data-theme="light"] .language-switch-hero {
   let cacheDemandas = [];
   let cacheEstoque = [];
   let cacheMovimentacoes = [];
+  let cacheGarantias = [];
   let cacheUsuarios = [];
   let cacheCodigosConvite = [];
   let modoAdminBypass = false;
   let chartStatus = null;
   let chartCategoria = null;
-
-  // ====== SEGURANÇA CLIENT-SIDE V6.1 ======
-  // HTML + Firebase Realtime Database não substitui backend/Auth.
-  // As melhorias abaixo reduzem riscos comuns; a proteção forte depende das regras do Firebase.
-  const SESSION_KEY = 'usuarioOmniSessionV3';
-  const LEGACY_SESSION_KEY = 'usuarioOmniV2';
-  const INVITE_KEY = 'omniInviteAccessV2';
-  const LEGACY_INVITE_KEY = 'omniInviteAccessV1';
-  const LOGIN_ATTEMPT_KEY = 'omniLoginAttemptsV1';
-  const INVITE_ATTEMPT_KEY = 'omniInviteAttemptsV1';
-  const MAX_LOGIN_ATTEMPTS = 5;
-  const MAX_INVITE_ATTEMPTS = 5;
-  const LOCK_MINUTES = 10;
 
   const TITULOS = {
     dashboard: ['Dashboard', 'Painel Operacional de Suporte Técnico', 'Visão geral dos chamados, demandas diárias e estoque de TI.'],
@@ -4669,11 +4776,216 @@ body[data-theme="light"] .language-switch-hero {
     demandas: ['Demandas', 'Demandas Diárias', 'Controle atividades sem chamado, rotinas administrativas e acompanhamentos.'],
     estoque: ['Estoque TI', 'Controle de Estoque e Ativos', 'Gerencie equipamentos, patrimônios, seriais, usuários e localização.'],
     movimentacoes: ['Movimentações', 'Empréstimos, Trocas e Devoluções', 'Controle histórico de notebooks, acessórios, patrimônio OMNI e ALG/APNETWORKS.'],
+    garantia: ['Garantia Equipamentos', 'Levantamento de Garantias', 'Controle notebooks, seriais, validade de garantia e status de acompanhamento.'],
     insights: ['Omni Insights', 'IA de Melhoria Contínua', 'Análise automática dos registros, gargalos, pendências e oportunidades de melhoria.'],
     relatorios: ['Relatórios', 'Relatórios e Indicadores', 'Exporte dados e acompanhe a produtividade do suporte.'],
     usuarios: ['Usuários', 'Gestão de Analistas', 'Administre acessos, perfis e status dos usuários.'],
     config: ['Configurações', 'Configurações do Sistema', 'Ajustes visuais e ações de manutenção.']
   };
+
+
+  const MODULE_DEFINITIONS = [
+    { key: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { key: 'chamados', label: 'Chamados / Atendimentos', icon: '🎫' },
+    { key: 'demandas', label: 'Demandas Diárias', icon: '🗓️' },
+    { key: 'estoque', label: 'Estoque TI', icon: '💻' },
+    { key: 'movimentacoes', label: 'Movimentações', icon: '🔄' },
+    { key: 'garantia', label: 'Garantia Equipamentos', icon: '🛡️' },
+    { key: 'insights', label: 'Omni Insights', icon: '🤖' },
+    { key: 'relatorios', label: 'Relatórios', icon: '📑' },
+    { key: 'usuarios', label: 'Usuários', icon: '👥' },
+    { key: 'config', label: 'Configurações', icon: '⚙️' }
+  ];
+
+  const GARANTIA_PERMISSION_DEFINITIONS = [
+    { key: 'visualizar', label: 'Visualizar Garantia' },
+    { key: 'criar', label: 'Criar Levantamentos' },
+    { key: 'editar', label: 'Editar Levantamentos' },
+    { key: 'excluir', label: 'Excluir Levantamentos' },
+    { key: 'encerrar', label: 'Encerrar Garantias' }
+  ];
+
+  function mapaModulos(valor = false) {
+    return Object.fromEntries(MODULE_DEFINITIONS.map(m => [m.key, valor]));
+  }
+
+  function mapaGarantia(valor = false) {
+    return Object.fromEntries(GARANTIA_PERMISSION_DEFINITIONS.map(p => [p.key, valor]));
+  }
+
+  function defaultModulesByRole(role) {
+    const r = String(role || '').toLowerCase();
+    const m = mapaModulos(false);
+
+    if (r === 'admin') return mapaModulos(true);
+
+    m.dashboard = true;
+
+    if (r.includes('gestor')) {
+      ['chamados','demandas','estoque','movimentacoes','garantia','insights','relatorios','config'].forEach(k => m[k] = true);
+      return m;
+    }
+
+    if (r.includes('pleno')) {
+      ['chamados','demandas','estoque','movimentacoes','garantia','relatorios'].forEach(k => m[k] = true);
+      return m;
+    }
+
+    if (r.includes('n1')) {
+      ['chamados','demandas'].forEach(k => m[k] = true);
+      return m;
+    }
+
+    if (r.includes('consulta')) {
+      ['chamados','demandas','garantia'].forEach(k => m[k] = true);
+      return m;
+    }
+
+    ['chamados','demandas'].forEach(k => m[k] = true);
+    return m;
+  }
+
+  function defaultGarantiaByRole(role) {
+    const r = String(role || '').toLowerCase();
+    const p = mapaGarantia(false);
+
+    if (r === 'admin' || r.includes('gestor')) return mapaGarantia(true);
+    if (r.includes('pleno')) {
+      p.visualizar = true; p.criar = true; p.editar = true;
+      return p;
+    }
+    if (r.includes('n1')) {
+      p.visualizar = true; p.criar = true;
+      return p;
+    }
+    if (r.includes('consulta')) {
+      p.visualizar = true;
+      return p;
+    }
+    p.visualizar = true;
+    return p;
+  }
+
+  function normalizarPermissoesModulos(modulos, role) {
+    if (String(role || '').toLowerCase() === 'admin') return mapaModulos(true);
+    const base = defaultModulesByRole(role);
+    const obj = modulos && typeof modulos === 'object' ? modulos : null;
+    return Object.fromEntries(MODULE_DEFINITIONS.map(m => [
+      m.key,
+      obj && Object.prototype.hasOwnProperty.call(obj, m.key) ? obj[m.key] === true : base[m.key] === true
+    ]));
+  }
+
+  function normalizarPermissoesGarantia(permissoes, role) {
+    if (String(role || '').toLowerCase() === 'admin') return mapaGarantia(true);
+    const base = defaultGarantiaByRole(role);
+    const obj = permissoes && typeof permissoes === 'object' ? permissoes : null;
+    return Object.fromEntries(GARANTIA_PERMISSION_DEFINITIONS.map(p => [
+      p.key,
+      obj && Object.prototype.hasOwnProperty.call(obj, p.key) ? obj[p.key] === true : base[p.key] === true
+    ]));
+  }
+
+  function hasModuleAccess(view) {
+    if (isAdmin()) return true;
+    if (view === 'usuarios') return false;
+    const perms = normalizarPermissoesModulos(logado?.modulos, logado?.role);
+    return perms[view] === true;
+  }
+
+  function canGarantia(action) {
+    if (isAdmin()) return true;
+    if (!hasModuleAccess('garantia')) return false;
+    const p = normalizarPermissoesGarantia(logado?.garantiaPermissoes, logado?.role);
+    return p[action] === true;
+  }
+
+  function firstAllowedView() {
+    const perms = normalizarPermissoesModulos(logado?.modulos, logado?.role);
+    const preferred = ['dashboard','chamados','demandas','garantia','estoque','movimentacoes','insights','relatorios','config'];
+    return preferred.find(v => hasModuleAccess(v) && perms[v] === true) || 'dashboard';
+  }
+
+  function applyModulePermissions() {
+    document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+      const view = item.dataset.view;
+      item.style.display = hasModuleAccess(view) ? '' : 'none';
+    });
+
+    document.querySelectorAll('.view').forEach(v => {
+      const id = v.id || '';
+      if (!id.startsWith('view')) return;
+      const key = id.replace('view','');
+      const view = key.charAt(0).toLowerCase() + key.slice(1);
+      if (view && MODULE_DEFINITIONS.some(m => m.key === view)) {
+        v.dataset.allowed = hasModuleAccess(view) ? 'true' : 'false';
+      }
+    });
+  }
+
+  function checklistModulosHTML(selected, prefix) {
+    return MODULE_DEFINITIONS.map(m => {
+      const checked = selected[m.key] === true ? 'checked' : '';
+      const disabled = (prefix === 'mod' && document.getElementById('usRole')?.value === 'admin') ? 'disabled' : '';
+      return `<label class="permission-check"><input type="checkbox" data-modulo-key="${m.key}" id="${prefix}_${m.key}" ${checked} ${disabled}> ${m.icon} ${escapeHTML(m.label)}</label>`;
+    }).join('');
+  }
+
+  function checklistGarantiaHTML(selected, prefix) {
+    return GARANTIA_PERMISSION_DEFINITIONS.map(p => {
+      const checked = selected[p.key] === true ? 'checked' : '';
+      const disabled = (prefix === 'gar' && document.getElementById('usRole')?.value === 'admin') ? 'disabled' : '';
+      return `<label class="permission-check"><input type="checkbox" data-garantia-key="${p.key}" id="${prefix}_${p.key}" ${checked} ${disabled}> ${escapeHTML(p.label)}</label>`;
+    }).join('');
+  }
+
+  function renderPermissoesCadastro(modulos = null, garantiaPermissoes = null) {
+    const role = document.getElementById('usRole')?.value || 'Analista Pleno';
+    const m = normalizarPermissoesModulos(modulos, role);
+    const g = normalizarPermissoesGarantia(garantiaPermissoes, role);
+
+    const gridM = document.getElementById('modulosUsuarioGrid');
+    const gridG = document.getElementById('garantiaPermissoesGrid');
+
+    if (gridM) gridM.innerHTML = checklistModulosHTML(m, 'mod');
+    if (gridG) gridG.innerHTML = checklistGarantiaHTML(g, 'gar');
+  }
+
+  function aplicarPresetPermissoesPorPerfil() {
+    renderPermissoesCadastro();
+  }
+
+  function coletarModulosCadastro() {
+    const role = document.getElementById('usRole')?.value || 'Analista Pleno';
+    if (String(role).toLowerCase() === 'admin') return mapaModulos(true);
+    const out = mapaModulos(false);
+    document.querySelectorAll('#modulosUsuarioGrid input[data-modulo-key]').forEach(input => {
+      out[input.dataset.moduloKey] = input.checked === true;
+    });
+    return out;
+  }
+
+  function coletarGarantiaCadastro() {
+    const role = document.getElementById('usRole')?.value || 'Analista Pleno';
+    if (String(role).toLowerCase() === 'admin') return mapaGarantia(true);
+    const out = mapaGarantia(false);
+    document.querySelectorAll('#garantiaPermissoesGrid input[data-garantia-key]').forEach(input => {
+      out[input.dataset.garantiaKey] = input.checked === true;
+    });
+    return out;
+  }
+
+  function coletarChecklist(prefix, tipo) {
+    const defs = tipo === 'garantia' ? GARANTIA_PERMISSION_DEFINITIONS : MODULE_DEFINITIONS;
+    const out = Object.fromEntries(defs.map(d => [d.key, false]));
+    const attr = tipo === 'garantia' ? 'garantiaKey' : 'moduloKey';
+    const selector = tipo === 'garantia' ? `#${prefix} input[data-garantia-key]` : `#${prefix} input[data-modulo-key]`;
+    document.querySelectorAll(selector).forEach(input => {
+      out[input.dataset[attr]] = input.checked === true;
+    });
+    return out;
+  }
+
 
   // ====== CONEXÃO ======
   db.ref('.info/connected').on('value', snap => {
@@ -4902,152 +5214,6 @@ body[data-theme="light"] .language-switch-hero {
   function escapeHTML(v) { return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
   function texto(v) { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
-
-  function bytesToHex(buffer) {
-    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  function gerarTokenSeguro(tamanho = 32) {
-    const bytes = new Uint8Array(tamanho);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  async function sha256Hex(textoBase) {
-    const data = new TextEncoder().encode(String(textoBase || ''));
-    return bytesToHex(await crypto.subtle.digest('SHA-256', data));
-  }
-
-  async function gerarHashSenha(senha, salt = gerarTokenSeguro(16)) {
-    const hash = await sha256Hex(`${salt}:${senha}`);
-    return { salt, hash };
-  }
-
-  async function verificarSenhaUsuario(user, senhaDigitada) {
-    if (user?.senhaHash && user?.senhaSalt) {
-      const { hash } = await gerarHashSenha(senhaDigitada, user.senhaSalt);
-      return hash === user.senhaHash;
-    }
-    return String(senhaDigitada) === String(user?.senha || '');
-  }
-
-  async function migrarSenhaLegadaSeNecessario(login, user, senhaDigitada) {
-    if (!user || user.senhaHash || !user.senha) return;
-    const { salt, hash } = await gerarHashSenha(senhaDigitada);
-    await db.ref('usuarios/' + login).update({
-      senhaHash: hash,
-      senhaSalt: salt,
-      senha: null,
-      senhaMigradaEm: new Date().toISOString(),
-      atualizadoEm: new Date().toISOString()
-    });
-  }
-
-  function getAttemptState(key) {
-    try {
-      const data = JSON.parse(localStorage.getItem(key) || '{}');
-      if (data.lockUntil && Date.now() < Number(data.lockUntil)) return data;
-      if (data.lockUntil && Date.now() >= Number(data.lockUntil)) {
-        localStorage.removeItem(key);
-        return {};
-      }
-      return data || {};
-    } catch(e) {
-      localStorage.removeItem(key);
-      return {};
-    }
-  }
-
-  function assertNotLocked(key, label) {
-    const data = getAttemptState(key);
-    if (data.lockUntil && Date.now() < Number(data.lockUntil)) {
-      const min = Math.ceil((Number(data.lockUntil) - Date.now()) / 60000);
-      showToast(`${label} bloqueado por muitas tentativas. Tente novamente em ${min} minuto(s).`, 'error');
-      return false;
-    }
-    return true;
-  }
-
-  function registrarFalha(key, max = 5) {
-    const data = getAttemptState(key);
-    const count = Number(data.count || 0) + 1;
-    const next = { count, lastAttempt: Date.now() };
-    if (count >= max) next.lockUntil = Date.now() + LOCK_MINUTES * 60000;
-    localStorage.setItem(key, JSON.stringify(next));
-  }
-
-  function limparFalhas(key) { localStorage.removeItem(key); }
-
-  function salvarSessaoLocal(sessao) {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessao));
-    localStorage.removeItem(LEGACY_SESSION_KEY);
-  }
-
-  function lerSessaoLocal() {
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch(e) {
-      sessionStorage.removeItem(SESSION_KEY);
-      return null;
-    }
-  }
-
-  function limparSessaoLocal() {
-    sessionStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(LEGACY_SESSION_KEY);
-  }
-
-  async function validarSessaoSalva() {
-    const sessao = lerSessaoLocal();
-    if (!sessao?.login || !sessao?.sessionToken) return false;
-
-    try {
-      const snap = await db.ref('usuarios/' + sessao.login).once('value');
-      const user = snap.val();
-      const tokenRemoto = user?.sessaoAtual?.token;
-      const expira = Number(user?.sessaoAtual?.expiraTimestamp || 0);
-
-      if (!user || user.ativo === false || tokenRemoto !== sessao.sessionToken || !expira || Date.now() > expira) {
-        limparSessaoLocal();
-        return false;
-      }
-
-      logado = {
-        nome: user.nomeCompleto || sessao.nome || sessao.login,
-        login: sessao.login,
-        role: user.role || 'Analista Pleno',
-        sessionToken: sessao.sessionToken,
-        exigirTrocaSenha: user.exigirTrocaSenha === true || user.trocarSenhaPrimeiroAcesso === true || user.primeiroAcesso === true
-      };
-      salvarSessaoLocal(logado);
-      return true;
-    } catch (error) {
-      console.warn('Não foi possível validar sessão salva:', error);
-      limparSessaoLocal();
-      return false;
-    }
-  }
-
-  async function criarSessaoRemota(login, user) {
-    const token = gerarTokenSeguro(32);
-    const expiraTimestamp = Date.now() + (8 * 60 * 60 * 1000);
-    await db.ref('usuarios/' + login + '/sessaoAtual').set({
-      token,
-      criadoEm: new Date().toISOString(),
-      expiraTimestamp,
-      userAgent: navigator.userAgent.slice(0, 180)
-    });
-
-    return {
-      nome: user.nomeCompleto || login,
-      login,
-      role: user.role || 'Analista Pleno',
-      sessionToken: token,
-      exigirTrocaSenha: user.exigirTrocaSenha === true || user.trocarSenhaPrimeiroAcesso === true || user.primeiroAcesso === true
-    };
-  }
-
   function showToast(msg, type='success') {
     const c = document.getElementById('toast-container');
     const t = document.createElement('div');
@@ -5137,6 +5303,7 @@ body[data-theme="light"] .language-switch-hero {
       'Demandas Diárias': 'Daily Tasks',
       'Estoque TI': 'IT Inventory',
       'Movimentações': 'Movements',
+      'Garantia Equipamentos': 'Equipment Warranty',
       'Relatórios': 'Reports',
       'Usuários': 'Users',
       'Configurações': 'Settings',
@@ -5275,6 +5442,13 @@ body[data-theme="light"] .language-switch-hero {
       'Protegido': 'Protected',
 
       'Configurações do Sistema': 'System Settings',
+      'Permissões de Módulos': 'Module Permissions',
+      'Permissões da Garantia': 'Warranty Permissions',
+      'Visualizar Garantia': 'View Warranty',
+      'Criar Levantamentos': 'Create Surveys',
+      'Editar Levantamentos': 'Edit Surveys',
+      'Excluir Levantamentos': 'Delete Surveys',
+      'Encerrar Garantias': 'Close Warranties',
       'Ajustes visuais e ações de manutenção.': 'Visual preferences and maintenance actions.',
       'Preferências visuais salvas individualmente por usuário conectado.': 'Visual preferences saved individually per connected user.',
       'Tema do painel': 'Panel theme',
@@ -5355,6 +5529,7 @@ body[data-theme="light"] .language-switch-hero {
       'Demandas Diárias': 'Tareas Diarias',
       'Estoque TI': 'Inventario TI',
       'Movimentações': 'Movimientos',
+      'Garantia Equipamentos': 'Garantía de Equipos',
       'Relatórios': 'Informes',
       'Usuários': 'Usuarios',
       'Configurações': 'Configuración',
@@ -5492,6 +5667,13 @@ body[data-theme="light"] .language-switch-hero {
       'Protegido': 'Protegido',
 
       'Configurações do Sistema': 'Configuración del Sistema',
+      'Permissões de Módulos': 'Permisos de Módulos',
+      'Permissões da Garantia': 'Permisos de Garantía',
+      'Visualizar Garantia': 'Visualizar Garantía',
+      'Criar Levantamentos': 'Crear Levantamientos',
+      'Editar Levantamentos': 'Editar Levantamientos',
+      'Excluir Levantamentos': 'Excluir Levantamientos',
+      'Encerrar Garantias': 'Cerrar Garantías',
       'Ajustes visuais e ações de manutenção.': 'Ajustes visuales y acciones de mantenimiento.',
       'Preferências visuais salvas individualmente por usuário conectado.': 'Preferencias visuales guardadas individualmente por usuario conectado.',
       'Tema do painel': 'Tema del panel',
@@ -5770,11 +5952,8 @@ body[data-theme="light"] .language-switch-hero {
     }
 
     try {
-      const { salt, hash } = await gerarHashSenha(s1);
       await db.ref('usuarios/' + logado.login).update({
-        senhaHash: hash,
-        senhaSalt: salt,
-        senha: null,
+        senha: String(s1),
         exigirTrocaSenha: false,
         trocarSenhaPrimeiroAcesso: false,
         primeiroAcesso: false,
@@ -5783,7 +5962,7 @@ body[data-theme="light"] .language-switch-hero {
       });
 
       logado.exigirTrocaSenha = false;
-      salvarSessaoLocal(logado);
+      localStorage.setItem('usuarioOmniV2', JSON.stringify(logado));
       forceCloseModal();
       showToast('Senha alterada com sucesso.');
     } catch (error) {
@@ -5800,11 +5979,8 @@ body[data-theme="light"] .language-switch-hero {
     const nova = gerarSenhaProvisoria();
 
     try {
-      const { salt, hash } = await gerarHashSenha(nova);
       await db.ref('usuarios/' + id).update({
-        senhaHash: hash,
-        senhaSalt: salt,
-        senha: null,
+        senha: nova,
         exigirTrocaSenha: true,
         trocarSenhaPrimeiroAcesso: true,
         primeiroAcesso: true,
@@ -5868,18 +6044,16 @@ body[data-theme="light"] .language-switch-hero {
 
   function getConviteLocal() {
     try {
-      const raw = localStorage.getItem(INVITE_KEY) || localStorage.getItem(LEGACY_INVITE_KEY);
+      const raw = localStorage.getItem('omniInviteAccessV1');
       if (!raw) return null;
       const data = JSON.parse(raw);
       if (!data.expiraTimestamp || Date.now() > Number(data.expiraTimestamp)) {
-        localStorage.removeItem(INVITE_KEY);
-        localStorage.removeItem(LEGACY_INVITE_KEY);
+        localStorage.removeItem('omniInviteAccessV1');
         return null;
       }
       return data;
     } catch(e) {
-      localStorage.removeItem(INVITE_KEY);
-        localStorage.removeItem(LEGACY_INVITE_KEY);
+      localStorage.removeItem('omniInviteAccessV1');
       return null;
     }
   }
@@ -5889,7 +6063,6 @@ body[data-theme="light"] .language-switch-hero {
   }
 
   function mostrarGate() {
-    document.body.classList.remove('security-locked');
     document.getElementById('accessGate')?.classList.remove('hidden');
     document.getElementById('loginScreen')?.classList.add('hidden');
     document.getElementById('appShell')?.classList.add('hidden');
@@ -5897,7 +6070,6 @@ body[data-theme="light"] .language-switch-hero {
   }
 
   function mostrarLogin(adminBypass = false) {
-    document.body.classList.remove('security-locked');
     modoAdminBypass = !!adminBypass;
     document.getElementById('accessGate')?.classList.add('hidden');
     document.getElementById('loginScreen')?.classList.remove('hidden');
@@ -5915,7 +6087,6 @@ body[data-theme="light"] .language-switch-hero {
   }
 
   async function validarCodigoConvite() {
-    if (!assertNotLocked(INVITE_ATTEMPT_KEY, 'Código de convite')) return;
     const input = document.getElementById('inviteCodeInput');
     const status = document.getElementById('inviteStatus');
     const codigo = normalizarCodigoConvite(input?.value || '');
@@ -5930,7 +6101,6 @@ body[data-theme="light"] .language-switch-hero {
       const data = snap.val();
 
       if (!data) {
-        registrarFalha(INVITE_ATTEMPT_KEY, MAX_INVITE_ATTEMPTS);
         if (status) status.innerText = '❌ Código não encontrado.';
         return showToast('Código de convite inválido.', 'error');
       }
@@ -5940,29 +6110,17 @@ body[data-theme="light"] .language-switch-hero {
       const usos = Number(data.usos || 0);
       const maxUsos = Number(data.maxUsos || 1);
 
-      if (data.ativo === false) { registrarFalha(INVITE_ATTEMPT_KEY, MAX_INVITE_ATTEMPTS); return showToast('Este código foi revogado pelo administrador.', 'error'); }
-      if (!expira || agora > expira) { registrarFalha(INVITE_ATTEMPT_KEY, MAX_INVITE_ATTEMPTS); return showToast('Este código expirou. Solicite outro ao administrador.', 'error'); }
-      if (usos >= maxUsos) { registrarFalha(INVITE_ATTEMPT_KEY, MAX_INVITE_ATTEMPTS); return showToast('Este código já atingiu o limite de uso.', 'error'); }
+      if (data.ativo === false) return showToast('Este código foi revogado pelo administrador.', 'error');
+      if (!expira || agora > expira) return showToast('Este código expirou. Solicite outro ao administrador.', 'error');
+      if (usos >= maxUsos) return showToast('Este código já atingiu o limite de uso.', 'error');
 
-      const tx = await db.ref('codigosAcesso/' + codigo).transaction(atual => {
-        if (!atual || atual.ativo === false) return;
-        const expiraAtual = Number(atual.expiraTimestamp || 0);
-        const usosAtual = Number(atual.usos || 0);
-        const maxAtual = Number(atual.maxUsos || 1);
-        if (!expiraAtual || Date.now() > expiraAtual || usosAtual >= maxAtual) return;
-        atual.usos = usosAtual + 1;
-        atual.ultimoUsoEm = new Date().toISOString();
-        atual.ultimoUsoTimestamp = Date.now();
-        return atual;
+      await db.ref('codigosAcesso/' + codigo).update({
+        usos: usos + 1,
+        ultimoUsoEm: new Date().toISOString(),
+        ultimoUsoTimestamp: agora
       });
 
-      if (!tx.committed) {
-        registrarFalha(INVITE_ATTEMPT_KEY, MAX_INVITE_ATTEMPTS);
-        return showToast('Código expirado, revogado ou já utilizado.', 'error');
-      }
-
-      limparFalhas(INVITE_ATTEMPT_KEY);
-      localStorage.setItem(INVITE_KEY, JSON.stringify({
+      localStorage.setItem('omniInviteAccessV1', JSON.stringify({
         codigo,
         autorizadoEm: new Date().toISOString(),
         expiraTimestamp: expira
@@ -5983,14 +6141,14 @@ body[data-theme="light"] .language-switch-hero {
     const maxUsos = Math.max(1, Number(document.getElementById('inviteMaxUsos')?.value || 1));
     const prefixo = normalizarCodigoConvite(document.getElementById('invitePrefixo')?.value || 'OMNI').replace(/[^A-Z0-9]/g, '') || 'OMNI';
 
-    let codigo = `${prefixo}-${gerarTrechoCodigo(10)}`;
+    let codigo = `${prefixo}-${gerarTrechoCodigo(6)}`;
     let tentativas = 0;
 
     try {
       while (tentativas < 5) {
         const exists = await db.ref('codigosAcesso/' + codigo).once('value');
         if (!exists.exists()) break;
-        codigo = `${prefixo}-${gerarTrechoCodigo(10)}`;
+        codigo = `${prefixo}-${gerarTrechoCodigo(6)}`;
         tentativas++;
       }
 
@@ -6089,8 +6247,6 @@ body[data-theme="light"] .language-switch-hero {
 
   // ====== LOGIN ======
   async function autenticar() {
-    if (!assertNotLocked(LOGIN_ATTEMPT_KEY, 'Login')) return;
-
     const userInput = document.getElementById('lUser').value.trim();
     const senhaInput = document.getElementById('lPass').value.trim();
     if (!userInput || !senhaInput) return showToast('Digite usuário e senha.', 'error');
@@ -6099,23 +6255,25 @@ body[data-theme="light"] .language-switch-hero {
     try {
       const snap = await db.ref('usuarios/' + key).once('value');
       const user = snap.val();
-      if (!user) { registrarFalha(LOGIN_ATTEMPT_KEY, MAX_LOGIN_ATTEMPTS); return showToast('Usuário ou senha inválidos.', 'error'); }
-      if (user.ativo === false) { registrarFalha(LOGIN_ATTEMPT_KEY, MAX_LOGIN_ATTEMPTS); return showToast('Usuário inativo. Fale com o administrador.', 'error'); }
-
-      const senhaOk = await verificarSenhaUsuario(user, senhaInput);
-      if (!senhaOk) { registrarFalha(LOGIN_ATTEMPT_KEY, MAX_LOGIN_ATTEMPTS); return showToast('Usuário ou senha inválidos.', 'error'); }
+      if (!user) return showToast('Usuário não encontrado no Firebase.', 'error');
+      if (user.ativo === false) return showToast('Usuário inativo. Fale com o administrador.', 'error');
+      if (String(senhaInput) !== String(user.senha)) return showToast('Senha incorreta.', 'error');
 
       const roleTemp = user.role || 'Analista Pleno';
       const isAdminLogin = String(roleTemp).toLowerCase() === 'admin';
       if (modoAdminBypass && !isAdminLogin && !conviteLocalValido()) {
-        registrarFalha(LOGIN_ATTEMPT_KEY, MAX_LOGIN_ATTEMPTS);
         return showToast('Entrada administrativa liberada apenas para admin. Usuários comuns precisam validar convite.', 'error');
       }
 
-      await migrarSenhaLegadaSeNecessario(key, user, senhaInput);
-      logado = await criarSessaoRemota(key, user);
-      salvarSessaoLocal(logado);
-      limparFalhas(LOGIN_ATTEMPT_KEY);
+      logado = {
+        nome: user.nomeCompleto || userInput,
+        login: key,
+        role: user.role || 'Analista Pleno',
+        modulos: normalizarPermissoesModulos(user.modulos, user.role || 'Analista Pleno'),
+        garantiaPermissoes: normalizarPermissoesGarantia(user.garantiaPermissoes, user.role || 'Analista Pleno'),
+        exigirTrocaSenha: user.exigirTrocaSenha === true || user.trocarSenhaPrimeiroAcesso === true || user.primeiroAcesso === true
+      };
+      localStorage.setItem('usuarioOmniV2', JSON.stringify(logado));
       iniciarApp();
     } catch (error) {
       console.error(error);
@@ -6124,13 +6282,31 @@ body[data-theme="light"] .language-switch-hero {
   }
 
   async function corrigirAdminFirebase() {
-    // Função perigosa removida na versão segura.
-    // Nunca recrie admin com senha fixa em código público.
-    showToast('A correção automática do admin foi removida por segurança. Crie/recupere admin pelo console do Firebase com regras restritas.', 'warning');
+    if (!confirm('Isso vai remover usuários antigos ADMIN/Admin/administrador e recriar usuarios/admin com senha Admin@123. Continuar?')) return;
+    try {
+      const updates = {};
+      ['ADMIN','Admin','Administrador','administrador'].forEach(k => updates['usuarios/' + k] = null);
+      updates['usuarios/admin'] = {
+        nomeCompleto: 'Administrador',
+        senha: 'Admin@123',
+        role: 'admin',
+        ativo: true,
+        modulos: mapaModulos(true),
+        garantiaPermissoes: mapaGarantia(true),
+        exigirTrocaSenha: false,
+        trocarSenhaPrimeiroAcesso: false,
+        primeiroAcesso: false,
+        atualizadoEm: new Date().toISOString()
+      };
+      await db.ref().update(updates);
+      showToast('Admin recriado. Login: admin | Senha: Admin@123');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao corrigir admin: ' + error.message, 'error');
+    }
   }
 
   function iniciarApp() {
-    document.body.classList.remove('security-locked');
     document.getElementById('accessGate')?.classList.add('hidden');
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
@@ -6138,6 +6314,7 @@ body[data-theme="light"] .language-switch-hero {
     document.getElementById('displayRole').innerText = logado.role;
     document.body.classList.toggle('is-admin', isAdmin());
     document.querySelectorAll('.only-admin').forEach(el => el.style.display = isAdmin() ? '' : 'none');
+    applyModulePermissions();
 
     const t = localStorage.getItem('omniThemeV2') || 'dark';
     setTheme(t, false);
@@ -6149,11 +6326,11 @@ body[data-theme="light"] .language-switch-hero {
     escutarTudo();
     if (isAdmin()) carregarUsuariosAgora(false);
 
-    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','movimentacoes','insights','relatorios','usuarios','config'];
-    let viewSalva = localStorage.getItem('omniActiveViewV2') || 'dashboard';
+    const viewsPermitidas = MODULE_DEFINITIONS.map(m => m.key);
+    let viewSalva = localStorage.getItem('omniActiveViewV2') || firstAllowedView();
 
-    if (!viewsPermitidas.includes(viewSalva)) viewSalva = 'dashboard';
-    if (viewSalva === 'usuarios' && !isAdmin()) viewSalva = 'dashboard';
+    if (!viewsPermitidas.includes(viewSalva)) viewSalva = firstAllowedView();
+    if (!hasModuleAccess(viewSalva)) viewSalva = firstAllowedView();
 
     switchView(viewSalva, null, true);
     applyLanguage(getLanguage());
@@ -6163,34 +6340,34 @@ body[data-theme="light"] .language-switch-hero {
     }
   }
 
-  async function logout() {
-    try {
-      if (logado?.login) await db.ref('usuarios/' + logado.login + '/sessaoAtual').remove();
-    } catch(e) { console.warn('Não foi possível remover sessão remota:', e); }
-    limparSessaoLocal();
+  function logout() {
+    localStorage.removeItem('usuarioOmniV2');
     localStorage.removeItem('omniActiveViewV2');
     location.reload();
   }
 
-  window.onload = async () => {
+  window.onload = () => {
     applyLanguage(getLanguage());
     startI18nObserver();
+    renderPermissoesCadastro();
 
-    // Não confia mais em localStorage para definir usuário/role.
-    // A sessão salva só entra se o token remoto no Firebase ainda existir e bater.
-    document.body.classList.add('security-locked');
-    const sessaoOk = await validarSessaoSalva();
-    if (sessaoOk) { iniciarApp(); return; }
+    const salvo = localStorage.getItem('usuarioOmniV2');
+    if (salvo) {
+      try { logado = JSON.parse(salvo); iniciarApp(); return; }
+      catch(e) { localStorage.removeItem('usuarioOmniV2'); }
+    }
 
-    document.body.classList.remove('security-locked');
     if (conviteLocalValido()) mostrarLogin(false);
     else mostrarGate();
   };
 
   function switchView(view, event, skipSave = false) {
-    const viewsPermitidas = ['dashboard','chamados','demandas','estoque','movimentacoes','insights','relatorios','usuarios','config'];
-    if (!viewsPermitidas.includes(view)) view = 'dashboard';
-    if (view === 'usuarios' && !isAdmin()) view = 'dashboard';
+    const viewsPermitidas = MODULE_DEFINITIONS.map(m => m.key);
+    if (!viewsPermitidas.includes(view)) view = firstAllowedView();
+    if (!hasModuleAccess(view)) {
+      showToast('Acesso negado. Este módulo não está liberado para seu usuário.', 'error');
+      view = firstAllowedView();
+    }
 
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 
@@ -6215,6 +6392,7 @@ body[data-theme="light"] .language-switch-hero {
     setTimeout(() => applyLanguage(getLanguage()), 0);
 
     if (view === 'movimentacoes') { ajustarFormularioMovimentacao(); atualizarDatalistPatrimonios(); renderMovimentacoes(); }
+    if (view === 'garantia') { renderGarantias(); atualizarPermissoesGarantiaUI(); }
     if (view === 'insights') renderOmniInsights();
     if (view === 'relatorios') renderRelatorios();
     if (view === 'usuarios') renderUsuarios();
@@ -6272,6 +6450,17 @@ body[data-theme="light"] .language-switch-hero {
       renderMovimentacoes();
       renderOmniInsights();
       atualizarDatalistPatrimonios();
+    });
+    db.ref('garantias_equipamentos').on('value', snap => {
+      cacheGarantias = [];
+      snap.forEach(item => cacheGarantias.push({ id: item.key, ...item.val() }));
+      cacheGarantias.sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
+      renderGarantias();
+      renderDashboard();
+      renderOmniInsights();
+    }, error => {
+      console.error('Erro ao escutar garantias:', error);
+      showToast('Erro ao carregar garantias: ' + error.message, 'error');
     });
     db.ref('usuarios').on('value', snap => {
       cacheUsuarios = [];
@@ -6947,6 +7136,197 @@ body[data-theme="light"] .language-switch-hero {
     closeModal(); showToast('Estoque atualizado.');
   }
 
+
+  // ====== GARANTIA EQUIPAMENTOS ======
+  function atualizarPermissoesGarantiaUI() {
+    const podeCriar = canGarantia('criar');
+    const warning = document.getElementById('garantiaPermissionWarning');
+    if (warning) warning.classList.toggle('hidden', podeCriar);
+
+    document.querySelectorAll('[data-garantia-action="criar"]').forEach(el => {
+      el.style.display = podeCriar ? '' : 'none';
+    });
+  }
+
+  function limparGarantia() {
+    if (!canGarantia('criar')) return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
+    ['gaPatrimonio','gaSerial','gaModelo','gaFornecedor','gaDataCompra','gaDataFim','gaResponsavel','gaObs'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    const st = document.getElementById('gaStatus');
+    if (st) st.value = 'Em garantia';
+  }
+
+  async function salvarGarantia() {
+    if (!hasModuleAccess('garantia') || !canGarantia('criar')) {
+      return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
+    }
+
+    const patrimonio = document.getElementById('gaPatrimonio').value.trim();
+    const serial = document.getElementById('gaSerial').value.trim();
+    const modelo = document.getElementById('gaModelo').value.trim();
+
+    if (!patrimonio && !serial) return showToast('Informe patrimônio ou serial do equipamento.', 'error');
+
+    const data = {
+      patrimonio,
+      serial,
+      modelo,
+      fornecedor: document.getElementById('gaFornecedor').value.trim(),
+      dataCompra: document.getElementById('gaDataCompra').value,
+      dataFim: document.getElementById('gaDataFim').value,
+      status: document.getElementById('gaStatus').value,
+      responsavel: document.getElementById('gaResponsavel').value.trim() || logado.nome,
+      observacao: document.getElementById('gaObs').value.trim(),
+      criadoPor: logado.nome,
+      criadoPorLogin: logado.login,
+      criadoEm: new Date().toISOString(),
+      atualizadoEm: new Date().toISOString()
+    };
+
+    try {
+      const ref = await db.ref('garantias_equipamentos').push(data);
+      cacheGarantias.unshift({ id: ref.key, ...data });
+      renderGarantias();
+      limparGarantia();
+      showToast('Levantamento de garantia salvo.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao salvar garantia: ' + error.message, 'error');
+    }
+  }
+
+  function statusGarantiaAuto(g) {
+    if (g.status === 'Encerrada' || g.status === 'Acionada') return g.status;
+    if (!g.dataFim) return g.status || 'Não informado';
+
+    const hoje = new Date(getHoje() + 'T00:00:00');
+    const fim = new Date(String(g.dataFim) + 'T00:00:00');
+    const dias = Math.ceil((fim - hoje) / 86400000);
+
+    if (dias < 0) return 'Vencida';
+    if (dias <= 30) return 'Próximo do vencimento';
+    return g.status || 'Em garantia';
+  }
+
+  function renderGarantias() {
+    const tb = document.getElementById('tbGarantia');
+    if (!tb) return;
+
+    atualizarPermissoesGarantiaUI();
+
+    const termo = texto(document.getElementById('filtroGarantia')?.value || '');
+    let lista = cacheGarantias.filter(g => {
+      if (!termo) return true;
+      return texto([g.patrimonio, g.serial, g.modelo, g.fornecedor, g.responsavel, g.status].join(' ')).includes(termo);
+    });
+
+    const status = document.getElementById('garantiaStatus');
+    if (status) status.innerText = `${lista.length} levantamento(s) exibido(s) de ${cacheGarantias.length}.`;
+
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">Nenhum levantamento de garantia cadastrado.</td></tr>';
+      return;
+    }
+
+    const podeEditar = canGarantia('editar');
+    const podeExcluir = canGarantia('excluir');
+    const podeEncerrar = canGarantia('encerrar');
+
+    tb.innerHTML = lista.map(g => {
+      const st = statusGarantiaAuto(g);
+      const id = JSON.stringify(g.id);
+      const acoes = [
+        podeEditar ? `<button class="btn btn-sm" onclick='editarGarantia(${id})'>Editar</button>` : '',
+        podeEncerrar && st !== 'Encerrada' ? `<button class="btn btn-sm" onclick='encerrarGarantia(${id})'>Encerrar</button>` : '',
+        podeExcluir ? `<button class="btn btn-danger btn-sm" onclick='excluirGarantia(${id})'>Excluir</button>` : ''
+      ].filter(Boolean).join('');
+
+      return `<tr>
+        <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.fornecedor || '')}</span></td>
+        <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span></td>
+        <td>${escapeHTML(g.dataFim || '-')}</td>
+        <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span></td>
+        <td>${escapeHTML(g.responsavel || '-')}</td>
+        <td><div class="actions">${acoes || '<span class="subnote">Somente visualização</span>'}</div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function editarGarantia(id) {
+    if (!canGarantia('editar')) return showToast('Acesso negado para editar garantia.', 'error');
+    const g = cacheGarantias.find(x => x.id === id);
+    if (!g) return showToast('Registro não encontrado.', 'error');
+
+    openModal('Editar garantia', g.patrimonio || g.serial || 'Equipamento', `
+      <div class="grid grid-3">
+        <div><label>Patrimônio</label><input id="edGaPatrimonio" value="${escapeHTML(g.patrimonio || '')}"></div>
+        <div><label>Serial</label><input id="edGaSerial" value="${escapeHTML(g.serial || '')}"></div>
+        <div><label>Modelo</label><input id="edGaModelo" value="${escapeHTML(g.modelo || '')}"></div>
+        <div><label>Fornecedor</label><input id="edGaFornecedor" value="${escapeHTML(g.fornecedor || '')}"></div>
+        <div><label>Fim da garantia</label><input id="edGaDataFim" type="date" value="${escapeHTML(g.dataFim || '')}"></div>
+        <div><label>Status</label><select id="edGaStatus">${['Em garantia','Próximo do vencimento','Vencida','Acionada','Encerrada'].map(x=>`<option ${g.status===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>Responsável</label><input id="edGaResponsavel" value="${escapeHTML(g.responsavel || '')}"></div>
+      </div>
+      <div style="margin-top:12px;"><label>Observação</label><textarea id="edGaObs">${escapeHTML(g.observacao || '')}</textarea></div>
+      <button class="btn btn-success btn-block" style="margin-top:14px;" onclick='salvarEdicaoGarantia(${JSON.stringify(id)})'>Salvar alterações</button>
+    `);
+  }
+
+  async function salvarEdicaoGarantia(id) {
+    if (!canGarantia('editar')) return showToast('Acesso negado para editar garantia.', 'error');
+    try {
+      await db.ref('garantias_equipamentos/' + id).update({
+        patrimonio: document.getElementById('edGaPatrimonio').value.trim(),
+        serial: document.getElementById('edGaSerial').value.trim(),
+        modelo: document.getElementById('edGaModelo').value.trim(),
+        fornecedor: document.getElementById('edGaFornecedor').value.trim(),
+        dataFim: document.getElementById('edGaDataFim').value,
+        status: document.getElementById('edGaStatus').value,
+        responsavel: document.getElementById('edGaResponsavel').value.trim(),
+        observacao: document.getElementById('edGaObs').value.trim(),
+        atualizadoPor: logado.nome,
+        atualizadoEm: new Date().toISOString()
+      });
+      forceCloseModal();
+      showToast('Garantia atualizada.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao atualizar garantia: ' + error.message, 'error');
+    }
+  }
+
+  async function encerrarGarantia(id) {
+    if (!canGarantia('encerrar')) return showToast('Acesso negado para encerrar garantia.', 'error');
+    if (!confirm('Encerrar esta garantia?')) return;
+    try {
+      await db.ref('garantias_equipamentos/' + id).update({
+        status: 'Encerrada',
+        encerradoPor: logado.nome,
+        encerradoEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      });
+      showToast('Garantia encerrada.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao encerrar garantia: ' + error.message, 'error');
+    }
+  }
+
+  async function excluirGarantia(id) {
+    if (!canGarantia('excluir')) return showToast('Acesso negado para excluir garantia.', 'error');
+    if (!confirm('Excluir este levantamento de garantia?')) return;
+    try {
+      await db.ref('garantias_equipamentos/' + id).remove();
+      showToast('Garantia excluída.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao excluir garantia: ' + error.message, 'error');
+    }
+  }
+
+
   // ====== USUÁRIOS ======
   async function salvarUsuario() {
     const btn = document.getElementById('btnSalvarUsuario');
@@ -6962,11 +7342,14 @@ body[data-theme="light"] .language-switch-hero {
       const email = document.getElementById('usEmail').value.trim();
       const telefone = document.getElementById('usTelefone').value.trim();
       const exigirTroca = document.getElementById('usExigirTroca')?.checked !== false;
+      const modulos = coletarModulosCadastro();
+      const garantiaPermissoes = coletarGarantiaCadastro();
 
       if (!nome || !loginDigitado || !senha) return showToast('Preencha nome, login e senha.', 'error');
       if (/\s/.test(loginDigitado)) return showToast('Login não pode ter espaços.', 'error');
       if (!validarSenhaForte(senha)) {
         validarSenhaUsuarioVisual();
+      renderPermissoesCadastro();
         return showToast('A senha precisa ter no mínimo 8 caracteres, com letras, números e pelo menos 1 símbolo.', 'error');
       }
 
@@ -6985,16 +7368,15 @@ body[data-theme="light"] .language-switch-hero {
         ? existente.val().criadoEm
         : new Date().toISOString();
 
-      const { salt, hash } = await gerarHashSenha(senha);
       const payload = {
         nomeCompleto: nome,
-        senhaHash: hash,
-        senhaSalt: salt,
-        senha: null,
+        senha: String(senha),
         role: role,
         ativo: true,
         email,
         telefone,
+        modulos,
+        garantiaPermissoes,
         exigirTrocaSenha: exigirTroca,
         trocarSenhaPrimeiroAcesso: exigirTroca,
         primeiroAcesso: exigirTroca,
@@ -7081,7 +7463,14 @@ body[data-theme="light"] .language-switch-hero {
       const proximoStatus = ativoAtual ? 'false' : 'true';
       const textoBotao = ativoAtual ? 'Inativar' : 'Ativar';
       const trocaPendente = u.exigirTrocaSenha === true || u.trocarSenhaPrimeiroAcesso === true || u.primeiroAcesso === true;
+      const mods = normalizarPermissoesModulos(u.modulos, u.role);
+      const modulosAtivos = MODULE_DEFINITIONS
+        .filter(m => mods[m.key])
+        .map(m => `<span class="module-chip">${m.icon} ${escapeHTML(m.label.replace(' / Atendimentos','').replace(' Equipamentos',''))}</span>`)
+        .join('');
+
       const botaoStatus = `<button class="btn btn-sm" onclick='toggleUsuario(${idSeguro}, ${proximoStatus})'>${textoBotao}</button>`;
+      const botaoPermissoes = `<button class="btn btn-sm" onclick='abrirPermissoesUsuario(${idSeguro})'>Permissões</button>`;
       const botaoReset = `<button class="btn btn-sm" onclick='resetarSenhaUsuario(${idSeguro})'>Resetar senha</button>`;
       const botaoForcar = `<button class="btn btn-sm" onclick='forcarTrocaSenhaUsuario(${idSeguro})'>Forçar troca</button>`;
       const botaoExcluir = u.id === 'admin'
@@ -7089,15 +7478,66 @@ body[data-theme="light"] .language-switch-hero {
         : `<button class="btn btn-danger btn-sm" onclick='excluirUsuario(${idSeguro})'>Excluir</button>`;
 
       return `<tr>
-        <td><b>${escapeHTML(u.nomeCompleto || u.id)}</b></td>
+        <td><b>${escapeHTML(u.nomeCompleto || u.id)}</b><br><div class="module-list-mini" style="margin-top:6px;">${modulosAtivos || '<span class="subnote">Sem módulos</span>'}</div></td>
         <td>${escapeHTML(desnormalizarLogin(u.id))}</td>
         <td>${escapeHTML(u.email || '-')}<br><span class="subnote">${escapeHTML(u.telefone || '')}</span></td>
         <td><span class="pill pill-blue">${escapeHTML(u.role || 'Analista')}</span></td>
         <td><span class="pill ${ativoAtual ? 'pill-ok' : 'pill-bad'}">${ativoAtual ? 'Ativo' : 'Inativo'}</span></td>
         <td><span class="pill ${trocaPendente ? 'pill-warn' : 'pill-ok'}">${trocaPendente ? 'Troca pendente' : 'Ok'}</span></td>
-        <td><div class="actions">${botaoStatus}${botaoReset}${botaoForcar}${botaoExcluir}</div></td>
+        <td><div class="actions">${botaoStatus}${botaoPermissoes}${botaoReset}${botaoForcar}${botaoExcluir}</div></td>
       </tr>`;
     }).join('');
+  }
+
+  function abrirPermissoesUsuario(id) {
+    const u = cacheUsuarios.find(x => x.id === id);
+    if (!u) return showToast('Usuário não encontrado.', 'error');
+
+    const mods = normalizarPermissoesModulos(u.modulos, u.role);
+    const gar = normalizarPermissoesGarantia(u.garantiaPermissoes, u.role);
+    const adminAlvo = String(u.role || '').toLowerCase() === 'admin';
+
+    openModal('Permissões do usuário', u.nomeCompleto || id, `
+      <div class="password-force-card">
+        <b>Controle corporativo por usuário.</b>
+        <p class="subnote" style="margin-top:8px;">Os menus liberados abaixo serão os únicos visíveis para este usuário. O acesso também é bloqueado no switchView.</p>
+      </div>
+      ${adminAlvo ? '<div class="permission-warning">Usuário Admin sempre possui todos os módulos habilitados.</div>' : ''}
+      <div class="permission-card">
+        <div class="card-title" style="margin-bottom:10px;">Permissões de Módulos</div>
+        <div id="editModulosGrid" class="permission-grid">${checklistModulosHTML(mods, 'editMod')}</div>
+      </div>
+      <div class="permission-card" style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;">Permissões da Garantia</div>
+        <div id="editGarantiaGrid" class="permission-grid permission-grid-small">${checklistGarantiaHTML(gar, 'editGar')}</div>
+      </div>
+      <button class="btn btn-success btn-block" style="margin-top:16px;" onclick='salvarPermissoesUsuario(${JSON.stringify(id)})'>Salvar permissões</button>
+    `);
+  }
+
+  async function salvarPermissoesUsuario(id) {
+    const u = cacheUsuarios.find(x => x.id === id);
+    if (!u) return showToast('Usuário não encontrado.', 'error');
+
+    const adminAlvo = String(u.role || '').toLowerCase() === 'admin';
+    const modulos = adminAlvo ? mapaModulos(true) : coletarChecklist('editModulosGrid', 'modulos');
+    const garantiaPermissoes = adminAlvo ? mapaGarantia(true) : coletarChecklist('editGarantiaGrid', 'garantia');
+
+    try {
+      await db.ref('usuarios/' + id).update({
+        modulos,
+        garantiaPermissoes,
+        permissoesAtualizadasPor: logado.nome,
+        permissoesAtualizadasEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString()
+      });
+      forceCloseModal();
+      showToast('Permissões atualizadas.');
+      await carregarUsuariosAgora(false);
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao salvar permissões: ' + error.message, 'error');
+    }
   }
 
   async function toggleUsuario(id, ativo) {
@@ -7399,59 +7839,6 @@ body[data-theme="light"] .language-switch-hero {
       setTimeout(() => burst.remove(), 440);
     });
   })();
-
-
-  /*
-  ====== REGRAS FIREBASE RECOMENDADAS - COLE NO REALTIME DATABASE > RULES ======
-  IMPORTANTE: esta aplicação ainda usa login próprio em HTML. Para segurança máxima, migre para Firebase Authentication.
-  Sem regras restritas, qualquer pessoa pode burlar o front-end pelo DevTools.
-
-  Modelo inicial recomendado para uma próxima etapa com Firebase Auth:
-  {
-    "rules": {
-      ".read": false,
-      ".write": false,
-      "usuarios": {
-        "$uid": {
-          ".read": "auth != null && (auth.uid === $uid || root.child('usuarios').child(auth.uid).child('role').val() === 'admin')",
-          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('role').val() === 'admin'"
-        }
-      },
-      "codigosAcesso": {
-        "$codigo": {
-          ".read": true,
-          ".write": "auth != null && root.child('usuarios').child(auth.uid).child('role').val() === 'admin'"
-        }
-      },
-      "chamados_ti": { ".read": "auth != null", ".write": "auth != null" },
-      "demandas_ti": { ".read": "auth != null", ".write": "auth != null" },
-      "estoque_ti": { ".read": "auth != null", ".write": "auth != null" },
-      "movimentacoes_ti": { ".read": "auth != null", ".write": "auth != null" }
-    }
-  }
-  */
-
-
-const garantiaStoreKey='omni_garantia';
-function getGarantias(){return JSON.parse(localStorage.getItem(garantiaStoreKey)||'[]')}
-function renderGarantia(){
- const p={ 'Crítica':1,'Média':2,'Baixa':3 };
- const dados=getGarantias().sort((a,b)=>p[a.prioridade]-p[b.prioridade]);
- const tb=document.getElementById('garantiaTabela'); if(!tb) return;
- tb.innerHTML=dados.map(x=>`<tr><td>${x.prioridade}</td><td>${x.nome}</td><td>${x.email}</td><td>${x.serial}</td><td>${x.modelo}</td></tr>`).join('');
-}
-function salvarGarantia(){
- const item={nome:g_nome.value.trim(),email:g_email.value.trim().toLowerCase(),serial:g_serial.value.trim().toUpperCase(),modelo:g_modelo.value.trim(),prioridade:g_prioridade.value,defeitos:g_defeitos.value,acessorios:g_acessorios.value};
- let dados=getGarantias();
- if(dados.some(x=>x.email===item.email)){alert('E-mail já cadastrado');return;}
- if(dados.some(x=>x.serial===item.serial)){alert('Serial já cadastrado');return;}
- dados.push(item); localStorage.setItem(garantiaStoreKey,JSON.stringify(dados)); renderGarantia(); alert('Salvo');
-}
-function exportarGarantiaCSV(){
- let dados=getGarantias(); let csv='Prioridade,Nome,Email,Serial,Modelo\n'+dados.map(x=>[x.prioridade,x.nome,x.email,x.serial,x.modelo].join(',')).join('\n');
- let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='garantia.csv'; a.click();
-}
-document.addEventListener('DOMContentLoaded',renderGarantia);
 
 </script>
 </body>
