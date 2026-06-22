@@ -4721,6 +4721,8 @@ body {
   color: var(--read-text);
 }
 
+
+
 </style>
 </head>
 <body>
@@ -5380,7 +5382,7 @@ body {
             <div><label>Nome do usuário</label><input id="gaUsuario" placeholder="Colaborador vinculado ao notebook"></div>
             <div><label>E-mail do usuário</label><input id="gaEmailUsuario" type="email" placeholder="email@empresa.com"></div>
             <div>
-              <label>Status</label>
+              <label>Status da garantia</label>
               <select id="gaStatus">
                 <option>Acionar garantia</option>
                 <option>Aguardando Fornecedor</option>
@@ -5388,6 +5390,52 @@ body {
               </select>
             </div>
             <div><label>Responsável</label><input id="gaResponsavelView" readonly></div>
+          </div>
+
+          <div class="grid grid-4" style="margin-top:14px;" data-garantia-action="criar">
+            <div>
+              <label>Cliente Proprietário</label>
+              <select id="gaClienteProprietario">
+                <option>Omni Taxi Aereo</option>
+                <option>ALG</option>
+              </select>
+            </div>
+            <div><label>Alocado / Setor</label><input id="gaAlocado" placeholder="Ex: Accounting & Costs / Contabilidade"></div>
+            <div>
+              <label>Base</label>
+              <select id="gaBase">
+                <option>O2</option>
+                <option>JPA</option>
+                <option>Macaé</option>
+                <option>Cabo Frio</option>
+                <option>Salvador</option>
+                <option>Guiana</option>
+                <option>Outra</option>
+              </select>
+            </div>
+            <div>
+              <label>Status do ativo</label>
+              <select id="gaStatusAtivo">
+                <option>Em uso</option>
+                <option>Reserva</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-2" style="margin-top:14px;" data-garantia-action="criar">
+            <div>
+              <label>Tipo de Ativo</label>
+              <select id="gaTipoAtivo">
+                <option>HARDWARE - NOTEBOOK</option>
+                <option>HARDWARE - DESKTOP</option>
+                <option>HARDWARE - MONITOR</option>
+                <option>HARDWARE - ACESSÓRIO</option>
+              </select>
+            </div>
+            <div>
+              <label>TAG</label>
+              <input id="gaTag" class="uppercase-input" placeholder="Se vazio, usa o Serial/ST" oninput="forcarCaixaAlta(this)">
+            </div>
           </div>
 
           <div style="margin-top:14px;" data-garantia-action="criar">
@@ -5418,7 +5466,10 @@ body {
               <div class="card-title">Levantamentos cadastrados</div>
               <div id="garantiaStatus" class="subnote">Lista sincronizada com o Firebase.</div>
             </div>
-            <input id="filtroGarantia" style="max-width:280px;" placeholder="Buscar patrimônio, usuário, e-mail, serial..." oninput="renderGarantias()">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <input id="filtroGarantia" style="max-width:280px;" placeholder="Buscar patrimônio, usuário, e-mail, serial..." oninput="renderGarantias()">
+              <button class="btn btn-primary btn-sm" onclick="exportarInventarioGarantia()">⬇ Exportar inventário Excel</button>
+            </div>
           </div>
           <div class="table-wrap">
             <table>
@@ -7324,7 +7375,6 @@ body {
     const t = localStorage.getItem('omniThemeV2') || 'dark';
     setTheme(t, false);
     carregarPreferenciasUsuario();
-
     const hoje = getHoje();
     ['filtroDataInicioChamado','filtroDataFimChamado','dmDataPrevista'].forEach(id => { const el = document.getElementById(id); if (el && !el.value) el.value = hoje; });
 
@@ -8365,6 +8415,36 @@ body {
     box.innerHTML = renderThumbsGarantia(garantiaAnexosTemp);
   }
 
+  function getSelectValue(id, fallback = '') {
+    const el = document.getElementById(id);
+    return el ? String(el.value || fallback).trim() : fallback;
+  }
+
+  function normalizarStatusAtivo(valor = '') {
+    const v = texto(valor);
+    return v.includes('reserva') ? 'Reserva' : 'Em uso';
+  }
+
+  function normalizarClienteProprietario(valor = '') {
+    const v = texto(valor);
+    if (v.includes('alg')) return 'ALG';
+    return 'Omni Taxi Aereo';
+  }
+
+  function linhaExcelGarantia(data) {
+    const serial = String(data.serial || '').toUpperCase();
+    return {
+      "Inventário Manual": String(data.patrimonio || '').toUpperCase(),
+      "Número de Série": serial,
+      "TAG": String(data.tag || serial || '').toUpperCase(),
+      "Cliente Proprietário": normalizarClienteProprietario(data.clienteProprietario),
+      "Alocado": String(data.alocado || '').trim(),
+      "Base": String(data.base || '').trim(),
+      "Status": normalizarStatusAtivo(data.statusAtivo),
+      "Tipo de Ativo": String(data.tipoAtivo || 'HARDWARE - NOTEBOOK').trim()
+    };
+  }
+
   function atualizarPermissoesGarantiaUI() {
     const podeCriar = canGarantia('criar');
     const warning = document.getElementById('garantiaPermissionWarning');
@@ -8382,7 +8462,7 @@ body {
   function limparGarantia() {
     if (!canGarantia('criar')) return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
 
-    ['gaPatrimonio','gaSerial','gaModelo','gaUsuario','gaEmailUsuario','gaDefeito','gaObs'].forEach(id => {
+    ['gaPatrimonio','gaSerial','gaModelo','gaUsuario','gaEmailUsuario','gaDefeito','gaObs','gaAlocado','gaTag'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -8392,6 +8472,15 @@ body {
 
     const st = document.getElementById('gaStatus');
     if (st) st.value = 'Acionar garantia';
+
+    const cliente = document.getElementById('gaClienteProprietario');
+    if (cliente) cliente.value = 'Omni Taxi Aereo';
+    const base = document.getElementById('gaBase');
+    if (base) base.value = 'O2';
+    const statusAtivo = document.getElementById('gaStatusAtivo');
+    if (statusAtivo) statusAtivo.value = 'Em uso';
+    const tipoAtivo = document.getElementById('gaTipoAtivo');
+    if (tipoAtivo) tipoAtivo.value = 'HARDWARE - NOTEBOOK';
 
     garantiaAnexosTemp = [];
     const anexos = document.getElementById('gaAnexos');
@@ -8453,11 +8542,19 @@ body {
     const emailUsuario = document.getElementById('gaEmailUsuario').value.trim();
     const defeito = document.getElementById('gaDefeito').value.trim();
     const status = statusGarantiaPadrao(document.getElementById('gaStatus').value);
+    const clienteProprietario = normalizarClienteProprietario(getSelectValue('gaClienteProprietario', 'Omni Taxi Aereo'));
+    const alocado = getSelectValue('gaAlocado');
+    const base = getSelectValue('gaBase', 'O2');
+    const statusAtivo = normalizarStatusAtivo(getSelectValue('gaStatusAtivo', 'Em uso'));
+    const tipoAtivo = getSelectValue('gaTipoAtivo', 'HARDWARE - NOTEBOOK');
+    const tag = (getSelectValue('gaTag') || serial).toUpperCase();
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
     if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
     if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
     if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
+    if (!alocado) return showToast('Informe o setor onde o notebook está alocado.', 'error');
+    if (!base) return showToast('Informe a base onde o notebook está alocado.', 'error');
 
     const payloadDuplicidade = { patrimonio, usuario, emailUsuario };
     const duplicado = encontrarDuplicidadeGarantia(payloadDuplicidade);
@@ -8470,6 +8567,12 @@ body {
       serial,
       modelo,
       fornecedor,
+      clienteProprietario,
+      alocado,
+      base,
+      statusAtivo,
+      tipoAtivo,
+      tag,
       usuarioVinculado: usuario,
       emailUsuario,
       defeito,
@@ -8490,7 +8593,7 @@ body {
       cacheGarantias.unshift({ id: ref.key, ...data });
       renderGarantias();
       limparGarantia();
-      showToast('Levantamento de garantia salvo.');
+      showToast('Garantia salva. Use Exportar inventário Excel para baixar a planilha.');
     } catch (error) {
       console.error(error);
       showToast('Erro ao salvar garantia: ' + error.message, 'error');
@@ -8704,8 +8807,8 @@ body {
       ].filter(Boolean).join('');
 
       return `<tr>
-        <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.fornecedor || '')}</span></td>
-        <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></td>
+        <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.clienteProprietario || '')} • ${escapeHTML(g.base || '')}</span></td>
+        <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span><br><span class="subnote">${escapeHTML(g.alocado || '')}</span></td>
         <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span><br><span class="subnote">${Array.isArray(g.anexos) && g.anexos.length ? '📎 ' + g.anexos.length + ' foto(s)' : ''}</span></td>
         <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span><br><span class="subnote">${escapeHTML(g.defeito || '')}</span></td>
         <td>${escapeHTML(g.responsavel || g.criadoPor || '-')}<br><span class="subnote">${escapeHTML(g.criadoEm ? new Date(g.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
@@ -8759,10 +8862,18 @@ body {
         <div><label>Serial</label><input id="edGaSerial" class="uppercase-input" oninput="forcarCaixaAlta(this)" value="${escapeHTML(g.serial || '')}"></div>
         <div><label>Modelo</label><input id="edGaModelo" class="uppercase-input" oninput="forcarCaixaAlta(this)" value="${escapeHTML(g.modelo || '')}"></div>
         <div><label>Fornecedor</label><select id="edGaFornecedor">${opcoesFornecedorGarantia(g.fornecedor || '')}</select></div>
+        <div><label>Cliente Proprietário</label><select id="edGaClienteProprietario">${['Omni Taxi Aereo','ALG'].map(x=>`<option ${normalizarClienteProprietario(g.clienteProprietario)===x?'selected':''}>${x}</option>`).join('')}</select></div>
         <div><label>Nome do usuário</label><input id="edGaUsuario" value="${escapeHTML(g.usuarioVinculado || g.usuario || '')}"></div>
         <div><label>E-mail do usuário</label><input id="edGaEmailUsuario" type="email" value="${escapeHTML(g.emailUsuario || '')}"></div>
-        <div><label>Status</label><select id="edGaStatus">${['Acionar garantia','Aguardando Fornecedor','Resolvido'].map(x=>`<option ${statusGarantiaPadrao(g.status)===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>Status da garantia</label><select id="edGaStatus">${['Acionar garantia','Aguardando Fornecedor','Resolvido'].map(x=>`<option ${statusGarantiaPadrao(g.status)===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>Status do ativo</label><select id="edGaStatusAtivo">${['Em uso','Reserva'].map(x=>`<option ${normalizarStatusAtivo(g.statusAtivo)===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>Base</label><select id="edGaBase">${['O2','JPA','Macaé','Cabo Frio','Salvador','Guiana','Outra'].map(x=>`<option ${String(g.base||'O2')===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>Tipo de Ativo</label><select id="edGaTipoAtivo">${['HARDWARE - NOTEBOOK','HARDWARE - DESKTOP','HARDWARE - MONITOR','HARDWARE - ACESSÓRIO'].map(x=>`<option ${String(g.tipoAtivo||'HARDWARE - NOTEBOOK')===x?'selected':''}>${x}</option>`).join('')}</select></div>
         <div><label>Responsável</label><input readonly value="${escapeHTML(g.responsavel || g.criadoPor || '')}"></div>
+      </div>
+      <div class="grid grid-2" style="margin-top:12px;">
+        <div><label>Alocado / Setor</label><input id="edGaAlocado" value="${escapeHTML(g.alocado || '')}" placeholder="Ex: Accounting & Costs / Contabilidade"></div>
+        <div><label>TAG</label><input id="edGaTag" class="uppercase-input" oninput="forcarCaixaAlta(this)" value="${escapeHTML(g.tag || g.serial || '')}" placeholder="Se vazio, usa o Serial/ST"></div>
       </div>
       <div style="margin-top:12px;"><label>Defeito relatado</label><input id="edGaDefeito" value="${escapeHTML(g.defeito || '')}" placeholder="Ex: Monitor quebrado"></div>
       <div style="margin-top:12px;"><label>Observação</label><textarea id="edGaObs">${escapeHTML(g.observacao || '')}</textarea></div>
@@ -8779,11 +8890,18 @@ body {
     const usuario = document.getElementById('edGaUsuario').value.trim();
     const emailUsuario = document.getElementById('edGaEmailUsuario').value.trim();
     const status = statusGarantiaPadrao(document.getElementById('edGaStatus').value);
+    const clienteProprietario = normalizarClienteProprietario(getSelectValue('edGaClienteProprietario', 'Omni Taxi Aereo'));
+    const alocado = getSelectValue('edGaAlocado');
+    const base = getSelectValue('edGaBase', 'O2');
+    const statusAtivo = normalizarStatusAtivo(getSelectValue('edGaStatusAtivo', 'Em uso'));
+    const tipoAtivo = getSelectValue('edGaTipoAtivo', 'HARDWARE - NOTEBOOK');
+    const tag = (getSelectValue('edGaTag') || document.getElementById('edGaSerial').value.trim()).toUpperCase();
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
     if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
     if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
     if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
+    if (!alocado) return showToast('Informe o setor onde o notebook está alocado.', 'error');
 
     const payloadDuplicidade = { patrimonio, usuario, emailUsuario };
     const duplicado = encontrarDuplicidadeGarantia(payloadDuplicidade, id);
@@ -8797,6 +8915,12 @@ body {
         serial: document.getElementById('edGaSerial').value.trim().toUpperCase(),
         modelo: document.getElementById('edGaModelo').value.trim().toUpperCase(),
         fornecedor,
+        clienteProprietario,
+        alocado,
+        base,
+        statusAtivo,
+        tipoAtivo,
+        tag,
         usuarioVinculado: usuario,
         emailUsuario,
         defeito: document.getElementById('edGaDefeito').value.trim(),
@@ -9308,6 +9432,63 @@ body {
   }
 
   // ====== EXPORTAÇÃO ======
+  function exportarInventarioGarantia() {
+    const base = registrosGarantiaVisiveis();
+
+    if (!base.length) {
+      return showToast('Não existem garantias salvas para exportar.', 'warning');
+    }
+
+    const rows = base.map(g => linhaExcelGarantia(g));
+    const headers = [
+      "Inventário Manual",
+      "Número de Série",
+      "TAG",
+      "Cliente Proprietário",
+      "Alocado",
+      "Base",
+      "Status",
+      "Tipo de Ativo"
+    ];
+
+    const data = [
+      headers,
+      ...rows.map(r => headers.map(h => r[h] || ''))
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    ws['!cols'] = [
+      { wch: 20 },
+      { wch: 30 },
+      { wch: 22 },
+      { wch: 26 },
+      { wch: 42 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 28 }
+    ];
+
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: data.length - 1, c: headers.length - 1 } }) };
+
+    // Estilo básico quando o visualizador suporta metadata simples do SheetJS.
+    headers.forEach((h, i) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: i })];
+      if (cell) cell.s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "0B1F3A" } },
+        alignment: { horizontal: "center" }
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+
+    const nomeArquivo = `Inventario_Garantia_Omni_${getHoje()}.xlsx`;
+    XLSX.writeFile(wb, nomeArquivo);
+    showToast('Planilha de inventário exportada.');
+  }
+
   function exportarExcel(nome, rows) {
     if (!rows.length) return showToast('Não existem dados para exportar.', 'warning');
     const ws = XLSX.utils.json_to_sheet(rows);
