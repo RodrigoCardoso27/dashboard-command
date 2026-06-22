@@ -5508,6 +5508,7 @@ body {
               <input id="filtroGarantia" style="max-width:280px;" placeholder="Buscar patrimônio, usuário, e-mail, serial..." oninput="renderGarantias()">
               <button class="btn btn-primary btn-sm" onclick="exportarInventarioGarantia()">⬇ Exportar inventário Excel</button>
               <button class="btn btn-warning btn-sm" onclick="diagnosticarRecuperacaoGarantias()">🧭 Recuperar registros</button>
+              <button class="btn btn-sm" onclick="explicarDuplicadosGarantia()">ℹ️ Duplicados</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -7685,7 +7686,8 @@ body {
       cacheGarantias = montarCacheGarantiasDoSnapshot(snap);
       cacheGarantias.sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
       const somenteLeitura = cacheGarantias.filter(g => g._somenteLeitura).length;
-      console.info('Garantias carregadas do Firebase:', cacheGarantias.length, 'somente leitura/nested:', somenteLeitura);
+      const duplicados = quantidadeDuplicadosGarantia(cacheGarantias);
+      console.info('Garantias carregadas do Firebase:', cacheGarantias.length, 'somente leitura/nested:', somenteLeitura, 'duplicados ocultáveis:', duplicados);
       renderGarantias();
       renderDashboard();
       renderOmniInsights();
@@ -8523,6 +8525,50 @@ body {
     ].join('|');
   }
 
+  function scoreGarantiaParaDeduplicar(g = {}) {
+    let score = 0;
+    if (!g._somenteLeitura) score += 1000; // mantém primeiro registro gravado direto no caminho principal
+    if (g.anexos && Array.isArray(g.anexos)) score += Math.min(g.anexos.length, 10) * 5;
+    if (g.defeito) score += 5;
+    if (g.modelo) score += 3;
+    if (g.base) score += 2;
+    if (g.atualizadoEm) score += 1;
+    return score;
+  }
+
+  function deduplicarGarantias(lista = []) {
+    const map = new Map();
+
+    (lista || []).forEach(g => {
+      const key = chaveRegistroGarantia(g);
+      if (!key.replace(/\|/g, '').trim()) return;
+
+      if (!map.has(key)) {
+        map.set(key, g);
+        return;
+      }
+
+      const atual = map.get(key);
+      const novoScore = scoreGarantiaParaDeduplicar(g);
+      const atualScore = scoreGarantiaParaDeduplicar(atual);
+
+      if (novoScore > atualScore) {
+        map.set(key, g);
+      } else if (novoScore === atualScore) {
+        const novoTempo = String(g.atualizadoEm || g.criadoEm || '');
+        const atualTempo = String(atual.atualizadoEm || atual.criadoEm || '');
+        if (novoTempo && atualTempo && novoTempo.localeCompare(atualTempo) > 0) map.set(key, g);
+      }
+    });
+
+    return [...map.values()];
+  }
+
+  function quantidadeDuplicadosGarantia(lista = []) {
+    const totalValidos = (lista || []).filter(g => chaveRegistroGarantia(g).replace(/\|/g, '').trim()).length;
+    return Math.max(0, totalValidos - deduplicarGarantias(lista).length);
+  }
+
   function pareceRegistroGarantia(obj) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
     const campos = ['patrimonio','serial','modelo','fornecedor','usuarioVinculado','emailUsuario','defeito','status','clienteProprietario','tipoAtivo','Inventário Manual','Número de Série','TAG','Cliente Proprietário','Tipo de Ativo'];
@@ -8842,11 +8888,10 @@ body {
   }
 
   function registrosGarantiaVisiveis() {
-    // V7.8: Garantia Equipamentos funciona como inventário/controle compartilhado.
-    // Antes, usuário não-admin via apenas registros com criadoPorLogin igual ao login atual.
-    // Isso escondia registros antigos/criados por outro login e também limitava a exportação.
-    // Agora, qualquer usuário com acesso ao módulo Garantia visualiza/exporta todos os registros carregados.
-    return Array.isArray(cacheGarantias) ? cacheGarantias : [];
+    // V7.11: exibe/exporta sem duplicidade.
+    // O Firebase pode conter cópias criadas por recuperação/reimportação ou versões antigas.
+    // Mantemos o banco intacto, mas a tela e a exportação usam uma lista deduplicada.
+    return deduplicarGarantias(Array.isArray(cacheGarantias) ? cacheGarantias : []);
   }
 
   function encontrarDuplicidadeGarantia({ patrimonio, usuario, emailUsuario }, ignorarId = null) {
@@ -9118,6 +9163,30 @@ body {
     `);
   }
 
+
+  function explicarDuplicadosGarantia() {
+    const total = (cacheGarantias || []).length;
+    const unicos = deduplicarGarantias(cacheGarantias || []).length;
+    const duplicados = quantidadeDuplicadosGarantia(cacheGarantias || []);
+
+    openModal('Duplicados em Garantia', 'Por que alguns registros repetem?', `
+      <div class="subnote">
+        Os registros podem repetir quando o mesmo equipamento foi salvo mais de uma vez ou quando a recuperação reimportou registros que já existiam no caminho principal.
+      </div>
+
+      <div class="recovery-summary">
+        <div class="recovery-source"><b>Total carregado do Firebase</b><br><span class="subnote">${total} registro(s)</span></div>
+        <div class="recovery-source"><b>Total único exibido/exportado</b><br><span class="subnote">${unicos} registro(s)</span></div>
+        <div class="recovery-source"><b>Duplicados ocultados</b><br><span class="subnote">${duplicados} registro(s)</span></div>
+      </div>
+
+      <div class="subnote">
+        Nesta versão, a tela e a exportação usam uma lista sem duplicidade, mantendo apenas um registro por combinação de patrimônio, serial, usuário e e-mail.
+        Nenhum dado é apagado automaticamente do Firebase para evitar perda acidental.
+      </div>
+    `);
+  }
+
   function renderGarantias() {
     const tb = document.getElementById('tbGarantia');
     if (!tb) return;
@@ -9134,7 +9203,8 @@ body {
 
     const status = document.getElementById('garantiaStatus');
     if (status) {
-      status.innerText = `${lista.length} levantamento(s) exibido(s) de ${cacheGarantias.length} registro(s) carregado(s) do Firebase. A exportação usa todos os registros carregados.`;
+      const duplicados = quantidadeDuplicadosGarantia(cacheGarantias || []);
+      status.innerText = `${lista.length} levantamento(s) exibido(s), ${cacheGarantias.length} registro(s) carregado(s) do Firebase${duplicados ? `, ${duplicados} duplicado(s) ocultado(s)` : ''}. A exportação usa a lista sem duplicidade.`;
     }
 
     if (!lista.length) {
@@ -9780,7 +9850,7 @@ body {
 
   // ====== EXPORTAÇÃO ======
   function exportarInventarioGarantia() {
-    const base = Array.isArray(cacheGarantias) ? cacheGarantias : [];
+    const base = deduplicarGarantias(Array.isArray(cacheGarantias) ? cacheGarantias : []);
 
     if (!base.length) {
       return showToast('Não existem garantias salvas para exportar.', 'warning');
