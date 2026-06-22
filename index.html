@@ -7612,6 +7612,41 @@ body {
   }
 
   // ====== LISTENERS ======
+
+  function montarCacheGarantiasDoSnapshot(snap) {
+    const lista = [];
+
+    snap.forEach(item => {
+      const id = item.key;
+      const val = item.val();
+
+      if (pareceRegistroGarantia(val)) {
+        lista.push({
+          id,
+          ...val,
+          ...normalizarGarantiaRecuperada(val, 'firebase:garantias_equipamentos/' + id, id),
+          _somenteLeitura: false
+        });
+        return;
+      }
+
+      if (val && typeof val === 'object') {
+        const encontrados = extrairGarantiasDeObjeto(val, 'firebase:garantias_equipamentos/' + id, [], 0, id);
+        encontrados.forEach((g, idx) => {
+          lista.push({
+            id: `__rec_${id}_${idx}`,
+            ...g,
+            _somenteLeitura: true,
+            _pathOrigem: 'garantias_equipamentos/' + id,
+            _idOrigem: g.idOrigemRecuperacao || id
+          });
+        });
+      }
+    });
+
+    return lista;
+  }
+
   function escutarTudo() {
     db.ref('chamados_ti').on('value', snap => {
       cacheChamados = [];
@@ -7647,10 +7682,10 @@ body {
       atualizarDatalistPatrimonios();
     });
     db.ref('garantias_equipamentos').on('value', snap => {
-      cacheGarantias = [];
-      snap.forEach(item => cacheGarantias.push({ id: item.key, ...item.val() }));
+      cacheGarantias = montarCacheGarantiasDoSnapshot(snap);
       cacheGarantias.sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
-      console.info('Garantias carregadas do Firebase:', cacheGarantias.length);
+      const somenteLeitura = cacheGarantias.filter(g => g._somenteLeitura).length;
+      console.info('Garantias carregadas do Firebase:', cacheGarantias.length, 'somente leitura/nested:', somenteLeitura);
       renderGarantias();
       renderDashboard();
       renderOmniInsights();
@@ -8490,9 +8525,9 @@ body {
 
   function pareceRegistroGarantia(obj) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
-    const campos = ['patrimonio','serial','modelo','fornecedor','usuarioVinculado','emailUsuario','defeito','status','clienteProprietario','tipoAtivo'];
+    const campos = ['patrimonio','serial','modelo','fornecedor','usuarioVinculado','emailUsuario','defeito','status','clienteProprietario','tipoAtivo','Inventário Manual','Número de Série','TAG','Cliente Proprietário','Tipo de Ativo'];
     const hits = campos.filter(c => Object.prototype.hasOwnProperty.call(obj, c) && String(obj[c] || '').trim()).length;
-    return hits >= 2 && (obj.patrimonio || obj.serial || obj.modelo);
+    return hits >= 2 && (obj.patrimonio || obj.serial || obj.modelo || obj['Inventário Manual'] || obj['Número de Série'] || obj.TAG);
   }
 
   function normalizarGarantiaRecuperada(raw = {}, origem = '', idOrigem = '') {
@@ -8672,26 +8707,55 @@ body {
     }
   }
 
+
+  function limparGarantiaParaImportacao(g = {}) {
+    const clone = { ...g };
+    Object.keys(clone).forEach(k => {
+      if (k === 'id' || k.startsWith('_')) delete clone[k];
+    });
+    clone.recuperadoEm = new Date().toISOString();
+    clone.recuperadoPor = logado?.nome || '';
+    clone.recuperadoPorLogin = logado?.login || '';
+    clone.criadoEm = clone.criadoEm || new Date().toISOString();
+    clone.atualizadoEm = new Date().toISOString();
+    return clone;
+  }
+
+  async function importarGarantiaSomenteLeitura(id) {
+    const g = (cacheGarantias || []).find(x => String(x.id) === String(id));
+    if (!g) return showToast('Registro não encontrado para importar.', 'error');
+
+    try {
+      const payload = limparGarantiaParaImportacao(g);
+      const ref = await db.ref('garantias_equipamentos').push(payload);
+      await db.ref('garantias_equipamentos_backup/' + ref.key).set({ ...payload, backupCriadoEm: new Date().toISOString() });
+      showToast('Registro reimportado para o caminho principal. Aguarde sincronizar.');
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao reimportar registro: ' + error.message, 'error');
+    }
+  }
+
   async function importarGarantiasRecuperadas() {
     const lista = garantiasRecuperadasCache || [];
     if (!lista.length) return showToast('Nenhum registro faltante para importar.', 'warning');
     if (!confirm(`Importar ${lista.length} registro(s) para garantias_equipamentos?`)) return;
 
     try {
-      const updates = {};
-      lista.forEach(g => {
-        const key = db.ref('garantias_equipamentos').push().key;
-        updates['garantias_equipamentos/' + key] = {
-          ...g,
-          recuperadoEm: new Date().toISOString(),
-          recuperadoPor: logado?.nome || '',
-          recuperadoPorLogin: logado?.login || ''
-        };
-      });
+      let count = 0;
+      for (const g of lista) {
+        const payload = limparGarantiaParaImportacao(g);
+        const ref = await db.ref('garantias_equipamentos').push(payload);
+        try {
+          await db.ref('garantias_equipamentos_backup/' + ref.key).set({ ...payload, backupCriadoEm: new Date().toISOString() });
+        } catch(e) {
+          console.warn('Backup da recuperação falhou:', e);
+        }
+        count++;
+      }
 
-      await db.ref().update(updates);
       forceCloseModal();
-      showToast(`${lista.length} registro(s) importado(s). Aguarde a lista sincronizar.`);
+      showToast(`${count} registro(s) importado(s). Aguarde a lista sincronizar.`);
     } catch (error) {
       console.error(error);
       showToast('Erro ao importar registros: ' + error.message, 'error');
@@ -9085,15 +9149,17 @@ body {
     tb.innerHTML = lista.map(g => {
       const st = statusGarantiaAuto(g);
       const id = JSON.stringify(g.id);
+      const somenteLeitura = g._somenteLeitura === true;
       const acoes = [
         `<button class="btn btn-sm btn-copy-warranty" onclick='visualizarEmailGarantia(${id})'>E-mail + anexos</button>`,
         `<button class="btn btn-sm" onclick='visualizarEmailGarantia(${id})'>Prévia</button>`,
-        podeEditar ? `<button class="btn btn-sm" onclick='editarGarantia(${id})'>Editar</button>` : '',
-        podeExcluir ? `<button class="btn btn-danger btn-sm" onclick='excluirGarantia(${id})'>Excluir</button>` : ''
+        somenteLeitura ? `<button class="btn btn-warning btn-sm" onclick='importarGarantiaSomenteLeitura(${id})'>Reimportar</button>` : '',
+        !somenteLeitura && podeEditar ? `<button class="btn btn-sm" onclick='editarGarantia(${id})'>Editar</button>` : '',
+        !somenteLeitura && podeExcluir ? `<button class="btn btn-danger btn-sm" onclick='excluirGarantia(${id})'>Excluir</button>` : ''
       ].filter(Boolean).join('');
 
       return `<tr>
-        <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.clienteProprietario || '')} • ${escapeHTML(g.base || '')}</span></td>
+        <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.clienteProprietario || '')} • ${escapeHTML(g.base || '')}${g._somenteLeitura ? ' • Recuperado' : ''}</span></td>
         <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></td>
         <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span><br><span class="subnote">${Array.isArray(g.anexos) && g.anexos.length ? '📎 ' + g.anexos.length + ' foto(s)' : ''}</span></td>
         <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span><br><span class="subnote">${escapeHTML(g.defeito || '')}</span></td>
