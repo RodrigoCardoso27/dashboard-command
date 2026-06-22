@@ -4723,6 +4723,52 @@ body {
 
 
 
+
+/* ====== V7.9 RECUPERAÇÃO DE GARANTIAS ====== */
+.recovery-summary {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.recovery-source {
+  border: 1px solid var(--read-border);
+  background: color-mix(in srgb, var(--read-field) 72%, transparent);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.recovery-source b {
+  color: var(--read-text);
+}
+
+.recovery-list {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--read-border);
+  border-radius: 14px;
+  margin-top: 12px;
+}
+
+.recovery-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--read-border);
+  font-size: .82rem;
+}
+
+.recovery-row:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 700px) {
+  .recovery-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -5461,6 +5507,7 @@ body {
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
               <input id="filtroGarantia" style="max-width:280px;" placeholder="Buscar patrimônio, usuário, e-mail, serial..." oninput="renderGarantias()">
               <button class="btn btn-primary btn-sm" onclick="exportarInventarioGarantia()">⬇ Exportar inventário Excel</button>
+              <button class="btn btn-warning btn-sm" onclick="diagnosticarRecuperacaoGarantias()">🧭 Recuperar registros</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -8429,6 +8476,257 @@ body {
     };
   }
 
+
+  let garantiasRecuperadasCache = [];
+
+  function chaveRegistroGarantia(g = {}) {
+    return [
+      chaveNormalizada(g.patrimonio || ''),
+      chaveNormalizada(g.serial || ''),
+      texto(g.emailUsuario || ''),
+      texto(g.usuarioVinculado || g.usuario || '')
+    ].join('|');
+  }
+
+  function pareceRegistroGarantia(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+    const campos = ['patrimonio','serial','modelo','fornecedor','usuarioVinculado','emailUsuario','defeito','status','clienteProprietario','tipoAtivo'];
+    const hits = campos.filter(c => Object.prototype.hasOwnProperty.call(obj, c) && String(obj[c] || '').trim()).length;
+    return hits >= 2 && (obj.patrimonio || obj.serial || obj.modelo);
+  }
+
+  function normalizarGarantiaRecuperada(raw = {}, origem = '', idOrigem = '') {
+    const serial = String(raw.serial || raw.numeroSerie || raw['Número de Série'] || raw.tag || raw.TAG || '').trim().toUpperCase();
+    const patrimonio = String(raw.patrimonio || raw['Inventário Manual'] || raw.inventarioManual || '').trim().toUpperCase();
+    return {
+      patrimonio,
+      serial,
+      modelo: String(raw.modelo || raw.MODEL || raw.model || '').trim().toUpperCase(),
+      fornecedor: String(raw.fornecedor || '').trim() || 'DELL',
+      clienteProprietario: normalizarClienteProprietario(raw.clienteProprietario || raw['Cliente Proprietário'] || 'Omni Taxi Aereo'),
+      base: String(raw.base || raw.Base || 'O2').trim(),
+      statusAtivo: normalizarStatusAtivo(raw.statusAtivo || raw.Status || 'Em uso'),
+      tipoAtivo: String(raw.tipoAtivo || raw['Tipo de Ativo'] || 'HARDWARE - NOTEBOOK').trim(),
+      tag: serial,
+      usuarioVinculado: String(raw.usuarioVinculado || raw.usuario || raw.nomeUsuario || '').trim(),
+      emailUsuario: String(raw.emailUsuario || raw.email || '').trim(),
+      defeito: String(raw.defeito || raw.observacao || '').trim(),
+      anexos: Array.isArray(raw.anexos) ? raw.anexos : [],
+      status: statusGarantiaPadrao(raw.status || 'Acionar garantia'),
+      resolvidoEm: raw.resolvidoEm || '',
+      responsavel: raw.responsavel || raw.criadoPor || logado?.nome || '',
+      responsavelLogin: raw.responsavelLogin || raw.criadoPorLogin || logado?.login || '',
+      observacao: raw.observacao || '',
+      criadoPor: raw.criadoPor || logado?.nome || '',
+      criadoPorLogin: raw.criadoPorLogin || logado?.login || '',
+      criadoEm: raw.criadoEm || raw.createdAt || raw._criadoEm || new Date().toISOString(),
+      atualizadoEm: raw.atualizadoEm || new Date().toISOString(),
+      recuperadoDe: origem,
+      idOrigemRecuperacao: idOrigem
+    };
+  }
+
+  function extrairGarantiasDeObjeto(obj, origem = '', encontrados = [], depth = 0, idOrigem = '') {
+    if (depth > 6 || obj == null) return encontrados;
+
+    if (Array.isArray(obj)) {
+      obj.forEach((item, i) => extrairGarantiasDeObjeto(item, origem, encontrados, depth + 1, `${idOrigem}[${i}]`));
+      return encontrados;
+    }
+
+    if (typeof obj === 'object') {
+      if (pareceRegistroGarantia(obj)) {
+        encontrados.push(normalizarGarantiaRecuperada(obj, origem, idOrigem));
+        return encontrados;
+      }
+
+      Object.entries(obj).forEach(([k, v]) => {
+        if (v && typeof v === 'object') extrairGarantiasDeObjeto(v, origem, encontrados, depth + 1, idOrigem ? `${idOrigem}/${k}` : k);
+      });
+    }
+
+    return encontrados;
+  }
+
+  function buscarGarantiasStorageLocal() {
+    const encontrados = [];
+    const storages = [
+      ['localStorage', window.localStorage],
+      ['sessionStorage', window.sessionStorage]
+    ];
+
+    storages.forEach(([nome, storage]) => {
+      try {
+        for (let i = 0; i < storage.length; i++) {
+          const key = storage.key(i);
+          const val = storage.getItem(key);
+          if (!val || val.length < 10) continue;
+          try {
+            const parsed = JSON.parse(val);
+            extrairGarantiasDeObjeto(parsed, `${nome}:${key}`, encontrados);
+          } catch(e) {}
+        }
+      } catch(e) {
+        console.warn('Falha ao varrer storage local:', nome, e);
+      }
+    });
+
+    return encontrados;
+  }
+
+  async function buscarGarantiasPossiveisFirebase() {
+    const caminhos = [
+      'garantias_equipamentos',
+      'garantias_equipamentos_backup',
+      'backup_garantias',
+      'garantias_backup',
+      'garantias',
+      'garantia_equipamentos',
+      'garantiaEquipamentos',
+      'garantiasEquipamentos',
+      'warranty_cases',
+      'inventario_garantias'
+    ];
+
+    const encontrados = [];
+    const fontes = [];
+
+    for (const path of caminhos) {
+      try {
+        const snap = await db.ref(path).once('value');
+        const val = snap.val();
+        const antes = encontrados.length;
+        if (val) extrairGarantiasDeObjeto(val, `firebase:${path}`, encontrados);
+        fontes.push({ fonte: `firebase:${path}`, encontrados: encontrados.length - antes, existe: !!val });
+      } catch (error) {
+        fontes.push({ fonte: `firebase:${path}`, erro: error.message, encontrados: 0 });
+      }
+    }
+
+    const localAntes = encontrados.length;
+    encontrados.push(...buscarGarantiasStorageLocal());
+    fontes.push({ fonte: 'navegador:localStorage/sessionStorage', encontrados: encontrados.length - localAntes, existe: true });
+
+    return { encontrados, fontes };
+  }
+
+  function deduplicarGarantiasRecuperadas(lista = []) {
+    const map = new Map();
+    lista.forEach(g => {
+      const key = chaveRegistroGarantia(g);
+      if (!key.replace(/\|/g, '').trim()) return;
+      if (!map.has(key)) map.set(key, g);
+    });
+    return [...map.values()];
+  }
+
+  async function diagnosticarRecuperacaoGarantias() {
+    showToast('Procurando registros de garantia em caminhos antigos e storage local...');
+    try {
+      const { encontrados, fontes } = await buscarGarantiasPossiveisFirebase();
+      const dedup = deduplicarGarantiasRecuperadas(encontrados);
+
+      const atuaisKeys = new Set((cacheGarantias || []).map(chaveRegistroGarantia));
+      const faltantes = dedup.filter(g => !atuaisKeys.has(chaveRegistroGarantia(g)));
+
+      garantiasRecuperadasCache = faltantes;
+
+      const fontesHtml = fontes.map(f => `
+        <div class="recovery-source">
+          <b>${escapeHTML(f.fonte)}</b><br>
+          <span class="subnote">${f.erro ? 'Erro: ' + escapeHTML(f.erro) : `${f.encontrados || 0} possível(is) registro(s) encontrado(s)`}</span>
+        </div>
+      `).join('');
+
+      const listaHtml = faltantes.slice(0, 80).map(g => `
+        <div class="recovery-row">
+          <div><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.recuperadoDe || '')}</span></div>
+          <div>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span></div>
+          <div>${escapeHTML(g.usuarioVinculado || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></div>
+        </div>
+      `).join('');
+
+      openModal('Recuperação de registros de garantia', 'Busca em Firebase e navegador', `
+        <div class="subnote">Esta ferramenta procura registros que ficaram em caminhos antigos, backups ou storage local do navegador. Ela não consegue recuperar dados que tenham sido apagados definitivamente do Firebase sem backup.</div>
+
+        <div class="recovery-summary">
+          <div class="recovery-source"><b>Registros carregados atualmente</b><br><span class="subnote">${(cacheGarantias || []).length} registro(s)</span></div>
+          <div class="recovery-source"><b>Possíveis registros encontrados</b><br><span class="subnote">${dedup.length} registro(s) únicos</span></div>
+          <div class="recovery-source"><b>Faltando no caminho atual</b><br><span class="subnote">${faltantes.length} registro(s) podem ser reimportados</span></div>
+        </div>
+
+        <div class="card-title" style="font-size:.95rem;margin-top:12px;">Fontes verificadas</div>
+        <div class="recovery-summary">${fontesHtml}</div>
+
+        <div class="card-title" style="font-size:.95rem;margin-top:12px;">Registros faltantes encontrados</div>
+        <div class="recovery-list">${listaHtml || '<div class="subnote" style="padding:12px;">Nenhum registro faltante encontrado nas fontes verificadas.</div>'}</div>
+
+        <div class="grid grid-2" style="margin-top:14px;">
+          <button class="btn btn-success" onclick="importarGarantiasRecuperadas()">Importar registros encontrados</button>
+          <button class="btn" onclick="baixarDiagnosticoGarantias()">Baixar diagnóstico JSON</button>
+        </div>
+      `);
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao diagnosticar recuperação: ' + error.message, 'error');
+    }
+  }
+
+  async function importarGarantiasRecuperadas() {
+    const lista = garantiasRecuperadasCache || [];
+    if (!lista.length) return showToast('Nenhum registro faltante para importar.', 'warning');
+    if (!confirm(`Importar ${lista.length} registro(s) para garantias_equipamentos?`)) return;
+
+    try {
+      const updates = {};
+      lista.forEach(g => {
+        const key = db.ref('garantias_equipamentos').push().key;
+        updates['garantias_equipamentos/' + key] = {
+          ...g,
+          recuperadoEm: new Date().toISOString(),
+          recuperadoPor: logado?.nome || '',
+          recuperadoPorLogin: logado?.login || ''
+        };
+      });
+
+      await db.ref().update(updates);
+      forceCloseModal();
+      showToast(`${lista.length} registro(s) importado(s). Aguarde a lista sincronizar.`);
+    } catch (error) {
+      console.error(error);
+      showToast('Erro ao importar registros: ' + error.message, 'error');
+    }
+  }
+
+  function baixarDiagnosticoGarantias() {
+    const payload = {
+      geradoEm: new Date().toISOString(),
+      usuario: logado?.login || '',
+      registrosAtuais: cacheGarantias || [],
+      registrosRecuperacaoPendentes: garantiasRecuperadasCache || []
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `diagnostico_garantias_${getHoje()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 800);
+  }
+
+  function salvarBackupLocalGarantia(data = {}, id = '') {
+    try {
+      const key = 'omniGarantiasBackupLocalV1';
+      const atual = JSON.parse(localStorage.getItem(key) || '[]');
+      atual.unshift({ id, ...data, backupLocalEm: new Date().toISOString() });
+      localStorage.setItem(key, JSON.stringify(atual.slice(0, 300)));
+    } catch(e) {
+      console.warn('Não foi possível salvar backup local de garantia:', e);
+    }
+  }
+
   function atualizarPermissoesGarantiaUI() {
     const podeCriar = canGarantia('criar');
     const warning = document.getElementById('garantiaPermissionWarning');
@@ -8574,6 +8872,12 @@ body {
 
     try {
       const ref = await db.ref('garantias_equipamentos').push(data);
+      salvarBackupLocalGarantia(data, ref.key);
+      try {
+        await db.ref('garantias_equipamentos_backup/' + ref.key).set({ ...data, backupCriadoEm: new Date().toISOString() });
+      } catch(backupError) {
+        console.warn('Backup Firebase de garantia falhou:', backupError);
+      }
       cacheGarantias.unshift({ id: ref.key, ...data });
       renderGarantias();
       limparGarantia();
@@ -8886,7 +9190,7 @@ body {
     }
 
     try {
-      await db.ref('garantias_equipamentos/' + id).update({
+      const updatePayload = {
         patrimonio,
         serial: document.getElementById('edGaSerial').value.trim().toUpperCase(),
         modelo: document.getElementById('edGaModelo').value.trim().toUpperCase(),
@@ -8905,7 +9209,9 @@ body {
         atualizadoPor: logado.nome,
         atualizadoPorLogin: logado.login,
         atualizadoEm: new Date().toISOString()
-      });
+      };
+      await db.ref('garantias_equipamentos/' + id).update(updatePayload);
+      salvarBackupLocalGarantia({ ...(cacheGarantias.find(x => x.id === id) || {}), ...updatePayload }, id);
       forceCloseModal();
       showToast('Garantia atualizada.');
     } catch (error) {
