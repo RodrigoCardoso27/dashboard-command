@@ -5400,7 +5400,6 @@ body {
                 <option>ALG</option>
               </select>
             </div>
-            <div><label>Alocado / Setor</label><input id="gaAlocado" placeholder="Ex: Accounting & Costs / Contabilidade"></div>
             <div>
               <label>Base</label>
               <select id="gaBase">
@@ -5420,9 +5419,6 @@ body {
                 <option>Reserva</option>
               </select>
             </div>
-          </div>
-
-          <div class="grid grid-2" style="margin-top:14px;" data-garantia-action="criar">
             <div>
               <label>Tipo de Ativo</label>
               <select id="gaTipoAtivo">
@@ -5431,10 +5427,6 @@ body {
                 <option>HARDWARE - MONITOR</option>
                 <option>HARDWARE - ACESSÓRIO</option>
               </select>
-            </div>
-            <div>
-              <label>TAG</label>
-              <input id="gaTag" class="uppercase-input" placeholder="Se vazio, usa o Serial/ST" oninput="forcarCaixaAlta(this)">
             </div>
           </div>
 
@@ -8299,15 +8291,7 @@ body {
   // Para alterar depois, edite somente esta lista abaixo.
   const FORNECEDORES_GARANTIA = [
     'DELL',
-    'LENOVO',
-    'HP',
-    'APNETWORKS',
-    'ALG',
-    'OMNI',
-    'POSITIVO',
-    'SAMSUNG',
-    'APPLE',
-    'OUTRO FORNECEDOR CORPORATIVO'
+    'ALG'
   ];
 
   let garantiaAnexosTemp = [];
@@ -8436,9 +8420,8 @@ body {
     return {
       "Inventário Manual": String(data.patrimonio || '').toUpperCase(),
       "Número de Série": serial,
-      "TAG": String(data.tag || serial || '').toUpperCase(),
+      "TAG": serial,
       "Cliente Proprietário": normalizarClienteProprietario(data.clienteProprietario),
-      "Alocado": String(data.alocado || '').trim(),
       "Base": String(data.base || '').trim(),
       "Status": normalizarStatusAtivo(data.statusAtivo),
       "Tipo de Ativo": String(data.tipoAtivo || 'HARDWARE - NOTEBOOK').trim()
@@ -8462,7 +8445,7 @@ body {
   function limparGarantia() {
     if (!canGarantia('criar')) return showToast('Acesso negado para criar levantamentos de garantia.', 'error');
 
-    ['gaPatrimonio','gaSerial','gaModelo','gaUsuario','gaEmailUsuario','gaDefeito','gaObs','gaAlocado','gaTag'].forEach(id => {
+    ['gaPatrimonio','gaSerial','gaModelo','gaUsuario','gaEmailUsuario','gaDefeito','gaObs'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -8543,17 +8526,15 @@ body {
     const defeito = document.getElementById('gaDefeito').value.trim();
     const status = statusGarantiaPadrao(document.getElementById('gaStatus').value);
     const clienteProprietario = normalizarClienteProprietario(getSelectValue('gaClienteProprietario', 'Omni Taxi Aereo'));
-    const alocado = getSelectValue('gaAlocado');
     const base = getSelectValue('gaBase', 'O2');
     const statusAtivo = normalizarStatusAtivo(getSelectValue('gaStatusAtivo', 'Em uso'));
     const tipoAtivo = getSelectValue('gaTipoAtivo', 'HARDWARE - NOTEBOOK');
-    const tag = (getSelectValue('gaTag') || serial).toUpperCase();
+    const tag = serial;
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
     if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
     if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
     if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
-    if (!alocado) return showToast('Informe o setor onde o notebook está alocado.', 'error');
     if (!base) return showToast('Informe a base onde o notebook está alocado.', 'error');
 
     const payloadDuplicidade = { patrimonio, usuario, emailUsuario };
@@ -8568,7 +8549,6 @@ body {
       modelo,
       fornecedor,
       clienteProprietario,
-      alocado,
       base,
       statusAtivo,
       tipoAtivo,
@@ -8808,7 +8788,7 @@ body {
 
       return `<tr>
         <td><b>${escapeHTML(g.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(g.clienteProprietario || '')} • ${escapeHTML(g.base || '')}</span></td>
-        <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span><br><span class="subnote">${escapeHTML(g.alocado || '')}</span></td>
+        <td>${escapeHTML(g.usuarioVinculado || g.usuario || '-')}<br><span class="subnote">${escapeHTML(g.emailUsuario || '')}</span></td>
         <td>${escapeHTML(g.modelo || '-')}<br><span class="subnote">${escapeHTML(g.serial || '')}</span><br><span class="subnote">${Array.isArray(g.anexos) && g.anexos.length ? '📎 ' + g.anexos.length + ' foto(s)' : ''}</span></td>
         <td><span class="pill ${pillStatus(st)}">${escapeHTML(st)}</span><br><span class="subnote">${escapeHTML(g.defeito || '')}</span></td>
         <td>${escapeHTML(g.responsavel || g.criadoPor || '-')}<br><span class="subnote">${escapeHTML(g.criadoEm ? new Date(g.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
@@ -8871,10 +8851,6 @@ body {
         <div><label>Tipo de Ativo</label><select id="edGaTipoAtivo">${['HARDWARE - NOTEBOOK','HARDWARE - DESKTOP','HARDWARE - MONITOR','HARDWARE - ACESSÓRIO'].map(x=>`<option ${String(g.tipoAtivo||'HARDWARE - NOTEBOOK')===x?'selected':''}>${x}</option>`).join('')}</select></div>
         <div><label>Responsável</label><input readonly value="${escapeHTML(g.responsavel || g.criadoPor || '')}"></div>
       </div>
-      <div class="grid grid-2" style="margin-top:12px;">
-        <div><label>Alocado / Setor</label><input id="edGaAlocado" value="${escapeHTML(g.alocado || '')}" placeholder="Ex: Accounting & Costs / Contabilidade"></div>
-        <div><label>TAG</label><input id="edGaTag" class="uppercase-input" oninput="forcarCaixaAlta(this)" value="${escapeHTML(g.tag || g.serial || '')}" placeholder="Se vazio, usa o Serial/ST"></div>
-      </div>
       <div style="margin-top:12px;"><label>Defeito relatado</label><input id="edGaDefeito" value="${escapeHTML(g.defeito || '')}" placeholder="Ex: Monitor quebrado"></div>
       <div style="margin-top:12px;"><label>Observação</label><textarea id="edGaObs">${escapeHTML(g.observacao || '')}</textarea></div>
       <div style="margin-top:12px;"><label>Fotos anexadas</label>${renderThumbsGarantia(Array.isArray(g.anexos) ? g.anexos : [])}</div>
@@ -8891,17 +8867,15 @@ body {
     const emailUsuario = document.getElementById('edGaEmailUsuario').value.trim();
     const status = statusGarantiaPadrao(document.getElementById('edGaStatus').value);
     const clienteProprietario = normalizarClienteProprietario(getSelectValue('edGaClienteProprietario', 'Omni Taxi Aereo'));
-    const alocado = getSelectValue('edGaAlocado');
     const base = getSelectValue('edGaBase', 'O2');
     const statusAtivo = normalizarStatusAtivo(getSelectValue('edGaStatusAtivo', 'Em uso'));
     const tipoAtivo = getSelectValue('edGaTipoAtivo', 'HARDWARE - NOTEBOOK');
-    const tag = (getSelectValue('edGaTag') || document.getElementById('edGaSerial').value.trim()).toUpperCase();
+    const tag = document.getElementById('edGaSerial').value.trim().toUpperCase();
 
     if (!patrimonio) return showToast('Informe o patrimônio do equipamento.', 'error');
     if (!fornecedor) return showToast('Selecione o fornecedor do equipamento.', 'error');
     if (!usuario) return showToast('Informe o nome do usuário vinculado ao notebook.', 'error');
     if (!emailUsuario) return showToast('Informe o e-mail do usuário vinculado ao notebook.', 'error');
-    if (!alocado) return showToast('Informe o setor onde o notebook está alocado.', 'error');
 
     const payloadDuplicidade = { patrimonio, usuario, emailUsuario };
     const duplicado = encontrarDuplicidadeGarantia(payloadDuplicidade, id);
@@ -8916,7 +8890,6 @@ body {
         modelo: document.getElementById('edGaModelo').value.trim().toUpperCase(),
         fornecedor,
         clienteProprietario,
-        alocado,
         base,
         statusAtivo,
         tipoAtivo,
@@ -9445,7 +9418,6 @@ body {
       "Número de Série",
       "TAG",
       "Cliente Proprietário",
-      "Alocado",
       "Base",
       "Status",
       "Tipo de Ativo"
@@ -9463,7 +9435,6 @@ body {
       { wch: 30 },
       { wch: 22 },
       { wch: 26 },
-      { wch: 42 },
       { wch: 16 },
       { wch: 16 },
       { wch: 28 }
