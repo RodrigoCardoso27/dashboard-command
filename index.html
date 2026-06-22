@@ -7603,6 +7603,7 @@ body {
       cacheGarantias = [];
       snap.forEach(item => cacheGarantias.push({ id: item.key, ...item.val() }));
       cacheGarantias.sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
+      console.info('Garantias carregadas do Firebase:', cacheGarantias.length);
       renderGarantias();
       renderDashboard();
       renderOmniInsights();
@@ -8479,8 +8480,11 @@ body {
   }
 
   function registrosGarantiaVisiveis() {
-    if (isAdmin()) return cacheGarantias || [];
-    return (cacheGarantias || []).filter(g => String(g.criadoPorLogin || '') === String(logado?.login || ''));
+    // V7.8: Garantia Equipamentos funciona como inventário/controle compartilhado.
+    // Antes, usuário não-admin via apenas registros com criadoPorLogin igual ao login atual.
+    // Isso escondia registros antigos/criados por outro login e também limitava a exportação.
+    // Agora, qualquer usuário com acesso ao módulo Garantia visualiza/exporta todos os registros carregados.
+    return Array.isArray(cacheGarantias) ? cacheGarantias : [];
   }
 
   function encontrarDuplicidadeGarantia({ patrimonio, usuario, emailUsuario }, ignorarId = null) {
@@ -8762,9 +8766,7 @@ body {
 
     const status = document.getElementById('garantiaStatus');
     if (status) {
-      status.innerText = isAdmin()
-        ? `${lista.length} levantamento(s) exibido(s) de ${cacheGarantias.length} no Firebase.`
-        : `${lista.length} levantamento(s) do seu usuário exibido(s). Administrador visualiza todos.`;
+      status.innerText = `${lista.length} levantamento(s) exibido(s) de ${cacheGarantias.length} registro(s) carregado(s) do Firebase. A exportação usa todos os registros carregados.`;
     }
 
     if (!lista.length) {
@@ -9406,13 +9408,16 @@ body {
 
   // ====== EXPORTAÇÃO ======
   function exportarInventarioGarantia() {
-    const base = registrosGarantiaVisiveis();
+    const base = Array.isArray(cacheGarantias) ? cacheGarantias : [];
 
     if (!base.length) {
       return showToast('Não existem garantias salvas para exportar.', 'warning');
     }
 
-    const rows = base.map(g => linhaExcelGarantia(g));
+    const rows = base
+      .filter(g => String(g?.patrimonio || g?.serial || g?.modelo || '').trim())
+      .sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')))
+      .map(g => linhaExcelGarantia(g));
     const headers = [
       "Inventário Manual",
       "Número de Série",
