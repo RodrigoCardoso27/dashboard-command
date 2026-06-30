@@ -4827,6 +4827,15 @@ body {
   }
 }
 
+
+/* ====== V7.13 CONTROLES NOTEBOOK SIMPLIFICADO ====== */
+.audit-copy-view { display:grid; grid-template-columns:minmax(240px,1fr) minmax(220px,340px); gap:14px; align-items:start; }
+.audit-copy-text { width:100%; min-height:220px; line-height:1.45; }
+.audit-copy-photo { border:1px solid var(--read-border); background:var(--read-field); border-radius:16px; padding:10px; }
+.audit-copy-photo img { width:100%; max-height:360px; object-fit:contain; border-radius:12px; display:block; }
+.audit-copy-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+@media (max-width:800px){ .audit-copy-view, .audit-copy-actions{ grid-template-columns:1fr; } }
+
 </style>
 </head>
 <body>
@@ -5596,95 +5605,57 @@ body {
       </section>
 
 
-      <!-- CONTROLES NOTEBOOK / AUDITORIA -->
+      <!-- CONTROLES NOTEBOOK / STATUS -->
       <section id="viewAuditoria" class="view">
         <div class="card">
           <div class="card-header">
             <div>
               <div class="card-title">📸 Controles Notebook</div>
-              <div class="subnote">Auditoria física dos notebooks, com estado de conservação e 3 fotos obrigatórias.</div>
+              <div class="subnote">Registro rápido do patrimônio OMNI/ALG, colaborador vinculado, foto do estado da máquina e observação opcional.</div>
             </div>
             <button class="btn btn-sm" onclick="limparAuditoria()">+ Novo registro</button>
           </div>
 
           <div class="grid grid-4">
             <div>
+              <label>Tipo do patrimônio</label>
+              <select id="auTipoPatrimonio" onchange="aplicarPrefixoPatrimonioAuditoria()">
+                <option value="OMNI">OMNI</option>
+                <option value="ALG">ALG</option>
+              </select>
+            </div>
+            <div>
               <label>Número do Patrimônio</label>
-              <input id="auPatrimonio" class="uppercase-input" placeholder="Ex: OMNI0001" oninput="forcarCaixaAlta(this)">
+              <input id="auPatrimonio" class="uppercase-input" placeholder="OMNI-000" oninput="forcarCaixaAlta(this)">
             </div>
-
             <div>
-              <label>ST / Número de Série</label>
-              <input id="auSerial" class="uppercase-input" placeholder="Ex: 9ZVJ0Z3" oninput="forcarCaixaAlta(this)">
+              <label>Nome do colaborador</label>
+              <input id="auColaborador" placeholder="Nome de quem está com o notebook">
             </div>
-
             <div>
-              <label>Modelo</label>
-              <input id="auModelo" class="uppercase-input" placeholder="Ex: LATITUDE 3420" oninput="forcarCaixaAlta(this)">
-            </div>
-
-            <div>
-              <label>Fornecedor</label>
-              <select id="auFornecedor">
-                <option>DELL</option>
-                <option>ALG</option>
-                <option>OUTRO</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-4" style="margin-top:14px;">
-            <div>
-              <label>Base / Localização</label>
-              <select id="auBase">
-                <option>O2</option>
-                <option>JPA</option>
-                <option>Macaé</option>
-                <option>Cabo Frio</option>
-                <option>Salvador</option>
-                <option>Guiana</option>
-                <option>Outra</option>
-              </select>
-            </div>
-
-            <div>
-              <label>Estado de Conservação</label>
-              <select id="auEstado" onchange="toggleDefeitoAuditoria()">
-                <option>Excelente</option>
-                <option>Bom</option>
+              <label>Status visual da máquina</label>
+              <select id="auStatusMaquina">
+                <option>OK</option>
+                <option>Com observação</option>
                 <option>Ruim</option>
               </select>
             </div>
-
-            <div id="auDefeitoWrap" class="hidden">
-              <label>Qual o defeito?</label>
-              <input id="auDefeito" placeholder="Descreva o defeito encontrado">
-            </div>
           </div>
 
-          <div class="card-title" style="margin-top:18px;font-size:.98rem;">Fotos obrigatórias do notebook</div>
-          <div class="subnote" style="margin-bottom:12px;">Envie exatamente 3 fotos: aberto, parte inferior/etiqueta e tampa.</div>
-
-          <div class="grid grid-3">
+          <div class="grid grid-2" style="margin-top:14px;">
             <div class="audit-photo-box">
-              <label>Foto 1 — Notebook aberto</label>
-              <input id="auFotoAberto" type="file" accept="image/*" onchange="previewFotoAuditoria('auFotoAberto','previewFotoAberto')">
-              <div id="previewFotoAberto" class="audit-photo-preview"></div>
-              <div class="subnote">Mostrar teclado e tela.</div>
+              <label>Foto do status da máquina</label>
+              <input id="auFotoStatus" type="file" accept="image/*" onchange="previewFotoAuditoria('auFotoStatus','previewFotoStatus')">
+              <div id="previewFotoStatus" class="audit-photo-preview"></div>
+              <div class="subnote">Anexe uma foto clara mostrando o estado atual do notebook.</div>
             </div>
-
-            <div class="audit-photo-box">
-              <label>Foto 2 — Parte inferior / etiqueta</label>
-              <input id="auFotoEtiqueta" type="file" accept="image/*" onchange="previewFotoAuditoria('auFotoEtiqueta','previewFotoEtiqueta')">
-              <div id="previewFotoEtiqueta" class="audit-photo-preview"></div>
-              <div class="subnote">Focar na etiqueta de ST / serial.</div>
-            </div>
-
-            <div class="audit-photo-box">
-              <label>Foto 3 — Tampa do notebook</label>
-              <input id="auFotoTampa" type="file" accept="image/*" onchange="previewFotoAuditoria('auFotoTampa','previewFotoTampa')">
-              <div id="previewFotoTampa" class="audit-photo-preview"></div>
-              <div class="subnote">Notebook fechado, mostrando riscos/amassados.</div>
+            <div>
+              <label>Observação</label>
+              <button id="btnMostrarObsAuditoria" class="btn btn-block" type="button" onclick="toggleObsAuditoria()">+ Adicionar OBS</button>
+              <div id="auObsWrap" class="hidden" style="margin-top:10px;">
+                <textarea id="auObs" placeholder="Digite uma observação caso exista algo relevante sobre o notebook..."></textarea>
+                <button class="btn btn-sm" type="button" style="margin-top:8px;" onclick="limparObsAuditoria()">Remover OBS</button>
+              </div>
             </div>
           </div>
 
@@ -5697,26 +5668,14 @@ body {
               <div class="card-title">Registros salvos</div>
               <div id="auditoriaStatus" class="subnote">Lista sincronizada com o Firebase.</div>
             </div>
-
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <input id="filtroAuditoria" style="max-width:280px;" placeholder="Buscar patrimônio, serial, modelo, base..." oninput="renderAuditoria()">
+              <input id="filtroAuditoria" style="max-width:280px;" placeholder="Buscar patrimônio, colaborador, status..." oninput="renderAuditoria()">
               <button class="btn btn-primary btn-sm" onclick="exportarAuditoriaExcel()">⬇ Exportar Excel</button>
             </div>
           </div>
-
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Equipamento</th>
-                  <th>Base</th>
-                  <th>Estado</th>
-                  <th>Fotos</th>
-                  <th>Auditor</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Data</th><th>Patrimônio</th><th>Colaborador</th><th>Status</th><th>Foto</th><th>Registrado por</th><th>Ações</th></tr></thead>
               <tbody id="tbAuditoria"></tbody>
             </table>
           </div>
@@ -5903,7 +5862,7 @@ body {
     estoque: ['Estoque TI', 'Controle de Estoque e Ativos', 'Gerencie equipamentos, patrimônios, seriais, usuários e localização.'],
     movimentacoes: ['Movimentações', 'Empréstimos, Trocas e Devoluções', 'Controle histórico de notebooks, acessórios, patrimônio OMNI e ALG/APNETWORKS.'],
     garantia: ['Garantia Equipamentos', 'Levantamento de Garantias', 'Controle notebooks vinculados a colaboradores, sem duplicidade por patrimônio, usuário ou e-mail.'],
-    auditoria: ['Controles Notebook', 'Auditoria de Notebooks', 'Registro de estado de conservação com fotos.'],
+    auditoria: ['Controles Notebook', 'Status de Notebooks', 'Registro rápido de patrimônio, colaborador, foto e observação.'],
     insights: ['Omni Insights', 'IA de Melhoria Contínua', 'Análise automática dos registros, gargalos, pendências e oportunidades de melhoria.'],
     relatorios: ['Relatórios', 'Relatórios e Indicadores', 'Exporte dados e acompanhe a produtividade do suporte.'],
     usuarios: ['Usuários', 'Gestão de Analistas', 'Administre acessos, perfis e status dos usuários.'],
@@ -10051,28 +10010,45 @@ body {
 
   // ====== EXPORTAÇÃO ======
 
-  // ====== CONTROLES NOTEBOOK / AUDITORIA ======
-  function toggleDefeitoAuditoria() {
-    const estado = document.getElementById('auEstado')?.value || '';
-    const wrap = document.getElementById('auDefeitoWrap');
-    const input = document.getElementById('auDefeito');
-
-    const ruim = texto(estado) === 'ruim';
-
-    if (wrap) wrap.classList.toggle('hidden', !ruim);
-    if (input) {
-      input.disabled = !ruim;
-      if (!ruim) input.value = '';
+  // ====== CONTROLES NOTEBOOK / STATUS SIMPLIFICADO ======
+  function aplicarPrefixoPatrimonioAuditoria() {
+    const tipo = document.getElementById('auTipoPatrimonio')?.value || 'OMNI';
+    const input = document.getElementById('auPatrimonio');
+    if (!input) return;
+    const valor = String(input.value || '').trim().toUpperCase();
+    if (tipo === 'OMNI') {
+      if (!valor || valor === 'ALG-' || valor.startsWith('ALG-')) input.value = 'OMNI-000';
+      else if (!valor.startsWith('OMNI-')) input.value = 'OMNI-' + valor.replace(/^OMNI-?/i, '').replace(/^ALG-?/i, '');
+      return;
     }
+    if (!valor || valor === 'OMNI-000' || valor.startsWith('OMNI-')) input.value = 'ALG-';
+    else if (!valor.startsWith('ALG-')) input.value = 'ALG-' + valor.replace(/^ALG-?/i, '').replace(/^OMNI-?/i, '');
   }
 
-  function pillEstadoAuditoria(estado = '') {
-    const e = texto(estado);
+  function toggleObsAuditoria() {
+    const wrap = document.getElementById('auObsWrap');
+    const btn = document.getElementById('btnMostrarObsAuditoria');
+    if (!wrap) return;
+    const abrir = wrap.classList.contains('hidden');
+    wrap.classList.toggle('hidden', !abrir);
+    if (btn) btn.innerText = abrir ? 'Ocultar OBS' : '+ Adicionar OBS';
+    if (abrir) setTimeout(() => document.getElementById('auObs')?.focus(), 80);
+  }
 
-    if (e === 'excelente') return 'pill-audit-excelente';
-    if (e === 'bom') return 'pill-audit-bom';
-    if (e === 'ruim') return 'pill-audit-ruim';
+  function limparObsAuditoria() {
+    const obs = document.getElementById('auObs');
+    const wrap = document.getElementById('auObsWrap');
+    const btn = document.getElementById('btnMostrarObsAuditoria');
+    if (obs) obs.value = '';
+    if (wrap) wrap.classList.add('hidden');
+    if (btn) btn.innerText = '+ Adicionar OBS';
+  }
 
+  function pillStatusMaquinaAuditoria(status = '') {
+    const s = texto(status);
+    if (s === 'ok') return 'pill-audit-excelente';
+    if (s.includes('observ')) return 'pill-audit-bom';
+    if (s === 'ruim') return 'pill-audit-ruim';
     return '';
   }
 
@@ -10080,271 +10056,152 @@ body {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(previewId);
     const file = input?.files?.[0];
-
     if (!preview) return;
     preview.innerHTML = '';
     if (!file) return;
-
     if (!String(file.type || '').startsWith('image/')) {
       showToast('Envie apenas arquivos de imagem.', 'error');
       input.value = '';
       return;
     }
-
     const reader = new FileReader();
-    reader.onload = () => {
-      preview.innerHTML = `<img src="${reader.result}" alt="Prévia da foto">`;
-    };
+    reader.onload = () => { preview.innerHTML = `<img src="${reader.result}" alt="Prévia da foto">`; };
     reader.readAsDataURL(file);
   }
 
   function limparAuditoria() {
-    ['auPatrimonio', 'auSerial', 'auModelo', 'auDefeito'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-
-    const fornecedor = document.getElementById('auFornecedor');
-    if (fornecedor) fornecedor.value = 'DELL';
-
-    const base = document.getElementById('auBase');
-    if (base) base.value = 'O2';
-
-    const estado = document.getElementById('auEstado');
-    if (estado) estado.value = 'Excelente';
-
-    ['auFotoAberto', 'auFotoEtiqueta', 'auFotoTampa'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-
-    ['previewFotoAberto', 'previewFotoEtiqueta', 'previewFotoTampa'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = '';
-    });
-
-    toggleDefeitoAuditoria();
-
-    const patrimonio = document.getElementById('auPatrimonio');
-    if (patrimonio) patrimonio.focus();
+    ['auPatrimonio','auColaborador','auObs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const tipo = document.getElementById('auTipoPatrimonio'); if (tipo) tipo.value = 'OMNI';
+    const status = document.getElementById('auStatusMaquina'); if (status) status.value = 'OK';
+    const foto = document.getElementById('auFotoStatus'); if (foto) foto.value = '';
+    const preview = document.getElementById('previewFotoStatus'); if (preview) preview.innerHTML = '';
+    limparObsAuditoria();
+    aplicarPrefixoPatrimonioAuditoria();
+    document.getElementById('auPatrimonio')?.focus();
   }
 
   async function salvarAuditoria() {
-    if (!hasModuleAccess('auditoria')) {
-      return showToast('Acesso negado ao módulo Controles Notebook.', 'error');
-    }
-
+    if (!hasModuleAccess('auditoria')) return showToast('Acesso negado ao módulo Controles Notebook.', 'error');
+    const tipoPatrimonio = document.getElementById('auTipoPatrimonio')?.value || 'OMNI';
     const patrimonio = document.getElementById('auPatrimonio').value.trim().toUpperCase();
-    const serial = document.getElementById('auSerial').value.trim().toUpperCase();
-    const modelo = document.getElementById('auModelo').value.trim().toUpperCase();
-    const fornecedor = document.getElementById('auFornecedor').value;
-    const base = document.getElementById('auBase').value;
-    const estado = document.getElementById('auEstado').value;
-    const defeito = document.getElementById('auDefeito').value.trim();
-
-    const fotoAberto = document.getElementById('auFotoAberto')?.files?.[0];
-    const fotoEtiqueta = document.getElementById('auFotoEtiqueta')?.files?.[0];
-    const fotoTampa = document.getElementById('auFotoTampa')?.files?.[0];
-
-    if (!patrimonio) return showToast('Informe o número do patrimônio.', 'error');
-    if (!serial) return showToast('Informe o ST / Número de Série.', 'error');
-    if (!modelo) return showToast('Informe o modelo do notebook.', 'error');
-
-    if (estado === 'Ruim' && !defeito) {
-      return showToast('Informe a descrição do defeito quando o estado for Ruim.', 'error');
-    }
-
-    if (!fotoAberto || !fotoEtiqueta || !fotoTampa) {
-      return showToast('Envie exatamente 3 fotos: aberto, etiqueta e tampa.', 'error');
-    }
-
+    const colaborador = document.getElementById('auColaborador').value.trim();
+    const statusMaquina = document.getElementById('auStatusMaquina').value;
+    const observacao = document.getElementById('auObs').value.trim();
+    const fotoStatus = document.getElementById('auFotoStatus')?.files?.[0];
+    if (!patrimonio) return showToast('Informe o patrimônio do notebook.', 'error');
+    if (tipoPatrimonio === 'OMNI' && !patrimonio.startsWith('OMNI-')) return showToast('Patrimônio OMNI precisa começar com OMNI-.', 'error');
+    if (tipoPatrimonio === 'ALG' && !patrimonio.startsWith('ALG-')) return showToast('Patrimônio ALG precisa começar com ALG-.', 'error');
+    if (!colaborador) return showToast('Informe o nome do colaborador.', 'error');
+    if (!fotoStatus) return showToast('Anexe a foto do status da máquina.', 'error');
     try {
-      showToast('Processando fotos da auditoria...');
-
-      const fotos = {
-        aberto: await imagemCompactaBase64(fotoAberto),
-        etiqueta: await imagemCompactaBase64(fotoEtiqueta),
-        tampa: await imagemCompactaBase64(fotoTampa)
-      };
-
-      const data = {
-        patrimonio,
-        serial,
-        modelo,
-        fornecedor,
-        base,
-        estadoConservacao: estado,
-        defeito: estado === 'Ruim' ? defeito : '',
-        fotos,
-        auditor: logado?.nome || '',
-        auditorLogin: logado?.login || '',
-        data: getHoje(),
-        criadoEm: new Date().toISOString(),
-        atualizadoEm: new Date().toISOString()
-      };
-
+      showToast('Processando foto do notebook...');
+      const foto = await imagemCompactaBase64(fotoStatus);
+      const data = { tipoPatrimonio, patrimonio, colaborador, statusMaquina, observacao, foto, registradoPor: logado?.nome || '', registradoPorLogin: logado?.login || '', data: getHoje(), criadoEm: new Date().toISOString(), atualizadoEm: new Date().toISOString() };
       const ref = await db.ref('auditoria_notebooks').push(data);
-
       cacheAuditoria.unshift({ id: ref.key, ...data });
       renderAuditoria();
       limparAuditoria();
-
       showToast('Controle do notebook salvo com sucesso.');
-    } catch (error) {
-      console.error(error);
-      showToast('Erro ao salvar controle do notebook: ' + error.message, 'error');
-    }
+    } catch (error) { console.error(error); showToast('Erro ao salvar controle do notebook: ' + error.message, 'error'); }
+  }
+
+  function textoRegistroAuditoria(a = {}) {
+    return ['CONTROLE DE NOTEBOOK','',`Patrimônio: ${a.patrimonio || '-'}`,`Colaborador: ${a.colaborador || '-'}`,`Status da máquina: ${a.statusMaquina || '-'}`,`Observação: ${a.observacao || 'Sem observação'}`,`Registrado por: ${a.registradoPor || '-'}`,`Data: ${a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : (a.data || '-')}`].join('\\n');
   }
 
   function renderAuditoria() {
     const tb = document.getElementById('tbAuditoria');
     if (!tb) return;
-
     const termo = texto(document.getElementById('filtroAuditoria')?.value || '');
-
-    let lista = (cacheAuditoria || []).filter(a => {
-      if (!termo) return true;
-
-      return texto([
-        a.patrimonio,
-        a.serial,
-        a.modelo,
-        a.fornecedor,
-        a.base,
-        a.estadoConservacao,
-        a.defeito,
-        a.auditor
-      ].join(' ')).includes(termo);
-    });
-
+    let lista = (cacheAuditoria || []).filter(a => !termo || texto([a.patrimonio,a.colaborador,a.statusMaquina,a.observacao,a.registradoPor,a.auditor].join(' ')).includes(termo));
     const status = document.getElementById('auditoriaStatus');
-    if (status) {
-      status.innerText = `${lista.length} registro(s) exibido(s) de ${(cacheAuditoria || []).length} controle(s) carregado(s).`;
-    }
-
-    if (!lista.length) {
-      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);">Nenhum controle de notebook cadastrado.</td></tr>';
-      return;
-    }
-
+    if (status) status.innerText = `${lista.length} registro(s) exibido(s) de ${(cacheAuditoria || []).length} controle(s) carregado(s).`;
+    if (!lista.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);">Nenhum controle de notebook cadastrado.</td></tr>'; return; }
     tb.innerHTML = lista.map(a => {
       const id = JSON.stringify(a.id);
-      const fotosOk = a.fotos?.aberto?.base64 && a.fotos?.etiqueta?.base64 && a.fotos?.tampa?.base64;
-
-      const acoes = [
-        `<button class="btn btn-sm" onclick='gerarFichaAuditoriaPDF(${id})'>🖨️ Ficha (PDF)</button>`,
-        isAdmin() ? `<button class="btn btn-danger btn-sm" onclick='excluirAuditoria(${id})'>Excluir</button>` : ''
-      ].filter(Boolean).join('');
-
-      return `
-        <tr>
-          <td>${escapeHTML(a.data || '')}<br><span class="subnote">${escapeHTML(a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
-          <td><b>${escapeHTML(a.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(a.modelo || '')}</span><br><span class="subnote">ST: ${escapeHTML(a.serial || '')}</span></td>
-          <td>${escapeHTML(a.base || '-')}<br><span class="subnote">${escapeHTML(a.fornecedor || '')}</span></td>
-          <td><span class="pill ${pillEstadoAuditoria(a.estadoConservacao)}">${escapeHTML(a.estadoConservacao || '-')}</span>${a.defeito ? `<br><span class="subnote">${escapeHTML(a.defeito)}</span>` : ''}</td>
-          <td>${fotosOk ? '📎 3 fotos' : '⚠️ incompleto'}</td>
-          <td>${escapeHTML(a.auditor || '-')}<br><span class="subnote">${escapeHTML(a.auditorLogin || '')}</span></td>
-          <td><div class="actions">${acoes}</div></td>
-        </tr>
-      `;
+      const temFoto = !!(a.foto?.base64 || a.fotos?.aberto?.base64);
+      const acoes = [`<button class="btn btn-sm btn-copy-warranty" onclick='visualizarAuditoria(${id})'>Ver / copiar</button>`, isAdmin() ? `<button class="btn btn-danger btn-sm" onclick='excluirAuditoria(${id})'>Excluir</button>` : ''].filter(Boolean).join('');
+      return `<tr>
+        <td>${escapeHTML(a.data || '')}<br><span class="subnote">${escapeHTML(a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
+        <td><b>${escapeHTML(a.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(a.tipoPatrimonio || '')}</span></td>
+        <td>${escapeHTML(a.colaborador || a.usuarioVinculado || '-')}</td>
+        <td><span class="pill ${pillStatusMaquinaAuditoria(a.statusMaquina || a.estadoConservacao)}">${escapeHTML(a.statusMaquina || a.estadoConservacao || '-')}</span>${a.observacao ? `<br><span class="subnote">${escapeHTML(a.observacao)}</span>` : ''}</td>
+        <td>${temFoto ? '📎 Foto anexada' : '⚠️ sem foto'}</td>
+        <td>${escapeHTML(a.registradoPor || a.auditor || '-')}<br><span class="subnote">${escapeHTML(a.registradoPorLogin || a.auditorLogin || '')}</span></td>
+        <td><div class="actions">${acoes}</div></td>
+      </tr>`;
     }).join('');
   }
 
   function exportarAuditoriaExcel() {
-    if (!cacheAuditoria.length) {
-      return showToast('Não existem controles de notebook para exportar.', 'warning');
-    }
+    if (!cacheAuditoria.length) return showToast('Não existem controles de notebook para exportar.', 'warning');
+    const rows = cacheAuditoria.map(a => ({ Data:a.data||'', Patrimonio:a.patrimonio||'', Colaborador:a.colaborador||'', Status_Maquina:a.statusMaquina||'', Observacao:a.observacao||'', Foto:a.foto?'Foto salva no registro':'Sem foto', Registrado_Por:a.registradoPor||'', Login:a.registradoPorLogin||'', Criado_Em:a.criadoEm?new Date(a.criadoEm).toLocaleString('pt-BR'):'' }));
+    exportarExcel('Controles_Notebook_Status', rows);
+  }
 
-    const rows = cacheAuditoria.map(a => ({
-      Data: a.data || '',
-      Patrimonio: a.patrimonio || '',
-      Serial_ST: a.serial || '',
-      Modelo: a.modelo || '',
-      Fornecedor: a.fornecedor || '',
-      Base: a.base || '',
-      Estado_Conservacao: a.estadoConservacao || '',
-      Defeito: a.defeito || '',
-      Fotos: a.fotos ? '3 fotos salvas no registro' : 'Sem fotos',
-      Auditor: a.auditor || '',
-      Auditor_Login: a.auditorLogin || '',
-      Criado_Em: a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : ''
-    }));
+  async function copiarTextoAuditoriaAtual() {
+    const area = document.getElementById('auditoriaTextoCopiar');
+    const textoFinal = area?.value || '';
+    if (!textoFinal.trim()) return showToast('Não há texto para copiar.', 'warning');
+    try { await navigator.clipboard.writeText(textoFinal); showToast('Texto copiado.'); }
+    catch(error) { console.warn(error); showToast('Não foi possível copiar automaticamente. Selecione o texto manualmente.', 'warning'); area?.focus(); area?.select(); }
+  }
 
-    exportarExcel('Controles_Notebook_Auditoria', rows);
+  function htmlAuditoriaParaCopiar(a = {}, textoFinal = '') {
+    const foto = a.foto?.base64 || a.fotos?.aberto?.base64 || '';
+    const fotoHtml = foto ? `<p><b>Foto do status da máquina:</b></p><img src="${escapeHTML(foto)}" style="max-width:520px;width:100%;border:1px solid #ddd;border-radius:8px;">` : '';
+    return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#111;white-space:pre-wrap;">${escapeHTML(textoFinal)}</div>${fotoHtml}`;
+  }
+
+  async function copiarAuditoriaCompletaAtual(id) {
+    const a = cacheAuditoria.find(x => x.id === id);
+    if (!a) return showToast('Registro não encontrado.', 'error');
+    const area = document.getElementById('auditoriaTextoCopiar');
+    const textoFinal = area?.value || textoRegistroAuditoria(a);
+    const html = htmlAuditoriaParaCopiar(a, textoFinal);
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([textoFinal], { type: 'text/plain' })})]);
+        showToast('Informações + foto copiadas. Cole onde desejar.');
+      } else { await navigator.clipboard.writeText(textoFinal); showToast('Texto copiado. Este navegador não permite copiar a imagem junto.'); }
+    } catch (error) { console.warn(error); try { await navigator.clipboard.writeText(textoFinal); showToast('Texto copiado. O navegador bloqueou a cópia da foto junto.'); } catch(e) { showToast('Não foi possível copiar automaticamente.', 'warning'); } }
+  }
+
+  function baixarFotoAuditoria(id) {
+    const a = cacheAuditoria.find(x => x.id === id);
+    if (!a) return showToast('Registro não encontrado.', 'error');
+    const src = a.foto?.base64 || a.fotos?.aberto?.base64;
+    if (!src) return showToast('Este registro não possui foto.', 'warning');
+    const link = document.createElement('a');
+    link.href = src;
+    link.download = `${String(a.patrimonio || 'notebook').replace(/[^a-z0-9_-]/gi, '_')}_status.jpg`;
+    document.body.appendChild(link); link.click(); link.remove();
+  }
+
+  function visualizarAuditoria(id) {
+    const a = cacheAuditoria.find(x => x.id === id);
+    if (!a) return showToast('Registro não encontrado.', 'error');
+    const textoFinal = textoRegistroAuditoria(a);
+    const foto = a.foto?.base64 || a.fotos?.aberto?.base64 || '';
+    openModal('Controle Notebook', a.patrimonio || 'Notebook', `
+      <div class="subnote">Confira as informações, edite o texto se quiser e copie o conteúdo com a foto.</div>
+      <div class="audit-copy-view" style="margin-top:12px;">
+        <div><label>Texto para copiar</label><textarea id="auditoriaTextoCopiar" class="audit-copy-text">${escapeHTML(textoFinal)}</textarea></div>
+        <div class="audit-copy-photo">${foto ? `<img src="${escapeHTML(foto)}" alt="Foto do notebook">` : '<div class="subnote">Sem foto anexada.</div>'}</div>
+      </div>
+      <div class="audit-copy-actions">
+        <button class="btn btn-primary" onclick="copiarTextoAuditoriaAtual()">Copiar só texto</button>
+        <button class="btn btn-success" onclick='copiarAuditoriaCompletaAtual(${JSON.stringify(id)})'>Copiar texto + foto</button>
+        <button class="btn" onclick='baixarFotoAuditoria(${JSON.stringify(id)})'>Baixar foto</button>
+      </div>
+    `);
   }
 
   async function excluirAuditoria(id) {
-    if (!isAdmin()) return showToast('Apenas admin pode excluir registros de auditoria.', 'error');
+    if (!isAdmin()) return showToast('Apenas admin pode excluir registros de controle.', 'error');
     if (!confirm('Excluir este controle de notebook?')) return;
-
-    try {
-      await db.ref('auditoria_notebooks/' + id).remove();
-      showToast('Registro de auditoria excluído.');
-    } catch (error) {
-      console.error(error);
-      showToast('Erro ao excluir auditoria: ' + error.message, 'error');
-    }
-  }
-
-  function imagemFichaAuditoria(foto, titulo) {
-    const src = foto?.base64 || '';
-
-    if (!src) {
-      return `<div class="photo-box"><div class="photo-title">${titulo}</div><div class="photo-empty">Foto não disponível</div></div>`;
-    }
-
-    return `<div class="photo-box"><div class="photo-title">${titulo}</div><img src="${src}" alt="${titulo}"></div>`;
-  }
-
-  function gerarFichaAuditoriaPDF(id) {
-    const a = cacheAuditoria.find(x => x.id === id);
-    if (!a) return showToast('Registro não encontrado.', 'error');
-
-    const win = window.open('', '_blank');
-    if (!win) return showToast('O navegador bloqueou a abertura da ficha. Permita pop-ups para este site.', 'warning');
-
-    const estadoClasse = texto(a.estadoConservacao) === 'ruim' ? 'ruim' : texto(a.estadoConservacao) === 'bom' ? 'bom' : 'excelente';
-
-    const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Ficha de Auditoria - ${escapeHTML(a.patrimonio || '')}</title>
-<style>
-*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#111827;margin:0;padding:24px;background:#f3f6fb}.page{max-width:980px;margin:0 auto;background:white;padding:28px;border-radius:18px;border:1px solid #d8e0ec}.header{display:flex;justify-content:space-between;gap:18px;border-bottom:3px solid #071B8C;padding-bottom:16px;margin-bottom:20px}.brand{font-weight:900;font-size:24px;color:#071B8C}.subtitle{color:#5b6472;font-size:13px;margin-top:4px}.print-btn{border:0;background:#071B8C;color:white;font-weight:700;padding:12px 18px;border-radius:10px;cursor:pointer;height:fit-content}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}.field{border:1px solid #d8e0ec;border-radius:12px;padding:12px;background:#f9fbff}.label{color:#647084;font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:4px}.value{font-size:15px;font-weight:700}.state{display:inline-block;padding:7px 12px;border-radius:999px;font-weight:900;font-size:12px}.state.excelente{background:#dcfce7;color:#166534}.state.bom{background:#fef3c7;color:#92400e}.state.ruim{background:#fee2e2;color:#991b1b}.section-title{font-size:18px;font-weight:900;margin:22px 0 12px;color:#0f172a}.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.photo-box{border:1px solid #d8e0ec;border-radius:14px;padding:10px;background:#f9fbff}.photo-title{font-size:12px;font-weight:900;margin-bottom:8px;color:#0f172a}.photo-box img{width:100%;height:220px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0}.photo-empty{height:220px;border-radius:10px;border:1px dashed #94a3b8;display:grid;place-items:center;color:#64748b}.defect{border:1px solid #fecaca;background:#fff1f2;color:#7f1d1d;padding:14px;border-radius:14px;margin-top:12px}.signature{margin-top:44px;display:grid;grid-template-columns:1fr 1fr;gap:28px}.line{border-top:1px solid #111827;padding-top:8px;text-align:center;font-size:12px;color:#374151}@media print{body{background:white;padding:0}.page{border:0;border-radius:0;max-width:none}.print-btn{display:none}}
-</style>
-</head>
-<body>
-<div class="page">
-  <div class="header">
-    <div><div class="brand">Omni TI — Ficha de Auditoria de Notebook</div><div class="subtitle">Registro de conservação física do ativo com evidências fotográficas.</div></div>
-    <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
-  </div>
-  <div class="grid">
-    <div class="field"><div class="label">Patrimônio</div><div class="value">${escapeHTML(a.patrimonio || '-')}</div></div>
-    <div class="field"><div class="label">ST / Número de Série</div><div class="value">${escapeHTML(a.serial || '-')}</div></div>
-    <div class="field"><div class="label">Modelo</div><div class="value">${escapeHTML(a.modelo || '-')}</div></div>
-    <div class="field"><div class="label">Fornecedor</div><div class="value">${escapeHTML(a.fornecedor || '-')}</div></div>
-    <div class="field"><div class="label">Base / Localização</div><div class="value">${escapeHTML(a.base || '-')}</div></div>
-    <div class="field"><div class="label">Estado de Conservação</div><div class="value"><span class="state ${estadoClasse}">${escapeHTML(a.estadoConservacao || '-')}</span></div></div>
-    <div class="field"><div class="label">Auditor</div><div class="value">${escapeHTML(a.auditor || '-')}</div></div>
-    <div class="field"><div class="label">Data do Registro</div><div class="value">${escapeHTML(a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : a.data || '-')}</div></div>
-  </div>
-  ${a.defeito ? `<div class="defect"><b>Defeito informado:</b><br>${escapeHTML(a.defeito)}</div>` : ''}
-  <div class="section-title">Evidências fotográficas</div>
-  <div class="photos">
-    ${imagemFichaAuditoria(a.fotos?.aberto, 'Foto 1 — Notebook aberto')}
-    ${imagemFichaAuditoria(a.fotos?.etiqueta, 'Foto 2 — Parte inferior / etiqueta')}
-    ${imagemFichaAuditoria(a.fotos?.tampa, 'Foto 3 — Tampa do notebook')}
-  </div>
-  <div class="signature"><div class="line">Assinatura do Auditor / TI</div><div class="line">Assinatura do Responsável / Colaborador</div></div>
-</div>
-</body>
-</html>`;
-
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+    try { await db.ref('auditoria_notebooks/' + id).remove(); showToast('Registro de controle excluído.'); }
+    catch(error) { console.error(error); showToast('Erro ao excluir controle: ' + error.message, 'error'); }
   }
 
   function exportarInventarioGarantia() {
