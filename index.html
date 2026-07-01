@@ -4857,6 +4857,16 @@ body {
   }
 }
 
+
+/* ====== PAGINAÇÃO CONTROLE NOTEBOOK ====== */
+.pagination-bar { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.pagination-bar .btn[disabled] { opacity:.45; cursor:not-allowed; }
+@media (max-width: 700px) {
+  .pagination-bar { justify-content:stretch; display:grid; grid-template-columns:1fr; }
+  .pagination-bar .btn { width:100%; }
+  .pagination-bar .subnote { text-align:center; }
+}
+
 </style>
 </head>
 <body>
@@ -5710,7 +5720,7 @@ body {
               <div id="auditoriaStatus" class="subnote">Lista sincronizada com o Firebase.</div>
             </div>
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <input id="filtroAuditoria" style="max-width:280px;" placeholder="Buscar patrimônio, colaborador, status..." oninput="renderAuditoria()">
+              <input id="filtroAuditoria" style="max-width:280px;" placeholder="Buscar patrimônio, colaborador, status..." oninput="auditoriaPaginaAtual = 1; renderAuditoria()">
               <button class="btn btn-primary btn-sm" onclick="exportarAuditoriaExcel()">⬇ Exportar Excel</button>
             </div>
           </div>
@@ -5719,6 +5729,12 @@ body {
               <thead><tr><th>Data</th><th>Patrimônio</th><th>Colaborador</th><th>Status</th><th>Foto</th><th>Registrado por</th><th>Ações</th></tr></thead>
               <tbody id="tbAuditoria"></tbody>
             </table>
+          </div>
+
+          <div class="pagination-bar" id="auditoriaPaginacao">
+            <button class="btn btn-sm" onclick="mudarPaginaAuditoria(-1)">← Anterior</button>
+            <span id="auditoriaPaginaInfo" class="subnote">Página 1 de 1</span>
+            <button class="btn btn-sm" onclick="mudarPaginaAuditoria(1)">Próxima →</button>
           </div>
         </div>
       </section>
@@ -5890,6 +5906,8 @@ body {
   let cacheMovimentacoes = [];
   let cacheGarantias = [];
   let cacheAuditoria = [];
+  let auditoriaPaginaAtual = 1;
+  const AUDITORIA_ITENS_POR_PAGINA = 10;
   let cacheUsuarios = [];
   let cacheCodigosConvite = [];
   let modoAdminBypass = false;
@@ -10217,6 +10235,7 @@ body {
       const ref = await db.ref('auditoria_notebooks').push(data);
 
       cacheAuditoria.unshift({ id: ref.key, ...data });
+      auditoriaPaginaAtual = 1;
       renderAuditoria();
       limparAuditoria();
 
@@ -10241,29 +10260,70 @@ body {
     ].join('\n');
   }
 
+  function listaAuditoriaFiltrada() {
+    const termo = texto(document.getElementById('filtroAuditoria')?.value || '');
+
+    return (cacheAuditoria || [])
+      .slice()
+      .sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')))
+      .filter(a => {
+        if (!termo) return true;
+
+        return texto([
+          a.patrimonio,
+          a.colaborador,
+          a.statusMaquina,
+          a.observacao,
+          a.registradoPor,
+          a.auditor
+        ].join(' ')).includes(termo);
+      });
+  }
+
+  function atualizarPaginacaoAuditoria(totalItens = 0) {
+    const totalPaginas = Math.max(1, Math.ceil(totalItens / AUDITORIA_ITENS_POR_PAGINA));
+    auditoriaPaginaAtual = Math.min(Math.max(1, auditoriaPaginaAtual), totalPaginas);
+
+    const info = document.getElementById('auditoriaPaginaInfo');
+    const bar = document.getElementById('auditoriaPaginacao');
+
+    if (info) {
+      const inicio = totalItens ? ((auditoriaPaginaAtual - 1) * AUDITORIA_ITENS_POR_PAGINA) + 1 : 0;
+      const fim = Math.min(auditoriaPaginaAtual * AUDITORIA_ITENS_POR_PAGINA, totalItens);
+      info.innerText = `Página ${auditoriaPaginaAtual} de ${totalPaginas} • ${inicio}-${fim} de ${totalItens}`;
+    }
+
+    if (bar) {
+      const botoes = bar.querySelectorAll('button');
+      if (botoes[0]) botoes[0].disabled = auditoriaPaginaAtual <= 1;
+      if (botoes[1]) botoes[1].disabled = auditoriaPaginaAtual >= totalPaginas;
+    }
+  }
+
+  function mudarPaginaAuditoria(delta) {
+    const lista = listaAuditoriaFiltrada();
+    const totalPaginas = Math.max(1, Math.ceil(lista.length / AUDITORIA_ITENS_POR_PAGINA));
+    auditoriaPaginaAtual = Math.min(Math.max(1, auditoriaPaginaAtual + delta), totalPaginas);
+    renderAuditoria();
+  }
+
   function renderAuditoria() {
     const tb = document.getElementById('tbAuditoria');
     if (!tb) return;
 
-    const termo = texto(document.getElementById('filtroAuditoria')?.value || '');
+    const listaCompleta = listaAuditoriaFiltrada();
+    const totalPaginas = Math.max(1, Math.ceil(listaCompleta.length / AUDITORIA_ITENS_POR_PAGINA));
 
-    let lista = (cacheAuditoria || []).filter(a => {
-      if (!termo) return true;
+    if (auditoriaPaginaAtual > totalPaginas) auditoriaPaginaAtual = totalPaginas;
+    if (auditoriaPaginaAtual < 1) auditoriaPaginaAtual = 1;
 
-      return texto([
-        a.patrimonio,
-        a.colaborador,
-        a.statusMaquina,
-        a.observacao,
-        a.registradoPor,
-        a.auditor
-      ].join(' ')).includes(termo);
-    });
+    const inicio = (auditoriaPaginaAtual - 1) * AUDITORIA_ITENS_POR_PAGINA;
+    const lista = listaCompleta.slice(inicio, inicio + AUDITORIA_ITENS_POR_PAGINA);
 
     const status = document.getElementById('auditoriaStatus');
-    if (status) {
-      status.innerText = `${lista.length} registro(s) exibido(s) de ${(cacheAuditoria || []).length} controle(s) carregado(s).`;
-    }
+    if (status) status.innerText = `${listaCompleta.length} registro(s) encontrado(s). Exibindo até ${AUDITORIA_ITENS_POR_PAGINA} por página, do mais recente para o mais antigo.`;
+
+    atualizarPaginacaoAuditoria(listaCompleta.length);
 
     if (!lista.length) {
       tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);">Nenhum controle de notebook cadastrado.</td></tr>';
@@ -10298,7 +10358,7 @@ body {
       return showToast('Não existem controles de notebook para exportar.', 'warning');
     }
 
-    const rows = cacheAuditoria.map(a => ({
+    const rows = (cacheAuditoria || []).slice().sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''))).map(a => ({
       Data: a.data || '',
       Patrimonio: a.patrimonio || '',
       Colaborador: a.colaborador || '',
