@@ -10141,14 +10141,61 @@ body {
     reader.readAsDataURL(file);
   }
 
+  function valorPatrimonioAuditoria(a = {}) {
+    return String(a.patrimonio || a.patrimonioManual || a.inventarioManual || '').toUpperCase();
+  }
+
+  function valorTipoPatrimonioAuditoria(a = {}) {
+    if (a.tipoPatrimonio) return a.tipoPatrimonio;
+    const p = valorPatrimonioAuditoria(a);
+    if (p.startsWith('OMNI-')) return 'OMNI';
+    if (p.startsWith('ALG-')) return 'ALG';
+    return '';
+  }
+
+  function valorColaboradorAuditoria(a = {}) {
+    return a.colaborador || a.usuarioVinculado || a.usuario || a.nomeColaborador || a.emailUsuario || '';
+  }
+
+  function valorStatusAuditoria(a = {}) {
+    return a.statusMaquina || a.estadoConservacao || a.status || 'Registro antigo';
+  }
+
+  function valorObsAuditoria(a = {}) {
+    return a.observacao || a.obs || a.defeito || '';
+  }
+
+  function valorRegistradoPorAuditoria(a = {}) {
+    return a.registradoPor || a.auditor || a.responsavel || a.criadoPor || '';
+  }
+
+  function valorLoginAuditoria(a = {}) {
+    return a.registradoPorLogin || a.auditorLogin || a.criadoPorLogin || '';
+  }
+
+  function normalizarFotoAuditoria(foto) {
+    if (!foto) return null;
+    if (typeof foto === 'string') return { base64: foto };
+    if (foto.base64) return foto;
+    if (foto.dataUrl) return { ...foto, base64: foto.dataUrl };
+    if (foto.src) return { ...foto, base64: foto.src };
+    if (foto.url) return { ...foto, base64: foto.url };
+    if (foto.conteudo) return { ...foto, base64: foto.conteudo };
+    return null;
+  }
+
   function fotosAuditoriaArray(a = {}) {
-    const fotos = a.fotosControle || {};
-    const legado = a.foto || a.fotos?.aberto || null;
+    const atuais = a.fotosControle || {};
+    const antigas = a.fotos || {};
+
+    const aberto = normalizarFotoAuditoria(atuais.aberto || antigas.aberto || a.foto);
+    const baixo = normalizarFotoAuditoria(atuais.baixo || antigas.baixo || antigas.etiqueta || antigas.base || antigas.inferior);
+    const tampa = normalizarFotoAuditoria(atuais.tampa || antigas.tampa || antigas.superior);
 
     return [
-      { key: 'aberto', titulo: 'Foto 1 — Aberto / tela e teclado', foto: fotos.aberto || legado },
-      { key: 'baixo', titulo: 'Foto 2 — Parte de baixo / etiqueta', foto: fotos.baixo || null },
-      { key: 'tampa', titulo: 'Foto 3 — Tampa superior', foto: fotos.tampa || null }
+      { key: 'aberto', titulo: 'Foto 1 — Aberto / tela e teclado', foto: aberto },
+      { key: 'baixo', titulo: 'Foto 2 — Parte de baixo / etiqueta', foto: baixo },
+      { key: 'tampa', titulo: 'Foto 3 — Tampa superior', foto: tampa }
     ];
   }
 
@@ -10247,15 +10294,21 @@ body {
   }
 
   function textoRegistroAuditoria(a = {}) {
+    const patrimonio = valorPatrimonioAuditoria(a) || '-';
+    const colaborador = valorColaboradorAuditoria(a) || '-';
+    const status = valorStatusAuditoria(a) || '-';
+    const observacao = valorObsAuditoria(a) || 'Sem observação';
+    const registradoPor = valorRegistradoPorAuditoria(a) || '-';
+
     return [
       'CONTROLE DE NOTEBOOK',
       '',
-      `Patrimônio: ${a.patrimonio || '-'}`,
-      `Colaborador: ${a.colaborador || '-'}`,
-      `Status da máquina: ${a.statusMaquina || '-'}`,
-      `Observação: ${a.observacao || 'Sem observação'}`,
+      `Patrimônio: ${patrimonio}`,
+      `Colaborador: ${colaborador}`,
+      `Status da máquina: ${status}`,
+      `Observação: ${observacao}`,
       `Fotos anexadas: ${quantidadeFotosAuditoria(a)}/3`,
-      `Registrado por: ${a.registradoPor || '-'}`,
+      `Registrado por: ${registradoPor}`,
       `Data: ${a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : (a.data || '-')}`
     ].join('\n');
   }
@@ -10265,17 +10318,21 @@ body {
 
     return (cacheAuditoria || [])
       .slice()
-      .sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')))
+      .sort((a,b) => String(b.criadoEm || b.data || '').localeCompare(String(a.criadoEm || a.data || '')))
       .filter(a => {
         if (!termo) return true;
 
         return texto([
-          a.patrimonio,
-          a.colaborador,
-          a.statusMaquina,
-          a.observacao,
-          a.registradoPor,
-          a.auditor
+          valorPatrimonioAuditoria(a),
+          valorTipoPatrimonioAuditoria(a),
+          valorColaboradorAuditoria(a),
+          valorStatusAuditoria(a),
+          valorObsAuditoria(a),
+          valorRegistradoPorAuditoria(a),
+          a.serial,
+          a.modelo,
+          a.fornecedor,
+          a.base
         ].join(' ')).includes(termo);
       });
   }
@@ -10321,7 +10378,9 @@ body {
     const lista = listaCompleta.slice(inicio, inicio + AUDITORIA_ITENS_POR_PAGINA);
 
     const status = document.getElementById('auditoriaStatus');
-    if (status) status.innerText = `${listaCompleta.length} registro(s) encontrado(s). Exibindo até ${AUDITORIA_ITENS_POR_PAGINA} por página, do mais recente para o mais antigo.`;
+    if (status) {
+      status.innerText = `${listaCompleta.length} registro(s) encontrado(s). Exibindo até ${AUDITORIA_ITENS_POR_PAGINA} por página, incluindo registros antigos compatíveis.`;
+    }
 
     atualizarPaginacaoAuditoria(listaCompleta.length);
 
@@ -10333,6 +10392,13 @@ body {
     tb.innerHTML = lista.map(a => {
       const id = JSON.stringify(a.id);
       const qtdFotos = quantidadeFotosAuditoria(a);
+      const patrimonio = valorPatrimonioAuditoria(a) || '-';
+      const tipoPatrimonio = valorTipoPatrimonioAuditoria(a);
+      const colaborador = valorColaboradorAuditoria(a) || '-';
+      const statusMaquina = valorStatusAuditoria(a) || '-';
+      const observacao = valorObsAuditoria(a);
+      const registradoPor = valorRegistradoPorAuditoria(a) || '-';
+      const login = valorLoginAuditoria(a);
 
       const acoes = [
         `<button class="btn btn-sm btn-copy-warranty" onclick='visualizarAuditoria(${id})'>Ver / copiar</button>`,
@@ -10342,11 +10408,11 @@ body {
       return `
         <tr>
           <td>${escapeHTML(a.data || '')}<br><span class="subnote">${escapeHTML(a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : '')}</span></td>
-          <td><b>${escapeHTML(a.patrimonio || '-')}</b><br><span class="subnote">${escapeHTML(a.tipoPatrimonio || '')}</span></td>
-          <td>${escapeHTML(a.colaborador || a.usuarioVinculado || '-')}</td>
-          <td><span class="pill ${pillStatusMaquinaAuditoria(a.statusMaquina || a.estadoConservacao)}">${escapeHTML(a.statusMaquina || a.estadoConservacao || '-')}</span>${a.observacao ? `<br><span class="subnote">${escapeHTML(a.observacao)}</span>` : ''}</td>
+          <td><b>${escapeHTML(patrimonio)}</b><br><span class="subnote">${escapeHTML(tipoPatrimonio || 'Histórico')}</span></td>
+          <td>${escapeHTML(colaborador)}</td>
+          <td><span class="pill ${pillStatusMaquinaAuditoria(statusMaquina)}">${escapeHTML(statusMaquina)}</span>${observacao ? `<br><span class="subnote">${escapeHTML(observacao)}</span>` : ''}</td>
           <td>${qtdFotos === 3 ? '📎 3 fotos' : `⚠️ ${qtdFotos}/3 fotos`}</td>
-          <td>${escapeHTML(a.registradoPor || a.auditor || '-')}<br><span class="subnote">${escapeHTML(a.registradoPorLogin || a.auditorLogin || '')}</span></td>
+          <td>${escapeHTML(registradoPor)}<br><span class="subnote">${escapeHTML(login)}</span></td>
           <td><div class="actions">${acoes}</div></td>
         </tr>
       `;
@@ -10358,17 +10424,25 @@ body {
       return showToast('Não existem controles de notebook para exportar.', 'warning');
     }
 
-    const rows = (cacheAuditoria || []).slice().sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''))).map(a => ({
-      Data: a.data || '',
-      Patrimonio: a.patrimonio || '',
-      Colaborador: a.colaborador || '',
-      Status_Maquina: a.statusMaquina || '',
-      Observacao: a.observacao || '',
-      Fotos: `${quantidadeFotosAuditoria(a)}/3 fotos salvas no registro`,
-      Registrado_Por: a.registradoPor || '',
-      Login: a.registradoPorLogin || '',
-      Criado_Em: a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : ''
-    }));
+    const rows = (cacheAuditoria || [])
+      .slice()
+      .sort((a,b) => String(b.criadoEm || b.data || '').localeCompare(String(a.criadoEm || a.data || '')))
+      .map(a => ({
+        Data: a.data || '',
+        Patrimonio: valorPatrimonioAuditoria(a) || '',
+        Tipo_Patrimonio: valorTipoPatrimonioAuditoria(a) || '',
+        Colaborador: valorColaboradorAuditoria(a) || '',
+        Status_Maquina: valorStatusAuditoria(a) || '',
+        Observacao: valorObsAuditoria(a) || '',
+        Fotos: `${quantidadeFotosAuditoria(a)}/3 fotos salvas no registro`,
+        Modelo_Legado: a.modelo || '',
+        Serial_Legado: a.serial || '',
+        Fornecedor_Legado: a.fornecedor || '',
+        Base_Legado: a.base || '',
+        Registrado_Por: valorRegistradoPorAuditoria(a) || '',
+        Login: valorLoginAuditoria(a) || '',
+        Criado_Em: a.criadoEm ? new Date(a.criadoEm).toLocaleString('pt-BR') : ''
+      }));
 
     exportarExcel('Controles_Notebook_Status', rows);
   }
@@ -10440,7 +10514,7 @@ body {
     fotos.forEach((item, index) => {
       const link = document.createElement('a');
       link.href = item.foto.base64;
-      const nome = String(a.patrimonio || 'notebook').replace(/[^a-z0-9_-]/gi, '_');
+      const nome = String(valorPatrimonioAuditoria(a) || 'notebook').replace(/[^a-z0-9_-]/gi, '_');
       const sufixo = item.key === 'aberto' ? 'aberto_tela_teclado' : item.key === 'baixo' ? 'baixo_etiqueta' : 'tampa_superior';
       link.download = `${nome}_${index + 1}_${sufixo}.jpg`;
       document.body.appendChild(link);
@@ -10458,7 +10532,7 @@ body {
     const textoFinal = textoRegistroAuditoria(a);
     const fotos = fotosAuditoriaArray(a);
 
-    openModal('Controle Notebook', a.patrimonio || 'Notebook', `
+    openModal('Controle Notebook', valorPatrimonioAuditoria(a) || 'Notebook', `
       <div class="subnote">Confira as informações, edite o texto se quiser e copie o conteúdo com as fotos.</div>
 
       <div style="margin-top:12px;">
