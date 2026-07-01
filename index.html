@@ -5722,6 +5722,7 @@ body {
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
               <input id="filtroAuditoria" style="max-width:280px;" placeholder="Buscar patrimônio, colaborador, status..." oninput="auditoriaPaginaAtual = 1; renderAuditoria()">
               <button class="btn btn-primary btn-sm" onclick="exportarAuditoriaExcel()">⬇ Exportar Excel</button>
+              <button class="btn btn-sm" onclick="diagnosticarAuditoriaNotebooks()">🧭 Diagnóstico</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -5906,6 +5907,21 @@ body {
   let cacheMovimentacoes = [];
   let cacheGarantias = [];
   let cacheAuditoria = [];
+  let cacheAuditoriaPorOrigem = {};
+  const AUDITORIA_PATHS_FIREBASE = [
+    'auditoria_notebooks',
+    'auditoria_notebooks_backup',
+    'controle_notebooks',
+    'controles_notebooks',
+    'controle_notebook',
+    'controles_notebook',
+    'controle_notebook_status',
+    'controles_notebook_status',
+    'notebooks_controle',
+    'notebook_controles',
+    'auditoriaNotebooks',
+    'controleNotebooks'
+  ];
   let auditoriaPaginaAtual = 1;
   const AUDITORIA_ITENS_POR_PAGINA = 10;
   let cacheUsuarios = [];
@@ -7683,7 +7699,7 @@ body {
 
   function pararEscutasFirebase() {
     try {
-      ['chamados_ti','demandas_ti','estoque_ti','movimentacoes_ti','garantias_equipamentos','auditoria_notebooks','usuarios','codigosAcesso'].forEach(path => db.ref(path).off());
+      ['chamados_ti','demandas_ti','estoque_ti','movimentacoes_ti','garantias_equipamentos','usuarios','codigosAcesso', ...AUDITORIA_PATHS_FIREBASE].forEach(path => db.ref(path).off());
     } catch(e) {
       console.warn('Não foi possível remover listeners Firebase:', e);
     }
@@ -7857,6 +7873,191 @@ body {
     return lista;
   }
 
+
+  function chaveNormalizadaAuditoria(valor = '') {
+    return String(valor || '').trim().toLowerCase();
+  }
+
+  function pareceRegistroAuditoria(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+
+    const campos = [
+      'patrimonio',
+      'patrimonioManual',
+      'inventarioManual',
+      'Inventário Manual',
+      'tipoPatrimonio',
+      'colaborador',
+      'usuarioVinculado',
+      'nomeColaborador',
+      'statusMaquina',
+      'estadoConservacao',
+      'observacao',
+      'obs',
+      'defeito',
+      'foto',
+      'fotos',
+      'fotosControle',
+      'serial',
+      'modelo',
+      'fornecedor'
+    ];
+
+    const hits = campos.filter(c => {
+      if (!Object.prototype.hasOwnProperty.call(obj, c)) return false;
+      const v = obj[c];
+      if (v && typeof v === 'object') return Object.keys(v).length > 0;
+      return String(v || '').trim();
+    }).length;
+
+    const temIdentidade = obj.patrimonio || obj.patrimonioManual || obj.inventarioManual || obj['Inventário Manual'] || obj.colaborador || obj.usuarioVinculado || obj.serial || obj.modelo;
+    const temFotoOuStatus = obj.foto || obj.fotos || obj.fotosControle || obj.statusMaquina || obj.estadoConservacao || obj.observacao || obj.defeito;
+
+    return hits >= 2 && (temIdentidade || temFotoOuStatus);
+  }
+
+  function normalizarRegistroAuditoria(raw = {}, origem = '', idOrigem = '') {
+    const base = raw && typeof raw === 'object' ? { ...raw } : {};
+    const patrimonio = String(base.patrimonio || base.patrimonioManual || base.inventarioManual || base['Inventário Manual'] || '').toUpperCase();
+    const tipoPatrimonio = base.tipoPatrimonio || (patrimonio.startsWith('OMNI-') ? 'OMNI' : patrimonio.startsWith('ALG-') ? 'ALG' : '');
+    const colaborador = base.colaborador || base.usuarioVinculado || base.usuario || base.nomeColaborador || base.emailUsuario || '';
+    const statusMaquina = base.statusMaquina || base.estadoConservacao || base.status || 'Registro antigo';
+    const observacao = base.observacao || base.obs || base.defeito || '';
+
+    const antigas = base.fotos || {};
+    const atuais = base.fotosControle || {};
+
+    const fotosControle = {
+      aberto: atuais.aberto || antigas.aberto || base.foto || null,
+      baixo: atuais.baixo || antigas.baixo || antigas.etiqueta || antigas.base || antigas.inferior || null,
+      tampa: atuais.tampa || antigas.tampa || antigas.superior || null
+    };
+
+    return {
+      ...base,
+      id: base.id || idOrigem || origem,
+      _origemAuditoria: origem,
+      _idOrigemAuditoria: idOrigem || base.id || '',
+      tipoPatrimonio,
+      patrimonio,
+      colaborador,
+      statusMaquina,
+      observacao,
+      fotosControle,
+      registradoPor: base.registradoPor || base.auditor || base.responsavel || base.criadoPor || '',
+      registradoPorLogin: base.registradoPorLogin || base.auditorLogin || base.criadoPorLogin || '',
+      data: base.data || (base.criadoEm ? String(base.criadoEm).slice(0, 10) : ''),
+      criadoEm: base.criadoEm || base.dataCadastro || base.criado || base.updatedAt || ''
+    };
+  }
+
+  function extrairAuditoriasDeObjeto(obj, origem, encontrados = [], depth = 0, idOrigem = '') {
+    if (!obj || typeof obj !== 'object' || depth > 6) return encontrados;
+
+    if (pareceRegistroAuditoria(obj)) {
+      encontrados.push(normalizarRegistroAuditoria(obj, origem, idOrigem));
+      return encontrados;
+    }
+
+    Object.entries(obj).forEach(([key, val]) => {
+      if (!val || typeof val !== 'object') return;
+
+      const origemFilha = origem ? `${origem}/${key}` : key;
+      const idFilho = idOrigem || key;
+
+      if (pareceRegistroAuditoria(val)) {
+        encontrados.push(normalizarRegistroAuditoria(val, origemFilha, key));
+      } else {
+        extrairAuditoriasDeObjeto(val, origemFilha, encontrados, depth + 1, idFilho);
+      }
+    });
+
+    return encontrados;
+  }
+
+  function montarCacheAuditoriaDoSnapshot(snap, pathOrigem) {
+    const lista = [];
+
+    snap.forEach(item => {
+      const val = item.val();
+      const id = item.key;
+
+      if (pareceRegistroAuditoria(val)) {
+        lista.push(normalizarRegistroAuditoria(val, `${pathOrigem}/${id}`, id));
+        return;
+      }
+
+      if (val && typeof val === 'object') {
+        extrairAuditoriasDeObjeto(val, `${pathOrigem}/${id}`, lista, 0, id);
+      }
+    });
+
+    return lista;
+  }
+
+  function scoreFonteAuditoria(g = {}) {
+    const origem = String(g._origemAuditoria || '');
+    if (origem.startsWith('auditoria_notebooks/')) return 100;
+    if (origem.startsWith('auditoria_notebooks_backup/')) return 90;
+    return 50;
+  }
+
+  function chaveRegistroAuditoriaUnica(g = {}) {
+    const id = g._idOrigemAuditoria || g.id || '';
+    if (id && !String(id).startsWith('__')) return String(id);
+
+    return [
+      chaveNormalizadaAuditoria(g._origemAuditoria || ''),
+      chaveNormalizadaAuditoria(g.patrimonio || ''),
+      chaveNormalizadaAuditoria(g.colaborador || ''),
+      chaveNormalizadaAuditoria(g.criadoEm || g.data || ''),
+      chaveNormalizadaAuditoria(g.statusMaquina || '')
+    ].join('|');
+  }
+
+  function sincronizarCacheAuditoria() {
+    const todos = Object.values(cacheAuditoriaPorOrigem || {}).flat();
+    const mapa = new Map();
+
+    todos.forEach(g => {
+      const key = chaveRegistroAuditoriaUnica(g);
+      if (!key.replace(/\|/g, '').trim()) return;
+
+      if (!mapa.has(key)) {
+        mapa.set(key, g);
+        return;
+      }
+
+      const atual = mapa.get(key);
+      if (scoreFonteAuditoria(g) > scoreFonteAuditoria(atual)) {
+        mapa.set(key, g);
+      }
+    });
+
+    cacheAuditoria = [...mapa.values()]
+      .sort((a,b) => String(b.criadoEm || b.data || '').localeCompare(String(a.criadoEm || a.data || '')));
+
+    console.info('Controle Notebooks carregado:', {
+      total: cacheAuditoria.length,
+      fontes: Object.fromEntries(Object.entries(cacheAuditoriaPorOrigem || {}).map(([k,v]) => [k, v.length]))
+    });
+
+    renderAuditoria();
+  }
+
+  function escutarAuditoriaNotebooks() {
+    cacheAuditoriaPorOrigem = {};
+
+    AUDITORIA_PATHS_FIREBASE.forEach(path => {
+      db.ref(path).on('value', snap => {
+        cacheAuditoriaPorOrigem[path] = montarCacheAuditoriaDoSnapshot(snap, path);
+        sincronizarCacheAuditoria();
+      }, error => {
+        console.warn('Erro ao carregar caminho de auditoria:', path, error);
+      });
+    });
+  }
+
   function escutarTudo() {
     db.ref('chamados_ti').on('value', snap => {
       cacheChamados = [];
@@ -7904,15 +8105,7 @@ body {
       console.error('Erro ao escutar garantias:', error);
       showToast('Erro ao carregar garantias: ' + error.message, 'error');
     });
-    db.ref('auditoria_notebooks').on('value', snap => {
-      cacheAuditoria = [];
-      snap.forEach(item => cacheAuditoria.push({ id: item.key, ...item.val() }));
-      cacheAuditoria.sort((a,b) => String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
-      renderAuditoria();
-    }, error => {
-      console.error('Erro ao carregar auditoria de notebooks:', error);
-      showToast('Erro ao carregar Controles Notebook: ' + error.message, 'error');
-    });
+    escutarAuditoriaNotebooks();
 
     db.ref('usuarios').on('value', snap => {
       cacheUsuarios = [];
@@ -10281,9 +10474,23 @@ body {
 
       const ref = await db.ref('auditoria_notebooks').push(data);
 
-      cacheAuditoria.unshift({ id: ref.key, ...data });
+      try {
+        await db.ref('auditoria_notebooks_backup/' + ref.key).set({ ...data, backupCriadoEm: new Date().toISOString() });
+      } catch(e) {
+        console.warn('Backup Firebase do Controle Notebooks falhou:', e);
+      }
+
+      try {
+        const chaveBackup = 'omniControleNotebookBackupV1';
+        const atual = JSON.parse(localStorage.getItem(chaveBackup) || '[]');
+        atual.unshift({ id: ref.key, ...data, backupLocalEm: new Date().toISOString() });
+        localStorage.setItem(chaveBackup, JSON.stringify(atual.slice(0, 200)));
+      } catch(e) {
+        console.warn('Backup local do Controle Notebooks falhou:', e);
+      }
+
       auditoriaPaginaAtual = 1;
-      renderAuditoria();
+      sincronizarCacheAuditoria();
       limparAuditoria();
 
       showToast('Controle do notebook salvo com as 3 fotos.');
@@ -10379,7 +10586,7 @@ body {
 
     const status = document.getElementById('auditoriaStatus');
     if (status) {
-      status.innerText = `${listaCompleta.length} registro(s) encontrado(s). Exibindo até ${AUDITORIA_ITENS_POR_PAGINA} por página, incluindo registros antigos compatíveis.`;
+      status.innerText = `${listaCompleta.length} registro(s) encontrado(s). Exibindo até ${AUDITORIA_ITENS_POR_PAGINA} por página, incluindo registros antigos e caminhos de backup compatíveis.`;
     }
 
     atualizarPaginacaoAuditoria(listaCompleta.length);
@@ -10553,6 +10760,72 @@ body {
         <button class="btn btn-primary" onclick="copiarTextoAuditoriaAtual()">Copiar só texto</button>
         <button class="btn btn-success" onclick='copiarAuditoriaCompletaAtual(${JSON.stringify(id)})'>Copiar texto + fotos</button>
         <button class="btn" onclick='baixarFotosAuditoria(${JSON.stringify(id)})'>Baixar fotos</button>
+      </div>
+    `);
+  }
+
+
+  async function diagnosticarAuditoriaNotebooks() {
+    const linhas = [];
+    let totalEncontrado = 0;
+
+    for (const path of AUDITORIA_PATHS_FIREBASE) {
+      try {
+        const snap = await db.ref(path).once('value');
+        const lista = montarCacheAuditoriaDoSnapshot(snap, path);
+        totalEncontrado += lista.length;
+        linhas.push(`
+          <div class="recovery-source">
+            <b>firebase:${escapeHTML(path)}</b><br>
+            <span class="subnote">${lista.length} registro(s) encontrado(s)</span>
+          </div>
+        `);
+      } catch (error) {
+        linhas.push(`
+          <div class="recovery-source">
+            <b>firebase:${escapeHTML(path)}</b><br>
+            <span class="subnote">Erro ao consultar: ${escapeHTML(error.message || String(error))}</span>
+          </div>
+        `);
+      }
+    }
+
+    let localCount = 0;
+    try {
+      const local = JSON.parse(localStorage.getItem('omniControleNotebookBackupV1') || '[]');
+      localCount = Array.isArray(local) ? local.length : 0;
+    } catch(e) {
+      localCount = 0;
+    }
+
+    openModal('Diagnóstico', 'Controle Notebooks', `
+      <div class="subnote">
+        Este diagnóstico mostra quantos registros foram encontrados em cada caminho possível do Firebase.
+        A tela atual exibe ${cacheAuditoria.length} registro(s) unificado(s).
+      </div>
+
+      <div class="recovery-summary" style="margin-top:12px;">
+        <div class="recovery-source">
+          <b>Total bruto encontrado</b><br>
+          <span class="subnote">${totalEncontrado} registro(s)</span>
+        </div>
+
+        <div class="recovery-source">
+          <b>Total exibido na tela</b><br>
+          <span class="subnote">${cacheAuditoria.length} registro(s)</span>
+        </div>
+
+        <div class="recovery-source">
+          <b>Backup local deste navegador</b><br>
+          <span class="subnote">${localCount} registro(s)</span>
+        </div>
+
+        ${linhas.join('')}
+      </div>
+
+      <div class="subnote" style="margin-top:12px;">
+        Se aqui aparecer apenas 1 registro no total, os outros 3 não chegaram a ser gravados no Firebase.
+        Se aparecerem em outro caminho, esta versão passa a carregar esses caminhos automaticamente.
       </div>
     `);
   }
